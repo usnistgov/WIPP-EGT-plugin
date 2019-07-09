@@ -1,0 +1,29 @@
+#CLION files
+.idea
+*.log
+
+# build directories
+build
+cmake-build-debug
+cmake-build-release
+cmake-build-relwithdebinfo
+
+# Vagrant files
+VagrantFile
+.vagrant
+
+# output directory
+outputs
+
+# benchmark results
+benchmarks/results
+benchmarks/heaptrack.*
+
+# htgs graph
+**/color-compute-time-graph
+
+# container files
+dist/deps
+dist/build
+
+**/*.xdot
