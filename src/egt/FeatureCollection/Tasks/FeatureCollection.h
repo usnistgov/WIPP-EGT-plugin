@@ -777,7 +777,7 @@ class FeatureCollection {
                 // If the pixel is in the feature
                 if (feature.isInBitMask(rowTileFeature, colTileFeature)) {
                   currentTile->at((rowTileFeature - minRowTile) * tileSize
-                                      + (colTileFeature - minColTile)) = 1;
+                                      + (colTileFeature - minColTile)) = 255;
                 }
               }
             }

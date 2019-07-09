@@ -270,7 +270,6 @@ namespace egt {
         void executeTask(std::shared_ptr<MemoryData<fi::View<UserType>>> view)
         override {
             _view = view->get();
-            //Set tup the environment for the tile
             _tileHeight = _view->getTileHeight();
             _tileWidth = _view->getTileWidth();
             _vAnalyse = new ViewAnalyse();
@@ -279,16 +278,15 @@ namespace egt {
             _currentBlob = nullptr;
             _previousBlob = nullptr;
 
-            printArray<uint16_t >("tile",(uint16_t *)_view->getData(),_view->getViewWidth(),_view->getViewHeight());
+            printArray<uint16_t >("tile_" + std::to_string(_view->getGlobalXOffset()) + "_" + std::to_string(_view->getGlobalYOffset()) ,(uint16_t *)_view->getData(),_view->getViewWidth(),_view->getViewHeight());
 
-            //we look at every pixel in the tile
+            //we look at every pixel in the tile (not the view)
             for (int32_t row = 0; row < _tileHeight; ++row) {
                 for (int32_t col = 0; col < _tileWidth; ++col) {
 
 
-                    auto globalRow = row + _view->getGlobalYOffset();
-                    auto globalCol = col + _view->getGlobalXOffset();
-
+                    //       auto globalRow = row + _view->getGlobalYOffset();
+             //       auto globalCol = col + _view->getGlobalXOffset();
 //                    VLOG(1) << "pixel in tile (" << row << "," << col << "), view " << "( " << (int32_t) (row - _view->getRadius()) << "," << (int32_t)(col - _view->getRadius()) << ") " << ", global " << "( " << globalRow << "," << globalCol << ")   -> " << _view->getPixel(row,col);
 
 
@@ -357,19 +355,24 @@ namespace egt {
                     //Find the next blob to create
                     if (!visited(row, col)) {
 
+                        markAsVisited(row, col);
+
                         //find out the pixel color
                         bool color = getColor(row, col);
 
                         //add pixel to a new blob
-                        _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col, color);
-                        _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
-                        //make sure we don't look at it again
-                        markAsVisited(row, col);
-                        //look at its neighbors
-                        if (_rank == 4) {
-                            analyseNeighbour4(row, col, color);
-                        } else {
-                            analyseNeighbour8(row, col, color);
+                        if(color) {
+                            _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col,
+                                                    color);
+                            _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
+                            //make sure we don't look at it again
+
+                            //look at its neighbors
+                            if (_rank == 4) {
+                                analyseNeighbour4(row, col, color);
+                            } else {
+                                analyseNeighbour8(row, col, color);
+                            }
                         }
                     }
                 }

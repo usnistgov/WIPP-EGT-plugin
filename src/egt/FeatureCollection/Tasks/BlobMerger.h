@@ -90,6 +90,8 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
         }
       _count = 0;
       merge();
+
+      VLOG(1) << "after last merge, we have : " << _blobs->_blobs.size() << " blobs left";
       this->addResult(_blobs);
     }
   }
