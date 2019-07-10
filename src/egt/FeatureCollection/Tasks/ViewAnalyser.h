@@ -112,6 +112,8 @@ namespace egt {
             return _view->getPixel(row,col) > _background;
         }
 
+        bool IS_BACKGROUND = false;
+
         bool sameColor(uint32_t row, uint32_t col, bool color) {
             return getColor(row, col) == color;
         }
@@ -280,6 +282,79 @@ namespace egt {
 
             printArray<uint16_t >("tile_" + std::to_string(_view->getGlobalXOffset()) + "_" + std::to_string(_view->getGlobalYOffset()) ,(uint16_t *)_view->getData(),_view->getViewWidth(),_view->getViewHeight());
 
+
+            //WE FIRST VISIT BACKGROUND PIXELS TO REMOVE HOLES
+            for (int32_t row = 0; row < _tileHeight; ++row) {
+                for (int32_t col = 0; col < _tileWidth; ++col) {
+
+                    while (!_toVisit.empty()) {
+                        auto neighbourCoord = *_toVisit.begin();
+                        _toVisit.erase(_toVisit.begin());
+                        //mark pixel as visited so we don't look at it again
+                        markAsVisited(neighbourCoord.first,
+                                      neighbourCoord.second);
+                        bool color = getColor(neighbourCoord.first, neighbourCoord.second);
+
+                        _currentBlob->addPixel(
+                                _view->getGlobalYOffset() + neighbourCoord.first,
+                                _view->getGlobalXOffset() + neighbourCoord.second);
+
+
+                        if (_rank == 4) {
+                            analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, color);
+                        } else {
+                            analyseNeighbour8(neighbourCoord.first, neighbourCoord.second, color);
+                        }
+                    }
+
+                    //we have a completed blob, we need to save it.
+                    if (_currentBlob != nullptr) {
+                        //we cannot make a decision about removing this hole yet,
+
+
+                        //we need to merge it with its neighbors to calculate its size.
+                        if(_currentBlob->isBackground() && _currentBlob->isToMerge()) {
+                            //TODO ignore for now
+                            //_vAnalyse->insertBlob(_currentBlob);
+                            _previousBlob = _currentBlob;
+                            _currentBlob = nullptr;
+                        }
+                        else if (_currentBlob->getCount() < MIN_HOLE_SIZE){
+                            VLOG(1) << "hole detected! Remove.";
+                            for(auto it = _currentBlob->getRowCols().begin(); it != _currentBlob->getRowCols().end(); ++it ){
+                                auto row = it->first;
+                                for(auto col : it->second) {
+                                    auto xOffset = _view->getGlobalXOffset();
+                                    auto yOffset = _view->getGlobalYOffset();
+                                    unmarkAsVisited(row - yOffset,col - xOffset);
+                                    _view->setPixel(row - yOffset,col - xOffset, _background + 1);
+                                }
+                            }
+                        }
+                    }
+
+                    //Find the next blob to create
+                    if (!visited(row, col) & getColor(row, col) == IS_BACKGROUND) {
+
+                        markAsVisited(row, col);
+
+                        //add pixel to a new blob
+                        _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col,
+                                                IS_BACKGROUND);
+                        _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
+                        //make sure we don't look at it again
+
+                        //look at its neighbors
+                        if (_rank == 4) {
+                            analyseNeighbour4(row, col, IS_BACKGROUND);
+                        } else {
+                            analyseNeighbour8(row, col, IS_BACKGROUND);
+                        }
+                    }
+                }
+            }
+
+
             //we look at every pixel in the tile (not the view)
             for (int32_t row = 0; row < _tileHeight; ++row) {
                 for (int32_t col = 0; col < _tileWidth; ++col) {
@@ -360,8 +435,9 @@ namespace egt {
                         //find out the pixel color
                         bool color = getColor(row, col);
 
-                        //add pixel to a new blob
                         if(color) {
+
+                            //add pixel to a new blob
                             _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col,
                                                     color);
                             _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
@@ -446,7 +522,7 @@ namespace egt {
         std::vector<bool> _visited;
 
 
-        uint32_t minHoleSize = 20;
+        uint32_t MIN_HOLE_SIZE = 20;
         uint32_t minObjectSize = 20;
 
 
