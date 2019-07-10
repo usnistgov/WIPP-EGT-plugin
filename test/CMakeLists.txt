@@ -1,5 +1,2 @@
-#add_executable(sortTest sort.cpp ${SRC_FILES})
-#add_executable(sobelOpencvTest sobelOpencv.cpp ${SRC_FILES})
-#add_executable(sobelAndSegmentationTest sobelAndSegmentation.cpp ${SRC_FILES})
-#add_executable(segmentationTest Segmentation.cpp ${SRC_FILES})
-#add_executable(miscTest miscTest.cpp ${SRC_FILES})
+add_executable(thresholdFinder thresholdFinder.cpp ${SRC_FILES} thresholdFinder.cpp)
+
