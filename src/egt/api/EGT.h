@@ -15,6 +15,7 @@
 #include "DataTypes.h"
 #include <egt/tasks/ThresholdFinder.h>
 #include <egt/tasks/SobelFilterOpenCV.h>
+#include <egt/tasks/FCSobelFilterOpenCV.h>
 #include <htgs/log/TaskGraphSignalHandler.hpp>
 
 
@@ -91,7 +92,8 @@ namespace egt {
             delete runtime;
 
             //TODO for now we bypass the threshold selection mechanism and work directly with masks
-            fi = new fi::FastImage<T>(tileLoader, 2);
+            auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(path, 1);
+            fi = new fi::FastImage<T>(tileLoader2, 2);
             fi->getFastImageOptions()->setNumberOfViewParallel(1);
             fi->configureAndRun();
             imageHeight = fi->getImageHeight();
@@ -101,11 +103,12 @@ namespace egt {
             analyseGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
 
 
-            auto sobelFilter2 = new SobelFilterOpenCV<T>(1, depth);
+            auto sobelFilter2 = new FCSobelFilterOpenCV<T>(1, depth);
             auto viewAnalyseTask = new egt::ViewAnalyser<T>(1,fi,4,threshold);
             auto fileCreation = new BlobMerger(imageHeight,imageWidth,fi->getNumberTilesHeight()* fi->getNumberTilesWidth());
 
-            analyseGraph->setGraphConsumerTask(viewAnalyseTask);
+            analyseGraph->setGraphConsumerTask(sobelFilter2);
+            analyseGraph->addEdge(sobelFilter2,viewAnalyseTask);
             analyseGraph->addEdge(viewAnalyseTask, fileCreation);
             analyseGraph->addGraphProducerTask(fileCreation);
             analyseRuntime = new htgs::TaskGraphRuntime(analyseGraph);
