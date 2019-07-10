@@ -74,7 +74,7 @@ class SobelFilterOpenCV : public htgs::ITask<htgs::MemoryData<fi::View<T>>, Conv
 
                         /// Total Gradient (approximate)
 //                        addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad );
-                        addWeighted( abs(grad_x), 0.5, abs(grad_y), 0.5, 0, grad, CV_32F );
+                        addWeighted( abs(grad_x), 1, abs(grad_y), 1, 0, grad, CV_32F );
 
                  //       cv::Mat out;
 
