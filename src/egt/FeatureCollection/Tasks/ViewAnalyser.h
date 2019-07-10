@@ -121,14 +121,19 @@ namespace egt {
         /// \brief Analyse the neighbour of a pixel for a 4-connectivity
         /// \param row Pixel's row
         /// \param col Pixel's col
-        void analyseNeighbour4(int32_t row, int32_t col, bool color) {
+        void analyseNeighbour4(int32_t row, int32_t col, bool color,bool erode) {
 
             //Explore neighbors in all directions to see if they need to be added to the blob.
+
+            auto countBadNeighbors = 0;
 
             // Top Pixel
             if (row >= 1) {
                 if (needVisit(row - 1, col, color)) {
                     _toVisit.emplace(row - 1, col);
+                }
+                else {
+                    countBadNeighbors++;
                 }
             }
             // Bottom pixel
@@ -136,11 +141,17 @@ namespace egt {
                 if (needVisit((row + 1), col, color)) {
                     _toVisit.emplace(row + 1, col);
                 }
+                else {
+                    countBadNeighbors++;
+                }
             }
             // Left pixel
             if (col >= 1) {
                 if (needVisit(row, col - 1, color)) {
                     _toVisit.emplace(row, col - 1);
+                }
+                else {
+                    countBadNeighbors++;
                 }
             }
             // Right pixel
@@ -148,6 +159,17 @@ namespace egt {
                 if (needVisit(row, col + 1, color)) {
                     _toVisit.emplace(row, col + 1);
                 }
+                else {
+                    countBadNeighbors++;
+                }
+            }
+
+            bool pixelColor = _view->getPixel(row,col) > _background;
+
+            if(erode && countBadNeighbors >= 3 && pixelColor == IS_BACKGROUND){
+                VLOG(1) << "lonely pixel" << row << "," << col << "Let's remove it.";
+                unmarkAsVisited(row,col);
+                _view->setPixel(row,col, _background + 1);
             }
 
             //Check if the blob in this tile belongs to a bigger blob extending several tiles.
@@ -301,7 +323,7 @@ namespace egt {
 
 
                         if (_rank == 4) {
-                            analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, color);
+                            analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, color, true);
                         } else {
                             analyseNeighbour8(neighbourCoord.first, neighbourCoord.second, color);
                         }
@@ -347,7 +369,7 @@ namespace egt {
 
                         //look at its neighbors
                         if (_rank == 4) {
-                            analyseNeighbour4(row, col, IS_BACKGROUND);
+                            analyseNeighbour4(row, col, IS_BACKGROUND, true);
                         } else {
                             analyseNeighbour8(row, col, IS_BACKGROUND);
                         }
@@ -381,7 +403,7 @@ namespace egt {
 
 
                         if (_rank == 4) {
-                            analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, color);
+                            analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, color, false);
                         } else {
                             analyseNeighbour8(neighbourCoord.first, neighbourCoord.second, color);
                         }
@@ -446,7 +468,7 @@ namespace egt {
 
                             //look at its neighbors
                             if (_rank == 4) {
-                                analyseNeighbour4(row, col, color);
+                                analyseNeighbour4(row, col, color, false);
                             } else {
                                 analyseNeighbour8(row, col, color);
                             }
