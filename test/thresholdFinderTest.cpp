@@ -11,7 +11,7 @@
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-     std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/fillHoles_tiled256_pyramid.tif";
+     std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256.tif";
 //    std::string path = "/home/gerardin/Documents/images/egt-test-images/datasetSegmentationTest2/test2_160px_tiled64_8bit.tif";
 //    std::string path = "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif";
 
@@ -34,8 +34,8 @@ int main() {
 
     auto sobelFilter = new egt::SobelFilterOpenCV<T>(1, depth);
 
-    auto numTileCol = fi->getNumberTilesWidth(1);
-    auto numTileRow = fi->getNumberTilesHeight(1);
+    auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequest);
+    auto numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequest);
     auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol);
 
     graph->addEdge(fastImage,sobelFilter);
@@ -58,12 +58,15 @@ int main() {
 
         if (data != nullptr) {
             threshold = data->getValue();
+            VLOG(1) << "Threshold value : " << threshold;
         }
     }
 
+    runtime->waitForRuntime();
 
-    VLOG(1) << "Threshold value : " << threshold;
+    graph->writeDotToFile("colorGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
+    delete runtime;
 
     return 0;
 }

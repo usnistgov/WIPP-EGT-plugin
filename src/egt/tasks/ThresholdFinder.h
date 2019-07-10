@@ -23,8 +23,8 @@ namespace egt {
 
     public:
         ThresholdFinder(uint32_t width, uint32_t height, uint32_t numTileRow, uint32_t numTileCol) : htgs::ITask<ConvOutData<T>, Threshold<T>>(1),
-                                                                                           width(width),
-                                                                                           height(height),
+                                                                                           imageWidth(width),
+                                                                                           imageHeight(height),
                                                                                            numTileRow(numTileRow),
                                                                                            numTileCol(numTileCol)
                                                                                            {
@@ -42,13 +42,16 @@ namespace egt {
 
             if(counter == totalTiles){
                 VLOG(1) << "we are done";
-//                printArray<T>("full gradient",gradient,width,height);
 
-            //    std::string outputPath = "/home/gerardin/CLionProjects/egt/outputs/fullGradient.png";
-                std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
-                cv::Mat image(height, width, CV_32F, gradient);
-                cv::imwrite(outputPath + "fullGradient.png", image);
+                printArray<T>("full gradient",gradient,imageWidth,imageHeight);
+
+
+                std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+//                std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
+
+                cv::Mat image(imageHeight, imageWidth, CV_32F, gradient);
+                cv::imwrite(outputPath + "fullGradient.tif", image);
                 image.release();
 
                 //TODO INIT VALUE? MINVALUE IS ALWAYS > 0 AFTER SOBEL? WHAT IS FLOAT? DO WE HAVE TO EXHAUSTIVELY SEARCH?
@@ -60,7 +63,7 @@ namespace egt {
 
                 //create an histogram of NUM_HISTOGRAM_BINS bins
                 //we also collect none zero values as we need them for the final step when applying the percentileThreshold.
-                for(auto k = 0; k < width * height; k++ ){
+                for(auto k = 0; k < imageWidth * imageHeight; k++ ){
                     if(gradient[k] != 0){
                         minValue = gradient[k] < minValue ? gradient[k] : minValue;
                         maxValue = gradient[k] > maxValue ? gradient[k] : maxValue;
@@ -71,7 +74,7 @@ namespace egt {
                 //also we use NUM_HISTOGRAM_BINS - 1 so values are bined in the [0,999] range.
                 double rescale = (NUM_HISTOGRAM_BINS - 1) / (maxValue - minValue);
                 double sum = 0;
-                for(auto k = 0; k < width * height; k++ ){
+                for(auto k = 0; k < imageWidth * imageHeight; k++ ){
                     if(gradient[k] != 0){
                         auto val = gradient[k];
                         auto index = (uint32_t)((gradient[k] - minValue) * rescale);
@@ -196,7 +199,7 @@ namespace egt {
                 uint32_t count;
                 //TODO remove for debug only
                 // apply the threshold to the gradient pixels (not just the nonzero ones)
-                for (int k = 0; k < width * height; k++) {
+                for (int k = 0; k < imageWidth * imageHeight; k++) {
                     if (gradient[k] >= threshold) {
                         count++;
                     }
@@ -204,11 +207,11 @@ namespace egt {
 
                 }
 
-                egt::printArray<T>("mask",gradient,width,height);
+                egt::printArray<T>("mask",gradient,imageWidth,imageHeight);
 
                 VLOG(1) << " number of pixel in foreground : " << count;
 
-                cv::Mat image2(height, width, CV_32F, gradient);
+                cv::Mat image2(imageHeight, imageWidth, CV_32F, gradient);
                 cv::imwrite(outputPath + "mask.png", image2);
                 image.release();
 
@@ -219,7 +222,7 @@ namespace egt {
         }
 
         htgs::ITask <ConvOutData<T>, Threshold<T>> *copy() override {
-            return new ThresholdFinder(width, height, numTileRow, numTileCol);
+            return new ThresholdFinder(imageWidth, imageHeight, numTileRow, numTileCol);
         }
 
         std::string getName() override { return "Threshold Finder"; }
@@ -234,15 +237,15 @@ namespace egt {
                  tileHeight = data->getTileHeight(),
                  tileWidth = data->getTileWidth();
                  for(auto tileRow = 0 ; tileRow < tileHeight; tileRow++) {
-                     assert((row + tileRow) * width + col <= width * height);
-                     assert((row + tileRow) * width + col >= 0);
-                     std::copy_n(tile + tileRow * tileWidth, tileWidth, gradient + (row + tileRow) * width + col);
+                     assert((row + tileRow) * imageWidth + col <= imageWidth * imageHeight);
+                     assert((row + tileRow) * imageWidth + col >= 0);
+                     std::copy_n(tile + tileRow * tileWidth, tileWidth, gradient + (row + tileRow) * imageWidth + col);
                  }
         }
 
         T* gradient;
-        uint32_t width;
-        uint32_t height;
+        uint32_t imageWidth;
+        uint32_t imageHeight;
         uint32_t numTileRow;
         uint32_t numTileCol;
         uint32_t totalTiles;

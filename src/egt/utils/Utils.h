@@ -25,7 +25,7 @@ namespace egt {
         oss << title << std::endl;
         for (size_t i = 0; i < h; ++i) {
             for (size_t j = 0; j < w; ++j) {
-                oss << std::setw(6) << (double) (data[i * w + j]) << " ";
+                oss << std::setw(6) << (data[i * w + j]) << " ";
             }
             oss << std::endl;
         }

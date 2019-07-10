@@ -76,4 +76,4 @@ set(SRC_FILES src)
 
 
 
-add_executable(newEgt main.cpp ${SRC_FILES})
+add_executable(main main.cpp ${SRC_FILES})

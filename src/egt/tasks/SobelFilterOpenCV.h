@@ -50,7 +50,7 @@ class SobelFilterOpenCV : public htgs::ITask<htgs::MemoryData<fi::View<T>>, Conv
                     auto radius = view->getRadius();
 
 
-                    printArray<T>("view",view->getData(),viewWidth,viewHeight);
+                 //   printArray<T>("view",view->getData(),viewWidth,viewHeight);
 
                     auto srcGray = cv::Mat(viewHeight, viewWidth, inputDepth, view->getData());
 
@@ -76,13 +76,13 @@ class SobelFilterOpenCV : public htgs::ITask<htgs::MemoryData<fi::View<T>>, Conv
 //                        addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad );
                         addWeighted( abs(grad_x), 0.5, abs(grad_y), 0.5, 0, grad, CV_32F );
 
-                        cv::Mat out;
+                 //       cv::Mat out;
 
-                        printArray<float>("grad float",(float*)grad.data,viewWidth,viewHeight);
+            //            printArray<float>("grad float",(float*)grad.data,viewWidth,viewHeight);
 
-                        grad.convertTo(out, CV_8U);
+                //        grad.convertTo(out, CV_8U);
 
-                        printArray<uint8_t>("grad",(uint8_t*)out.data,viewWidth,viewHeight);
+                //        printArray<uint8_t>("grad",(uint8_t*)out.data,viewWidth,viewHeight);
 
 //                        cv::imwrite(outputPath + "segComp" + std::to_string(counter) + ".png" , out);
 
@@ -129,6 +129,7 @@ class SobelFilterOpenCV : public htgs::ITask<htgs::MemoryData<fi::View<T>>, Conv
                         auto img5 = cv::Mat(tileHeight, tileWidth, CV_32F, tileOut);
                         cv::imwrite(outputPath + "tileout" + std::to_string(counter)  + ".png" , img5);
 
+                        printArray<T>("gradient of tile",(float*)tileOut,tileWidth,tileHeight);
 
                     // Write the output tile
                     this->addResult(new ConvOutData<T>(tileOut, view->getGlobalYOffset(), view->getGlobalXOffset(), tileWidth, tileHeight));

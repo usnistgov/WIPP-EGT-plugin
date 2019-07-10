@@ -12,6 +12,10 @@
 #include <egt/FeatureCollection/Tasks/ViewAnalyser.h>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
 #include <egt/FeatureCollection/Tasks/FeatureCollection.h>
+#include "DataTypes.h"
+#include <egt/tasks/ThresholdFinder.h>
+#include <egt/tasks/SobelFilterOpenCV.h>
+#include <htgs/log/TaskGraphSignalHandler.hpp>
 
 
 namespace egt {
@@ -36,9 +40,58 @@ namespace egt {
 
         void run(std::string path) {
 
+            ImageDepth depth = ImageDepth::_32F;
+            uint32_t pyramidLevelToRequest = 0;
+
+            auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, 1);
+            fi::FastImage<T> *fi = new fi::FastImage<T>(tileLoader, 1);
+            fi->getFastImageOptions()->setNumberOfViewParallel(1);
+            auto fastImage = fi->configureAndMoveToTaskGraphTask("Fast Image");
+
+            imageHeight = fi->getImageHeight(pyramidLevelToRequest),     //< Image Height
+            imageWidth = fi->getImageWidth(pyramidLevelToRequest);      //< Image Width
+
+
+            auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
+
+            auto sobelFilter = new SobelFilterOpenCV<T>(1, depth);
+
+            auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequest);
+            auto numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequest);
+            auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol);
+
+            graph->addEdge(fastImage,sobelFilter);
+            graph->addEdge(sobelFilter,thresholdFinder);
+            graph->addGraphProducerTask(thresholdFinder);
+
+            htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
+            htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
+
+            auto *runtime = new htgs::TaskGraphRuntime(graph);
+            runtime->executeRuntime();
+
+            fi->requestAllTiles(true,pyramidLevelToRequest);
+            graph->finishedProducingData();
+
+            T threshold = 0;
+
+            while (!graph->isOutputTerminated()) {
+                auto data = graph->consumeData();
+
+                if (data != nullptr) {
+                    threshold = data->getValue();
+                    VLOG(1) << "Threshold value : " << threshold;
+                }
+            }
+
+            runtime->waitForRuntime();
+
+            graph->writeDotToFile("colorGraph.xdot", DOTGEN_COLOR_COMP_TIME);
+
+            delete runtime;
+
             //TODO for now we bypass the threshold selection mechanism and work directly with masks
-            auto tileLoader = new PyramidTiledTiffLoader<T>(path, 1);
-            fi = new fi::FastImage<T>(tileLoader, 1);
+            fi = new fi::FastImage<T>(tileLoader, 2);
             fi->getFastImageOptions()->setNumberOfViewParallel(1);
             fi->configureAndRun();
             imageHeight = fi->getImageHeight();
@@ -47,7 +100,9 @@ namespace egt {
 
             analyseGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
 
-            auto viewAnalyseTask = new egt::ViewAnalyser<T>(1,fi,4,100);
+
+            auto sobelFilter2 = new SobelFilterOpenCV<T>(1, depth);
+            auto viewAnalyseTask = new egt::ViewAnalyser<T>(1,fi,4,threshold);
             auto fileCreation = new BlobMerger(imageHeight,imageWidth,fi->getNumberTilesHeight()* fi->getNumberTilesWidth());
 
             analyseGraph->setGraphConsumerTask(viewAnalyseTask);
