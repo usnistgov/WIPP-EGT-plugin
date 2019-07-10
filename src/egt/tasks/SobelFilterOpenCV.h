@@ -37,10 +37,8 @@ class SobelFilterOpenCV : public htgs::ITask<htgs::MemoryData<fi::View<T>>, Conv
                     std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
 
                     //TODO review but we need a mechanism for opencv to convert to Mat?
-//                    auto inputDepth = CV_32F;
                     auto inputDepth = convertToOpencvType(depth);
-                    auto outputDepth = CV_32F;
-//                    auto outputDepth = convertToOpencvType(depth);
+                    auto outputDepth = convertToOpencvType(depth);
                     int scale = 1;
                     int delta = 0;
 

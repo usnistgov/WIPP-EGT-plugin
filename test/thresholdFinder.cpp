@@ -11,13 +11,13 @@
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-    // std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/fillHoles_tiled256_pyramid.tif";
+     std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/fillHoles_tiled256_pyramid.tif";
 //    std::string path = "/home/gerardin/Documents/images/egt-test-images/datasetSegmentationTest2/test2_160px_tiled64_8bit.tif";
-    std::string path = "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif";
+//    std::string path = "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif";
 
-    typedef  uint16_t T;
+    typedef  float T;
 
-    ImageDepth depth = ImageDepth::_8U;
+    ImageDepth depth = ImageDepth::_32F;
     uint32_t pyramidLevelToRequest = 0;
 
     auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, 1);

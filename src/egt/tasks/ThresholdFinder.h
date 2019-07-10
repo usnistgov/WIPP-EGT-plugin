@@ -204,7 +204,7 @@ namespace egt {
 
                 }
 
-                egt::printArray<uint16_t>("mask",gradient,width,height);
+                egt::printArray<T>("mask",gradient,width,height);
 
                 VLOG(1) << " number of pixel in foreground : " << count;
 

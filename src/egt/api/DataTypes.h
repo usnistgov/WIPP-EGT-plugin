@@ -11,6 +11,7 @@
 enum class ImageDepth {
     _8U,
     _16U,
+    _32F
 };
 
 
@@ -20,6 +21,8 @@ int convertToOpencvType(ImageDepth depth){
             return CV_8U;
         case ImageDepth::_16U:
             return CV_16U;
+        case ImageDepth ::_32F:
+            return CV_32F;
         default:
             return CV_16U;
     }
