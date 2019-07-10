@@ -313,13 +313,14 @@ namespace egt {
 
 
                         //we need to merge it with its neighbors to calculate its size.
-                        if(_currentBlob->isBackground() && _currentBlob->isToMerge()) {
-                            //TODO ignore for now
-                            //_vAnalyse->insertBlob(_currentBlob);
-                            _previousBlob = _currentBlob;
-                            _currentBlob = nullptr;
-                        }
-                        else if (_currentBlob->getCount() < MIN_HOLE_SIZE){
+//                        if(_currentBlob->isBackground() && _currentBlob->isToMerge()) {
+//                            //TODO ignore for now
+//                            //_vAnalyse->insertBlob(_currentBlob);
+//                            _previousBlob = _currentBlob;
+//                            _currentBlob = nullptr;
+//                        }
+//TODO was an else if
+                    if (_currentBlob->getCount() < MIN_HOLE_SIZE){
                             VLOG(1) << "hole detected! Remove.";
                             for(auto it = _currentBlob->getRowCols().begin(); it != _currentBlob->getRowCols().end(); ++it ){
                                 auto row = it->first;
