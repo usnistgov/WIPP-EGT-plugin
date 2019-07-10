@@ -33,6 +33,8 @@ namespace egt {
         uint32_t
                 tileWidth;
 
+        uint32_t _minObjectSize = 100;
+
         htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *analyseGraph;  //< Analyse graph
         htgs::TaskGraphRuntime *analyseRuntime; //< Analyse runtime
 
@@ -140,8 +142,27 @@ namespace egt {
 
             auto listblob = blob.get();
 
+            uint32_t nbBlobsTooSmall = 0;
+
             auto originalNbOfBlobs = blob->_blobs.size();
+
+
+            auto i = listblob->_blobs.begin();
+            while (i != listblob->_blobs.end()) {
+                if((*i)->isForeground() && (*i)->getCount() < this->_minObjectSize){
+                    VLOG(1) << "too small...";
+                    nbBlobsTooSmall++;
+                    i = listblob->_blobs.erase(i);
+                }
+                else {
+                    i++;
+                }
+            }
+
+            auto nbBlobs = listblob->_blobs.size();
             VLOG(1) << "original nb of blobs : " << originalNbOfBlobs;
+            VLOG(1) << "objects too small have been removed : " << nbBlobsTooSmall;
+            VLOG(1) << "blobs left : " <<nbBlobs;
 
 
             FeatureCollection* fc = new FeatureCollection();
