@@ -166,11 +166,11 @@ namespace egt {
 
             bool pixelColor = _view->getPixel(row,col) > _background;
 
-            if(erode && countBadNeighbors >= 3 && pixelColor == IS_BACKGROUND){
-                VLOG(1) << "lonely pixel" << row << "," << col << "Let's remove it.";
-                unmarkAsVisited(row,col);
-                _view->setPixel(row,col, _background + 1);
-            }
+//            if(erode && countBadNeighbors >= 3 && pixelColor == IS_BACKGROUND){
+//                VLOG(1) << "lonely pixel" << row << "," << col << "Let's remove it.";
+//                unmarkAsVisited(row,col);
+//                _view->setPixel(row,col, _background + 1);
+//            }
 
             //Check if the blob in this tile belongs to a bigger blob extending several tiles.
             //We only to look at EAST and SOUTH so we can later merge only once, TOP to BOTTOM and LEFT to RIGHT.
@@ -343,7 +343,7 @@ namespace egt {
 //                        }
 //TODO was an else if
                     if (_currentBlob->getCount() < MIN_HOLE_SIZE){
-                            VLOG(1) << "hole detected! Remove.";
+//                            VLOG(1) << "hole detected! Remove.";
                             for(auto it = _currentBlob->getRowCols().begin(); it != _currentBlob->getRowCols().end(); ++it ){
                                 auto row = it->first;
                                 for(auto col : it->second) {

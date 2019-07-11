@@ -17,6 +17,7 @@
 #include <egt/tasks/SobelFilterOpenCV.h>
 #include <egt/tasks/FCSobelFilterOpenCV.h>
 #include <htgs/log/TaskGraphSignalHandler.hpp>
+#include <egt/tasks/CustomSobelFilter3by3.h>
 
 
 namespace egt {
@@ -44,23 +45,23 @@ namespace egt {
         void run(std::string path) {
 
             ImageDepth depth = ImageDepth::_32F;
-            uint32_t pyramidLevelToRequest = 0;
+            uint32_t pyramidLevelToRequestforThreshold = 0;
 
             auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, 1);
             fi::FastImage<T> *fi = new fi::FastImage<T>(tileLoader, 1);
             fi->getFastImageOptions()->setNumberOfViewParallel(1);
             auto fastImage = fi->configureAndMoveToTaskGraphTask("Fast Image");
 
-            imageHeight = fi->getImageHeight(pyramidLevelToRequest),     //< Image Height
-            imageWidth = fi->getImageWidth(pyramidLevelToRequest);      //< Image Width
+            imageHeight = fi->getImageHeight(pyramidLevelToRequestforThreshold),     //< Image Height
+            imageWidth = fi->getImageWidth(pyramidLevelToRequestforThreshold);      //< Image Width
 
 
             auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
 
-            auto sobelFilter = new SobelFilterOpenCV<T>(1, depth);
+            auto sobelFilter = new CustomSobelFilter3by3<T>(1, depth);
 
-            auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequest);
-            auto numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequest);
+            auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
+            auto numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold);
             auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol);
 
             graph->addEdge(fastImage,sobelFilter);
@@ -73,7 +74,7 @@ namespace egt {
             auto *runtime = new htgs::TaskGraphRuntime(graph);
             runtime->executeRuntime();
 
-            fi->requestAllTiles(true,pyramidLevelToRequest);
+            fi->requestAllTiles(true,pyramidLevelToRequestforThreshold);
             graph->finishedProducingData();
 
             T threshold = 0;
@@ -93,13 +94,15 @@ namespace egt {
 
             delete runtime;
 
+            uint32_t pyramidLevelToRequestForSegmentation = 0;
+
             //TODO for now we bypass the threshold selection mechanism and work directly with masks
             auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(path, 1);
             fi = new fi::FastImage<T>(tileLoader2, 2);
             fi->getFastImageOptions()->setNumberOfViewParallel(1);
             fi->configureAndRun();
-            imageHeight = fi->getImageHeight();
-            imageWidth = fi->getImageWidth();
+            imageHeight = fi->getImageHeight(pyramidLevelToRequestForSegmentation);
+            imageWidth = fi->getImageWidth(pyramidLevelToRequestForSegmentation);
             tileWidth = fi->getTileWidth();
 
             analyseGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
@@ -107,7 +110,9 @@ namespace egt {
 
             auto sobelFilter2 = new FCSobelFilterOpenCV<T>(1, depth);
             auto viewAnalyseTask = new egt::ViewAnalyser<T>(1,fi,4,threshold);
-            auto fileCreation = new BlobMerger(imageHeight,imageWidth,fi->getNumberTilesHeight()* fi->getNumberTilesWidth());
+            auto fileCreation = new BlobMerger(imageHeight,imageWidth,
+                    fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
+                    fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation));
 
             analyseGraph->setGraphConsumerTask(sobelFilter2);
             analyseGraph->addEdge(sobelFilter2,viewAnalyseTask);
@@ -120,7 +125,7 @@ namespace egt {
                 //Request all tiles from the FC
 
                 VLOG(1) << "request all tiles...";
-                fi->requestAllTiles(true);
+                fi->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
                 while (fi->isGraphProcessingTiles()) {
                     auto pView = fi->getAvailableViewBlocking();
                     if (pView != nullptr) {
@@ -150,7 +155,7 @@ namespace egt {
             auto i = listblob->_blobs.begin();
             while (i != listblob->_blobs.end()) {
                 if((*i)->isForeground() && (*i)->getCount() < this->_minObjectSize){
-                    VLOG(1) << "too small...";
+//                    VLOG(1) << "too small...";
                     nbBlobsTooSmall++;
                     i = listblob->_blobs.erase(i);
                 }

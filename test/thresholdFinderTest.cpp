@@ -8,10 +8,12 @@
 #include <egt/tasks/SobelFilterOpenCV.h>
 #include <egt/tasks/ThresholdFinder.h>
 #include <htgs/log/TaskGraphSignalHandler.hpp>
+#include <egt/tasks/CustomSobelFilter3by3.h>
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-     std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256.tif";
+    std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif";
+//     std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256.tif";
 //    std::string path = "/home/gerardin/Documents/images/egt-test-images/datasetSegmentationTest2/test2_160px_tiled64_8bit.tif";
 //    std::string path = "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif";
 
@@ -32,7 +34,8 @@ int main() {
 
     auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, egt::Threshold<T>>();
 
-    auto sobelFilter = new egt::SobelFilterOpenCV<T>(1, depth);
+    auto sobelFilter = new egt::CustomSobelFilter3by3<T>(1, depth);
+//    auto sobelFilter = new egt::SobelFilterOpenCV<T>(1, depth);
 
     auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequest);
     auto numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequest);
