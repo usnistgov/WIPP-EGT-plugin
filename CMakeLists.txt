@@ -72,7 +72,7 @@ include_directories(src)
 add_subdirectory(test)
 
 
-set(SRC_FILES src)
+set(SRC_FILES src src/egt/tasks/ViewToConvOutDataConverter.h)
 
 
 

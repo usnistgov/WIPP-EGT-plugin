@@ -40,11 +40,11 @@ namespace egt {
             copyTile(data);
             counter++;
 
-            if(counter == totalTiles){
-                VLOG(1) << "we are done";
+            if(counter == totalTiles) {
+                VLOG(1) << "we are done producing the " << totalTiles << " tiles.";
 
 
-                printArray<T>("full gradient",gradient,imageWidth,imageHeight);
+//                printArray<T>("full gradient",gradient,imageWidth,imageHeight);
 
 
                 std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";

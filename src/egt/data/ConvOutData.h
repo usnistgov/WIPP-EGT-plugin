@@ -19,7 +19,8 @@ private:
 
     uint32_t
             _globalRow,   ///< Global tile row
-            _globalCol,   ///< Global tile column
+            _globalCol;   ///< Global tile column
+    int32_t
             _tileWidth,
             _tileHeight;
 
@@ -33,7 +34,7 @@ public:
                                                                              _globalCol(globalCol) {}
 
 
-    ConvOutData(V *_outputdata, uint32_t _globalRow, uint32_t _globalCol, uint32_t _tileWidth, uint32_t _tileHeight)
+    ConvOutData(V *_outputdata, uint32_t _globalRow, uint32_t _globalCol, int32_t _tileWidth, int32_t _tileHeight)
             : _outputdata(_outputdata), _globalRow(_globalRow), _globalCol(_globalCol), _tileWidth(_tileWidth),
               _tileHeight(_tileHeight) {}
 
@@ -49,11 +50,11 @@ public:
     /// \return Global tile column index
     uint32_t getGlobalCol() const { return _globalCol; }
 
-    uint32_t getTileWidth() const {
+    int32_t getTileWidth() const {
         return _tileWidth;
     }
 
-    uint32_t getTileHeight() const {
+    int32_t getTileHeight() const {
         return _tileHeight;
     }
 
