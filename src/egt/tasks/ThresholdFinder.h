@@ -36,7 +36,7 @@ namespace egt {
 
         void executeTask(std::shared_ptr<ConvOutData<T>> data) override {
 
-            //TODO NO NEED TO COPY data> just accumulate. Or maybe build the histogram on the fly.
+            //TODO NO NEED TO COPY data. Just accumulate. Or maybe build the histogram on the fly.
             copyTile(data);
             counter++;
 
@@ -54,10 +54,10 @@ namespace egt {
                 cv::imwrite(outputPath + "fullGradient.tif", image);
                 image.release();
 
-                //TODO INIT VALUE? MINVALUE IS ALWAYS > 0 AFTER SOBEL? WHAT IS FLOAT? DO WE HAVE TO EXHAUSTIVELY SEARCH?
+                //TODO MINVALUE IS ALWAYS > 0 AFTER SOBEL? WHAT IS FLOAT? DO WE HAVE TO EXHAUSTIVELY SEARCH?
                 // SAMPLING SHOULD BE GOOD ENOUGH? ANOTHER APPROACH IS TO GET IT FROM THE SOBEL OPERATION
                 //How to find min and max value for T?
-                T minValue = MAXFLOAT , maxValue = 0;
+                T minValue = std::numeric_limits<T>::max() , maxValue = std::numeric_limits<T>::min();
 
                 auto nonZeroGradient = std::vector<T>();
 
@@ -70,14 +70,32 @@ namespace egt {
                         nonZeroGradient.push_back(gradient[k]);
                     }
                 }
-                //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.
-                //also we use NUM_HISTOGRAM_BINS - 1 so values are bined in the [0,999] range.
-                double rescale = (NUM_HISTOGRAM_BINS - 1) / (maxValue - minValue);
+
+
+
+                //TODO [CHECK]
+//                //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.
+//                //also we use NUM_HISTOGRAM_BINS - 1 so values are bined in the [0,999] range.
+//                //TODO DO WE NEED TO WORK WITH 0 VALUES? OR CAN WE USE DIRECTLY NON-ZEROS GRADIENTS?
+//                double rescale = (NUM_HISTOGRAM_BINS - 1) / (maxValue - minValue);
+//                double sum = 0;
+//                for(auto k = 0; k < imageWidth * imageHeight; k++ ){
+//                    //TODO see. here test non-zeros!
+//                    if(gradient[k] != 0){
+//                        auto index = (uint32_t)((gradient[k] - minValue) * rescale);
+//                        hist[index]++;
+//                        sum++;
+//                    }
+//                }
+
+
+                //TODO [CHECK]  to match previous implementation
+                double rescale = NUM_HISTOGRAM_BINS / (maxValue - minValue);
                 double sum = 0;
                 for(auto k = 0; k < imageWidth * imageHeight; k++ ){
+                    //TODO see. here test non-zeros!
                     if(gradient[k] != 0){
-                        auto val = gradient[k];
-                        auto index = (uint32_t)((gradient[k] - minValue) * rescale);
+                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
                         hist[index]++;
                         sum++;
                     }
@@ -85,12 +103,13 @@ namespace egt {
 
                 //TODO FOR DEBUG
                 float* histAsRawArray = &hist[0];
-//                printArray<float>("histogram",histAsRawArray,20,50);
+                printArray<float>("histogram",histAsRawArray,20,50);
 
-                //normalize the histogram so that sum(histData)=1;
-                for(uint32_t k = 0; k < NUM_HISTOGRAM_BINS; k++) {
-                    hist[k] /= sum;
-                }
+                //TODO [CHECK] in the book it is described as before modloc but not in original code
+//                //normalize the histogram so that sum(histData)=1;
+//                for(uint32_t k = 0; k < NUM_HISTOGRAM_BINS; k++) {
+//                    hist[k] /= sum;
+//                }
 
 //                printArray<float>("histogram normalized",&hist[0],20,50);
 
@@ -135,18 +154,42 @@ namespace egt {
 
                 VLOG(1) << "mode loc : " << modeLoc << " of " << NUM_HISTOGRAM_BINS << "buckets.";
 
+
+                //TODO [CHECK] in previous implementation, it is here
+                //normalize the histogram so that sum(histData)=1;
+                for(uint32_t k = 0; k < NUM_HISTOGRAM_BINS; k++) {
+                hist[k] /= sum;
+                }
+
+                //TODO [CHECK] in previous implementation, lower and upper bound have some index conversion
+//                //lower bound
+//                auto lowerBound = 3 * modeLoc < NUM_HISTOGRAM_BINS ? 3 * modeLoc : NUM_HISTOGRAM_BINS - 1;
+//
+//                //upper bound
+//                auto upperBound = 18 * modeLoc < NUM_HISTOGRAM_BINS ? 18 * modeLoc : NUM_HISTOGRAM_BINS -1;
+//                auto cutoff = hist[modeLoc] * 0.05; //95% dropoff from the mode location
+//                for(uint32_t k = modeLoc; k < NUM_HISTOGRAM_BINS; k++) {
+//                    if(hist[k] <= cutoff && hist[k] > upperBound){
+//                        upperBound = hist[k];
+//                        break;
+//                    }
+//                }
+
+                //TODO [CHECK] here we match previous implementation
                 //lower bound
-                auto lowerBound = 3 * modeLoc < NUM_HISTOGRAM_BINS ? 3 * modeLoc : NUM_HISTOGRAM_BINS - 1;
+                auto lowerBound = 3 * (modeLoc + 1) - 1 < NUM_HISTOGRAM_BINS ? 3 * (modeLoc + 1) - 1 : NUM_HISTOGRAM_BINS - 1;
 
                 //upper bound
-                auto upperBound = 18 * modeLoc < NUM_HISTOGRAM_BINS ? 18 * modeLoc : NUM_HISTOGRAM_BINS -1;
+                auto upperBound = 18 * (modeLoc + 1) - 1  < NUM_HISTOGRAM_BINS ? 18 * (modeLoc + 1) - 1  : NUM_HISTOGRAM_BINS -1;
                 auto cutoff = hist[modeLoc] * 0.05; //95% dropoff from the mode location
                 for(uint32_t k = modeLoc; k < NUM_HISTOGRAM_BINS; k++) {
                     if(hist[k] <= cutoff && hist[k] > upperBound){
                         upperBound = hist[k];
-                        break;
+                    break;
                     }
                 }
+
+
 
                 VLOG(1) << "lower bound : " << (uint32_t)lowerBound;
                 VLOG(1) << "upper bound : " << (uint32_t)upperBound;
