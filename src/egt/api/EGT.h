@@ -45,7 +45,7 @@ namespace egt {
         void run(std::string path) {
 
             ImageDepth depth = ImageDepth::_32F;
-            uint32_t pyramidLevelToRequestforThreshold = 0;
+            uint32_t pyramidLevelToRequestforThreshold = 2;
 
             auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, 1);
             fi::FastImage<T> *fi = new fi::FastImage<T>(tileLoader, 1);

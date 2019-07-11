@@ -151,7 +151,7 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     // For every Parent - son blob, merge every parent to it son
     for (auto pS : parentSons) {
       auto sons = pS.second;
-      VLOG(1) << "nb of sons: " << sons.size();
+      VLOG(4) << "nb of sons: " << sons.size();
       Blob
           *toMerge = *sons.begin(),
           *merged = nullptr;

@@ -146,11 +146,6 @@ namespace egt {
                         cv::imwrite(outputPath + "tileout" + std::to_string(row) + "," + std::to_string(col)  + ".png" , img5);
 
 
-
-
-            VLOG(1) << "value at border in (5,16) in tile : "<< row << "," << col  << " : "  << view->getPixel(5,16);
-            VLOG(1) << "value at border in (5,0) in tile : "<< row << "," << col  << " : "  << view->getPixel(5,0);
-
             // Forwarding the modified view
             this->addResult(data);
         }

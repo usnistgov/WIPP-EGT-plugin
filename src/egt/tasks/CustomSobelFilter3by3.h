@@ -43,15 +43,7 @@ namespace egt {
 
 
 
-            printArray<T>("view",view->getData(),viewWidth,viewHeight);
-//
-//            VLOG(1) << "pixel  " << (int)view->getPixel(-1,-1);
-//            VLOG(1) << "pixel  " << (int)view->getPixel(0,-1);
-//            VLOG(1) << "pixel  " << (int)view->getPixel(-1,0);
-//            VLOG(1) << "pixel  " << (int)view->getPixel(256,-1);
-//            VLOG(1) << "pixel  " << (int)view->getPixel(-1,255);
-//            VLOG(1) << "pixel  " << (int)view->getPixel(-1,257);
-
+//            printArray<T>("view",view->getData(),viewWidth,viewHeight);
 
             int32_t
                     radius = view->getRadius();
@@ -94,11 +86,10 @@ namespace egt {
 //                }
 //            }
 
-
+            //Emulate Sobel as implemented in ImageJ
+            //[description](https://imagejdocu.tudor.lu/faq/technical/what_is_the_algorithm_used_in_find_edges)
             for (auto row = 1; row < tileHeight; ++row) {
                 for (auto col = 1; col < tileWidth; ++col) {
-                    //convolution for one pixel
-                    VLOG(1) << "(" << row <<"," << col << ")";
 
                     auto data = view->getData();
                     auto p1 = data[(row - 1)*viewWidth + (col - 1)];
@@ -121,7 +112,7 @@ namespace egt {
             auto img5 = cv::Mat(tileHeight, tileWidth, CV_32F, tileOut);
             cv::imwrite(outputPath + "tileoutcustom" + std::to_string(counter)  + ".png" , img5);
 
-            printArray<T>("gradient",tileOut,tileWidth,tileHeight);
+          //  printArray<T>("gradient",tileOut,tileWidth,tileHeight);
 
             // Write the output tile
             this->addResult(new ConvOutData<T>(tileOut, view->getGlobalYOffset(), view->getGlobalXOffset(), tileWidth, tileHeight));
