@@ -11,11 +11,13 @@
 #include <glog/logging.h>
 #include <egt/utils/Utils.h>
 #include <egt/api/DataTypes.h>
+#include <egt/memory/ReleaseMemoryRule.h>
+#include <egt/data/ConvOutMemoryData.h>
 
 namespace egt {
 
     template <class T>
-    class CustomSobelFilter3by3 : public htgs::ITask<htgs::MemoryData<fi::View<T>>, ConvOutData<T>> {
+    class CustomSobelFilter3by3 : public htgs::ITask<htgs::MemoryData<fi::View<T>>, ConvOutMemoryData<T>> {
 
 
     private:
@@ -23,11 +25,12 @@ namespace egt {
         ImageDepth depth = ImageDepth::_8U;
         uint32_t counter = 0;
 
-        std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+//        std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+        std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
     public:
 
-        CustomSobelFilter3by3(size_t numThreads, ImageDepth depth) : htgs::ITask<htgs::MemoryData<fi::View<T>>,ConvOutData<T>> (numThreads), depth(depth) {}
+        CustomSobelFilter3by3(size_t numThreads, ImageDepth depth) : htgs::ITask<htgs::MemoryData<fi::View<T>>,ConvOutMemoryData<T>> (numThreads), depth(depth) {}
 
         /// \brief Do the convolution on a view
         /// \param data View
@@ -56,12 +59,17 @@ namespace egt {
 
             auto tileWidth = view->getTileWidth();
             auto tileHeight = view->getTileHeight();
-            auto *tileOut = new T[tileWidth * tileHeight]();
+
+
+//            auto *tileOut = new T[tileWidth * tileHeight]();
+            auto tileMemoryData = this-> template getDynamicMemory<T>("gradientTile", new ReleaseMemoryRule(1), tileWidth * tileHeight);
+            auto tileOut = tileMemoryData->get();
 
             auto ksize = 2 * radius + 1;
 
             assert(radius == 1 );
 
+            //TODO check why this is not working
 //            // Iterate through each tile pixel
 //            for (auto row = 0; row < viewHeight; ++row) {
 //                for (auto col = 0; col < viewWidth; ++col) {
@@ -112,15 +120,13 @@ namespace egt {
             auto img5 = cv::Mat(tileHeight, tileWidth, CV_32F, tileOut);
             cv::imwrite(outputPath + "tileoutcustom" + std::to_string(counter)  + ".png" , img5);
 
-          //  printArray<T>("gradient",tileOut,tileWidth,tileHeight);
-
             // Write the output tile
-            this->addResult(new ConvOutData<T>(tileOut, view->getGlobalYOffset(), view->getGlobalXOffset(), tileWidth, tileHeight));
+            this->addResult(new ConvOutMemoryData<T>(tileMemoryData, view->getGlobalYOffset(), view->getGlobalXOffset(), tileWidth, tileHeight));
             // Release the view
             data->releaseMemory();
         }
 
-        htgs::ITask <htgs::MemoryData<fi::View<T>>, ConvOutData<T>> *copy() override {
+        htgs::ITask <htgs::MemoryData<fi::View<T>>, ConvOutMemoryData<T>> *copy() override {
             return new CustomSobelFilter3by3(this->getNumThreads(), this->depth);
         }
 

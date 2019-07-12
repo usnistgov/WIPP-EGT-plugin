@@ -6,7 +6,7 @@
 #define EGT_THRESHOLDFINDER_H
 
 #include <egt/data/Threshold.h>
-#include <egt/data/ConvOutData.h>
+#include <egt/data/ConvOutMemoryData.h>
 #include <htgs/api/ITask.hpp>
 #include <algorithm>
 #include <glog/logging.h>
@@ -18,11 +18,11 @@
 namespace egt {
 
     template <class T>
-    class ThresholdFinder : public htgs::ITask<ConvOutData<T>, Threshold<T>> {
+    class ThresholdFinder : public htgs::ITask<ConvOutMemoryData<T>, Threshold<T>> {
 
 
     public:
-        ThresholdFinder(uint32_t width, uint32_t height, uint32_t numTileRow, uint32_t numTileCol) : htgs::ITask<ConvOutData<T>, Threshold<T>>(1),
+        ThresholdFinder(uint32_t width, uint32_t height, uint32_t numTileRow, uint32_t numTileCol) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(1),
                                                                                            imageWidth(width),
                                                                                            imageHeight(height),
                                                                                            numTileRow(numTileRow),
@@ -34,10 +34,13 @@ namespace egt {
                                                                                            }
 
 
-        void executeTask(std::shared_ptr<ConvOutData<T>> data) override {
+        void executeTask(std::shared_ptr<ConvOutMemoryData<T>> data) override {
 
             //TODO NO NEED TO COPY data. Just accumulate. Or maybe build the histogram on the fly.
             copyTile(data);
+            data->getOutputdata()->releaseMemory();
+            //TODO when do we delete the ConvOutMemoryData object?
+
             counter++;
 
             if(counter == totalTiles) {
@@ -47,8 +50,8 @@ namespace egt {
 //                printArray<T>("full gradient",gradient,imageWidth,imageHeight);
 
 
-                std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
-//                std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
+//                std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+                std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
                 cv::Mat image(imageHeight, imageWidth, CV_32F, gradient);
                 cv::imwrite(outputPath + "fullGradient.tif", image);
@@ -264,7 +267,7 @@ namespace egt {
 
         }
 
-        htgs::ITask <ConvOutData<T>, Threshold<T>> *copy() override {
+        htgs::ITask <ConvOutMemoryData<T>, Threshold<T>> *copy() override {
             return new ThresholdFinder(imageWidth, imageHeight, numTileRow, numTileCol);
         }
 
@@ -273,10 +276,11 @@ namespace egt {
 
     private:
 
-        void copyTile(std::shared_ptr<ConvOutData<T>> data){
-            auto tile = data->getOutputdata();
+        void copyTile(std::shared_ptr<ConvOutMemoryData<T>> data){
+            auto tile = data->getOutputdata()->get();
             auto row = data->getGlobalRow(),
-                 col = data->getGlobalCol(),
+                 col = data->getGlobalCol();
+            auto
                  tileHeight = data->getTileHeight(),
                  tileWidth = data->getTileWidth();
                  for(auto tileRow = 0 ; tileRow < tileHeight; tileRow++) {

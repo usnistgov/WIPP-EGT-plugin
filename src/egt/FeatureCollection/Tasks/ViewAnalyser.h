@@ -357,7 +357,7 @@ namespace egt {
                     }
 
                     //Find the next blob to create
-                    if (!visited(row, col) & getColor(row, col) == IS_BACKGROUND) {
+                    if (!visited(row, col) && getColor(row, col) == IS_BACKGROUND) {
 
                         markAsVisited(row, col);
 

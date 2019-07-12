@@ -18,6 +18,7 @@
 #include <egt/tasks/FCSobelFilterOpenCV.h>
 #include <htgs/log/TaskGraphSignalHandler.hpp>
 #include <egt/tasks/CustomSobelFilter3by3.h>
+#include <egt/memory/TileAllocator.h>
 
 
 namespace egt {
@@ -34,7 +35,7 @@ namespace egt {
         uint32_t
                 tileWidth;
 
-        uint32_t _minObjectSize = 100;
+        uint32_t _minObjectSize = 20;
 
         htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *analyseGraph;  //< Analyse graph
         htgs::TaskGraphRuntime *analyseRuntime; //< Analyse runtime
@@ -44,21 +45,28 @@ namespace egt {
 
         void run(std::string path) {
 
-            ImageDepth depth = ImageDepth::_32F;
-            uint32_t pyramidLevelToRequestforThreshold = 2;
 
-            auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, 1);
+            auto begin = std::chrono::high_resolution_clock::now();
+
+            ImageDepth depth = ImageDepth::_32F;
+            uint32_t pyramidLevelToRequestforThreshold = 0;
+            uint32_t concurrentTiles = 10;
+
+            auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, 2);
             fi::FastImage<T> *fi = new fi::FastImage<T>(tileLoader, 1);
-            fi->getFastImageOptions()->setNumberOfViewParallel(1);
+            fi->getFastImageOptions()->setNumberOfViewParallel(concurrentTiles);
             auto fastImage = fi->configureAndMoveToTaskGraphTask("Fast Image");
 
             imageHeight = fi->getImageHeight(pyramidLevelToRequestforThreshold),     //< Image Height
             imageWidth = fi->getImageWidth(pyramidLevelToRequestforThreshold);      //< Image Width
 
+            assert(fi->getTileWidth() == fi->getTileHeight()); //we work with square tiles
+            tileWidth = fi->getTileWidth();
+
 
             auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
 
-            auto sobelFilter = new CustomSobelFilter3by3<T>(1, depth);
+            auto sobelFilter = new CustomSobelFilter3by3<T>(10, depth);
 
             auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
             auto numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold);
@@ -67,6 +75,9 @@ namespace egt {
             graph->addEdge(fastImage,sobelFilter);
             graph->addEdge(sobelFilter,thresholdFinder);
             graph->addGraphProducerTask(thresholdFinder);
+
+            //MEMORY MANAGEMENT
+            graph->addMemoryManagerEdge("gradientTile",sobelFilter, new TileAllocator<T>(tileWidth , tileWidth),concurrentTiles, htgs::MMType::Dynamic);
 
             htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
             htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
@@ -97,9 +108,9 @@ namespace egt {
             uint32_t pyramidLevelToRequestForSegmentation = 0;
 
             //TODO for now we bypass the threshold selection mechanism and work directly with masks
-            auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(path, 1);
+            auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(path, 2);
             fi = new fi::FastImage<T>(tileLoader2, 2);
-            fi->getFastImageOptions()->setNumberOfViewParallel(1);
+            fi->getFastImageOptions()->setNumberOfViewParallel(10);
             fi->configureAndRun();
             imageHeight = fi->getImageHeight(pyramidLevelToRequestForSegmentation);
             imageWidth = fi->getImageWidth(pyramidLevelToRequestForSegmentation);
@@ -108,8 +119,8 @@ namespace egt {
             analyseGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
 
 
-            auto sobelFilter2 = new FCSobelFilterOpenCV<T>(1, depth);
-            auto viewAnalyseTask = new egt::ViewAnalyser<T>(1,fi,4,threshold);
+            auto sobelFilter2 = new FCSobelFilterOpenCV<T>(10, depth);
+            auto viewAnalyseTask = new egt::ViewAnalyser<T>(10,fi,4,threshold);
             auto fileCreation = new BlobMerger(imageHeight,imageWidth,
                     fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                     fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation));
@@ -185,6 +196,9 @@ namespace egt {
             // Delete HTGS graphs
             delete (fi);
             delete (analyseRuntime);
+
+            auto end = std::chrono::high_resolution_clock::now();
+            VLOG(1) << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
 
 
 
