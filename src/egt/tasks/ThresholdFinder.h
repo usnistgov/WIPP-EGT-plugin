@@ -17,6 +17,10 @@
 
 namespace egt {
 
+
+//    std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+    std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
+
     template <class T>
     class ThresholdFinder : public htgs::ITask<ConvOutMemoryData<T>, Threshold<T>> {
 
@@ -50,26 +54,46 @@ namespace egt {
 //                printArray<T>("full gradient",gradient,imageWidth,imageHeight);
 
 
-//                std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
-                std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
-                cv::Mat image(imageHeight, imageWidth, CV_32F, gradient);
-                cv::imwrite(outputPath + "fullGradient.tif", image);
-                image.release();
+
+//                cv::Mat image2(imageHeight, imageWidth, CV_32F, gradient);
+//                cv::imwrite(outputPath + "fullGradient.png", image2);
+//                cv::Mat out;
+////                image2.convertTo(out, CV_8U);
+////                cv::imwrite(outputPath + "fullGradient.tiff", out);
+//                cv::imwrite(outputPath + "fullGradient.tiff", image2);
+//                image2.release();
+////                out.release();
 
                 //TODO MINVALUE IS ALWAYS > 0 AFTER SOBEL? WHAT IS FLOAT? DO WE HAVE TO EXHAUSTIVELY SEARCH?
                 // SAMPLING SHOULD BE GOOD ENOUGH? ANOTHER APPROACH IS TO GET IT FROM THE SOBEL OPERATION
                 //How to find min and max value for T?
-                T minValue = std::numeric_limits<T>::max() , maxValue = std::numeric_limits<T>::min();
+                T minValue = 65000 , maxValue = 0;
+//                T minValue = std::numeric_limits<T>::max() , maxValue = std::numeric_limits<T>::min();
 
                 auto nonZeroGradient = std::vector<T>();
 
                 //create an histogram of NUM_HISTOGRAM_BINS bins
                 //we also collect none zero values as we need them for the final step when applying the percentileThreshold.
                 for(auto k = 0; k < imageWidth * imageHeight; k++ ){
-                    if(gradient[k] != 0){
+                    if(gradient[k] == 0.0){
+
+                    }
+                    else {
+                        auto value = gradient[k];
+                        auto row = k / imageWidth;
+                        auto col = k % imageWidth;
+
+
+                        if(gradient[k] > 5000){
+                            VLOG(1) << "row : " << row << " col : " << col << " value : " << value;
+                        }
+
+
                         minValue = gradient[k] < minValue ? gradient[k] : minValue;
                         maxValue = gradient[k] > maxValue ? gradient[k] : maxValue;
+//                        VLOG(1) << "min : " << minValue;
+//                        VLOG(1) << "max : " << maxValue;
                         nonZeroGradient.push_back(gradient[k]);
                     }
                 }
@@ -91,13 +115,17 @@ namespace egt {
 //                    }
 //                }
 
+                VLOG(1) << "min : " << minValue;
+                VLOG(1) << "max : " << maxValue;
+
 
                 //TODO [CHECK]  to match previous implementation
                 double rescale = NUM_HISTOGRAM_BINS / (maxValue - minValue);
                 double sum = 0;
                 for(auto k = 0; k < imageWidth * imageHeight; k++ ){
                     //TODO see. here test non-zeros!
-                    if(gradient[k] != 0){
+                    if(gradient[k] == 0.0){}
+                    else {
                         auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
                         hist[index]++;
                         sum++;
@@ -105,8 +133,8 @@ namespace egt {
                 }
 
                 //TODO FOR DEBUG
-                float* histAsRawArray = &hist[0];
-                printArray<float>("histogram",histAsRawArray,20,50);
+                T* histAsRawArray = &hist[0];
+                printArray<T>("histogram",histAsRawArray,20,50);
 
                 //TODO [CHECK] in the book it is described as before modloc but not in original code
 //                //normalize the histogram so that sum(histData)=1;
@@ -117,7 +145,7 @@ namespace egt {
 //                printArray<float>("histogram normalized",&hist[0],20,50);
 
                 //Get peak mode locations
-                std::vector<float> modes = {0}; //temp array to store histogram value. Default values to 0.
+                std::vector<T> modes = {0}; //temp array to store histogram value. Default values to 0.
                 std::vector<uint32_t> modesIdx = {0}; //index of histogram value
                 modes.resize(NUM_HISTOGRAM_MODES);
                 modesIdx.resize(NUM_HISTOGRAM_MODES);
@@ -242,24 +270,28 @@ namespace egt {
 
                 this->addResult(new Threshold<T>(threshold));
 
-                uint32_t count;
+                //clean up before the graph is destroyed.
+                delete gradient;
+                hist.clear();
+
+//                uint32_t count;
                 //TODO remove for debug only
                 // apply the threshold to the gradient pixels (not just the nonzero ones)
-                for (int k = 0; k < imageWidth * imageHeight; k++) {
-                    if (gradient[k] >= threshold) {
-                        count++;
-                    }
-                    gradient[k] = (gradient[k] >= threshold) ? 255 : 0;
+//                for (int k = 0; k < imageWidth * imageHeight; k++) {
+//                    if (gradient[k] >= threshold) {
+//                        count++;
+//                    }
+//                    gradient[k] = (gradient[k] >= threshold) ? 255 : 0;
+//
+//                }
+//
+//                egt::printArray<T>("mask",gradient,imageWidth,imageHeight);
 
-                }
+//                VLOG(1) << " number of pixel in foreground : " << count;
 
-                egt::printArray<T>("mask",gradient,imageWidth,imageHeight);
-
-                VLOG(1) << " number of pixel in foreground : " << count;
-
-                cv::Mat image2(imageHeight, imageWidth, CV_32F, gradient);
-                cv::imwrite(outputPath + "mask.png", image2);
-                image.release();
+//                cv::Mat image2(imageHeight, imageWidth, CV_32F, gradient);
+//                cv::imwrite(outputPath + "mask.png", image2);
+//                image2.release();
 
 
             }
@@ -302,7 +334,7 @@ namespace egt {
 
         const uint32_t NUM_HISTOGRAM_MODES = 3;
         const uint32_t NUM_HISTOGRAM_BINS = 1000; // TODO add to constructor param
-        std::vector<float> hist = {};
+        std::vector<T> hist = {};
 
     };
 }

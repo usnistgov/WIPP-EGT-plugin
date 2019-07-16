@@ -35,7 +35,7 @@ namespace egt {
         uint32_t
                 tileWidth;
 
-        uint32_t _minObjectSize = 20;
+        uint32_t _minObjectSize = 100;
 
         htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *analyseGraph;  //< Analyse graph
         htgs::TaskGraphRuntime *analyseRuntime; //< Analyse runtime

@@ -9,13 +9,14 @@
 #include <egt/tasks/ThresholdFinder.h>
 #include <htgs/log/TaskGraphSignalHandler.hpp>
 #include <egt/tasks/CustomSobelFilter3by3.h>
+#include <egt/memory/TileAllocator.h>
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif";
+//    std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif";
 //     std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256.tif";
 //    std::string path = "/home/gerardin/Documents/images/egt-test-images/datasetSegmentationTest2/test2_160px_tiled64_8bit.tif";
 //    std::string path = "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif";
+    std::string path = "/Users/gerardin/Documents/images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif";
 
     typedef  float T;
 
@@ -34,7 +35,9 @@ int main() {
 
     auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, egt::Threshold<T>>();
 
-    auto sobelFilter = new egt::CustomSobelFilter3by3<T>(1, depth);
+    auto concurrentTiles = 1;
+
+    auto sobelFilter = new egt::CustomSobelFilter3by3<T>(concurrentTiles, depth);
 //    auto sobelFilter = new egt::SobelFilterOpenCV<T>(1, depth);
 
     auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequest);
@@ -44,6 +47,10 @@ int main() {
     graph->addEdge(fastImage,sobelFilter);
     graph->addEdge(sobelFilter,thresholdFinder);
     graph->addGraphProducerTask(thresholdFinder);
+
+    //MEMORY MANAGEMENT
+    auto tileWidth = fi->getTileWidth();
+    graph->addMemoryManagerEdge("gradientTile",sobelFilter, new egt::TileAllocator<T>(tileWidth , tileWidth),concurrentTiles, htgs::MMType::Dynamic);
 
     htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
     htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);

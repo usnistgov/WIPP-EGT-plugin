@@ -302,7 +302,7 @@ namespace egt {
             _currentBlob = nullptr;
             _previousBlob = nullptr;
 
-            printArray<uint16_t >("tile_" + std::to_string(_view->getGlobalXOffset()) + "_" + std::to_string(_view->getGlobalYOffset()) ,(uint16_t *)_view->getData(),_view->getViewWidth(),_view->getViewHeight());
+//            printArray<uint16_t >("tile_" + std::to_string(_view->getGlobalXOffset()) + "_" + std::to_string(_view->getGlobalYOffset()) ,(uint16_t *)_view->getData(),_view->getViewWidth(),_view->getViewHeight());
 
 
             //WE FIRST VISIT BACKGROUND PIXELS TO REMOVE HOLES

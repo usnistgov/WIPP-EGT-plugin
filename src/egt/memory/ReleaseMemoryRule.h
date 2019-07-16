@@ -27,6 +27,7 @@ namespace egt {
 
 
 
+
     private:
         size_t releaseCount;
 

@@ -23,7 +23,6 @@ namespace egt {
     private:
 
         ImageDepth depth = ImageDepth::_8U;
-        uint32_t counter = 0;
 
 //        std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
         std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
@@ -38,34 +37,19 @@ namespace egt {
 
             VLOG(2) << "Sobel Filter...";
 
-            counter++;
-
             auto view = data->get();
             auto viewWidth = view->getViewWidth();
             auto viewHeight = view->getViewHeight();
 
-
-
 //            printArray<T>("view",view->getData(),viewWidth,viewHeight);
 
-            int32_t
-                    radius = view->getRadius();
-
-
-            float
-                    pixelOut = 0,
-                    pixelOutX = 0,
-                    pixelOutY = 0;
-
+            auto radius = view->getRadius();
             auto tileWidth = view->getTileWidth();
             auto tileHeight = view->getTileHeight();
 
 
-//            auto *tileOut = new T[tileWidth * tileHeight]();
             auto tileMemoryData = this-> template getDynamicMemory<T>("gradientTile", new ReleaseMemoryRule(1), tileWidth * tileHeight);
             auto tileOut = tileMemoryData->get();
-
-            auto ksize = 2 * radius + 1;
 
             assert(radius == 1 );
 
@@ -96,29 +80,31 @@ namespace egt {
 
             //Emulate Sobel as implemented in ImageJ
             //[description](https://imagejdocu.tudor.lu/faq/technical/what_is_the_algorithm_used_in_find_edges)
-            for (auto row = 1; row < tileHeight; ++row) {
-                for (auto col = 1; col < tileWidth; ++col) {
+            for (auto row = 1; row < tileHeight + 1; ++row) {
+                for (auto col = 1; col < tileWidth + 1; ++col) {
 
-                    auto data = view->getData();
-                    auto p1 = data[(row - 1)*viewWidth + (col - 1)];
-                    auto p2 = data[(row - 1)*viewWidth + (col)];
-                    auto p3 =  data[(row - 1)*viewWidth + (col + 1)];
-                    auto p4 =  data[(row)*viewWidth + (col -1)];
-                    auto p6 =  data[(row)*viewWidth + (col +1)];
-                    auto p7 =  data[(row +1)*viewWidth + (col - 1)];
-                    auto p8 = data[(row + 1)*viewWidth + (col)];
-                    auto p9 =  data[(row + 1)*viewWidth + (col + 1)];
+                    auto viewData = view->getData();
+                    auto p1 = viewData[(row - 1)*viewWidth + (col - 1)];
+                    auto p2 = viewData[(row - 1)*viewWidth + (col)];
+                    auto p3 =  viewData[(row - 1)*viewWidth + (col + 1)];
+                    auto p4 =  viewData[(row)*viewWidth + (col -1)];
+                    auto p6 =  viewData[(row)*viewWidth + (col +1)];
+                    auto p7 =  viewData[(row +1)*viewWidth + (col - 1)];
+                    auto p8 = viewData[(row + 1)*viewWidth + (col)];
+                    auto p9 =  viewData[(row + 1)*viewWidth + (col + 1)];
 
                     auto sum1 = p1 + 2*p2 + p3 - p7 - 2*p8 - p9;
                     auto sum2 = p1  + 2*p4 + p7 - p3 - 2*p6 - p9;
                     auto sum = sqrt(sum1*sum1 + sum2*sum2);
 
                     tileOut[row * tileWidth + col] = sum;
+
+
                 }
             }
 
-            auto img5 = cv::Mat(tileHeight, tileWidth, CV_32F, tileOut);
-            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(counter)  + ".png" , img5);
+//            auto img5 = cv::Mat(tileHeight, tileWidth, CV_32F, tileOut);
+//            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tiff" , img5);
 
             // Write the output tile
             this->addResult(new ConvOutMemoryData<T>(tileMemoryData, view->getGlobalYOffset(), view->getGlobalXOffset(), tileWidth, tileHeight));

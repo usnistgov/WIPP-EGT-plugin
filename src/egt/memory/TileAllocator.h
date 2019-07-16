@@ -21,11 +21,11 @@ namespace egt {
 
 
         T *memAlloc(size_t size) override {
-            return new T[size];
+            return new T[size]();
         }
 
         T *memAlloc() override {
-            return new T[this->size()];
+            return new T[this->size()]();
         }
 
         void memFree(T *&memory) override {

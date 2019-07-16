@@ -80,11 +80,11 @@ namespace egt {
 //                        addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad );
             addWeighted( abs(grad_x), 0.5, abs(grad_y), 0.5, 0, grad, CV_32F );
 
-            cv::Mat out;
+//            cv::Mat out;
 
 //                        printArray<float>("grad",(float*)grad.data,viewWidth,viewHeight);
 
-            grad.convertTo(out, CV_8U);
+//            grad.convertTo(out, CV_8U);
 
 //                        printArray<uint8_t>("grad",(uint8_t*)out.data,viewWidth,viewHeight);
 
@@ -142,8 +142,8 @@ namespace egt {
                 auto row = (int)std::ceil(view->getGlobalYOffset() / view->getTileHeight());
                 auto col = (int)std::ceil(view->getGlobalXOffset() / view->getTileWidth());
 
-                        auto img5 = cv::Mat(viewHeight, viewWidth, CV_32F, (T*)data->get()->getData());
-                        cv::imwrite(outputPath + "tileout" + std::to_string(row) + "," + std::to_string(col)  + ".png" , img5);
+//                        auto img5 = cv::Mat(viewHeight, viewWidth, CV_32F, (T*)data->get()->getData());
+//                        cv::imwrite(outputPath + "tileout" + std::to_string(row) + "," + std::to_string(col)  + ".png" , img5);
 
 
             // Forwarding the modified view
