@@ -76,17 +76,21 @@ namespace egt {
         /// 8-connectivity
         /// \param background Background value
         ViewAnalyser(size_t numThreads,
-                     fi::FastImage<UserType> *fi,
+                     const uint32_t imageHeight,
+                     const uint32_t imageWidth,
+                     const int32_t tileWidth,
+                     const int32_t tileHeight,
                      const uint8_t &rank,
                      const UserType &background)
                 : ITask<htgs::MemoryData<fi::View<UserType>>, ViewAnalyse>(numThreads),
                   _background(background),
-                  _fi(fi),
-                  _imageHeight(fi->getImageHeight()),
-                  _imageWidth(fi->getImageWidth()),
+                  _imageHeight(imageHeight),
+                  _imageWidth(imageWidth),
+                  _tileHeight(tileHeight),
+                  _tileWidth(tileWidth),
                   _rank(rank),
                   _vAnalyse(nullptr) {
-            _visited = std::vector<bool>((fi->getTileWidth(0) * fi->getTileHeight(0)));
+            _visited = std::vector<bool>((unsigned long)(tileWidth * tileHeight));
             _visited.flip();
 
         }
@@ -495,7 +499,10 @@ namespace egt {
         /// \return A new View analyser
         ViewAnalyser<UserType> *copy() override {
             return new ViewAnalyser<UserType>(this->getNumThreads(),
-                                              _fi,
+                                              _imageHeight,
+                                              _imageWidth,
+                                              _tileHeight,
+                                              _tileWidth,
                                               _rank,
                                               _background);
         }
@@ -512,9 +519,6 @@ namespace egt {
 
         UserType
                 _background{};                ///< Pixel background value
-
-        fi::FastImage<UserType> *
-                _fi{};                        ///< FI mask
 
         uint32_t
                 _imageHeight{},               ///< Mask height
