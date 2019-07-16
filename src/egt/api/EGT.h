@@ -42,9 +42,10 @@ namespace egt {
                 //The first graph finds the threshold value used to segment the image
                 ImageDepth depth = ImageDepth::_32F;
                 uint32_t pyramidLevelToRequestforThreshold = 0;
-                uint32_t concurrentTiles = 10;
+                uint32_t concurrentTiles = 1;
+                size_t nbLoaderThreads = 1;
 
-                auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, 2);
+                auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, nbLoaderThreads);
                 auto *fi = new fi::FastImage<T>(tileLoader, 1);
                 fi->getFastImageOptions()->setNumberOfViewParallel(concurrentTiles);
                 auto fastImage = fi->configureAndMoveToTaskGraphTask("Fast Image");
@@ -58,7 +59,7 @@ namespace egt {
                 assert(tileWidth == tileHeight); //we work with square tiles
 
                 auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
-                auto sobelFilter = new CustomSobelFilter3by3<T>(10, depth);
+                auto sobelFilter = new CustomSobelFilter3by3<T>(concurrentTiles, depth);
                 auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
                 auto numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold);
                 auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol);
@@ -103,9 +104,10 @@ namespace egt {
                 htgs::TaskGraphRuntime *segmentationRuntime; //< Analyse runtime
 
                 uint32_t pyramidLevelToRequestForSegmentation = 0;
+                uint32_t segmentationRadius = 2; //radius of 2 since we need to check the ghost region for potential merges.
 
-                auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(path, 2);
-                auto *fi2 = new fi::FastImage<T>(tileLoader, 2); //radius of 2 since we need to check the ghost region for potential merges.
+                auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(path, nbLoaderThreads);
+                auto *fi2 = new fi::FastImage<T>(tileLoader2, segmentationRadius);
                 fi2->getFastImageOptions()->setNumberOfViewParallel(concurrentTiles);
                 auto fastImage2 = fi2->configureAndMoveToTaskGraphTask("Fast Image 2");
                 uint32_t imageHeightAtSegmentationLevel = fi2->getImageHeight(pyramidLevelToRequestForSegmentation);     //< Image Height
@@ -180,21 +182,17 @@ namespace egt {
                 // Delete HTGS graphs
                 delete (segmentationRuntime);
 
+                auto fc = new FeatureCollection();
+                fc->createFCFromListBlobs(blob.get(), imageHeight, imageWidth);
+                fc->createBlackWhiteMask("output.tiff", tileWidth);
 
 
 
-
-            auto fc = new FeatureCollection();
-            fc->createFCFromListBlobs(blob.get(), imageHeight, imageWidth);
-            fc->createBlackWhiteMask("output.tiff", tileWidth);
+                delete fc;
 
 
-
-
-
-
-            auto end = std::chrono::high_resolution_clock::now();
-            VLOG(1) << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
+                auto end = std::chrono::high_resolution_clock::now();
+                VLOG(1) << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
 
 
 

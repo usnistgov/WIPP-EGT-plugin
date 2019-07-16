@@ -34,7 +34,7 @@ namespace egt {
                                                                                            {
             this->totalTiles = numTileRow * numTileCol;
             gradient = new T[width * height]();
-            hist.resize(NUM_HISTOGRAM_BINS);
+            hist.resize(NUM_HISTOGRAM_BINS + 1);
                                                                                            }
 
 
@@ -76,10 +76,7 @@ namespace egt {
                 //create an histogram of NUM_HISTOGRAM_BINS bins
                 //we also collect none zero values as we need them for the final step when applying the percentileThreshold.
                 for(auto k = 0; k < imageWidth * imageHeight; k++ ){
-                    if(gradient[k] == 0.0){
-
-                    }
-                    else {
+                    if(gradient[k] != 0.0) {
                         auto value = gradient[k];
                         auto row = k / imageWidth;
                         auto col = k % imageWidth;
@@ -124,9 +121,11 @@ namespace egt {
                 double sum = 0;
                 for(auto k = 0; k < imageWidth * imageHeight; k++ ){
                     //TODO see. here test non-zeros!
-                    if(gradient[k] == 0.0){}
-                    else {
+                    if(gradient[k] != 0.0) {
                         auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
+
+                        assert(index >= 0 && index < NUM_HISTOGRAM_BINS + 1);
+
                         hist[index]++;
                         sum++;
                     }
@@ -271,7 +270,7 @@ namespace egt {
                 this->addResult(new Threshold<T>(threshold));
 
                 //clean up before the graph is destroyed.
-                delete gradient;
+                delete[] gradient;
                 hist.clear();
 
 //                uint32_t count;

@@ -14,5 +14,8 @@ int main() {
 
     //TODO should we choose the userType? We should just get it from the tif image and stick to it.
     egt->run(path);
+
+    delete egt;
+
     return 0;
 }
