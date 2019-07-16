@@ -24,8 +24,8 @@ namespace egt {
 
         ImageDepth depth = ImageDepth::_8U;
 
-//        std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
-        std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
+        std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+//        std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
     public:
 
@@ -97,7 +97,12 @@ namespace egt {
                     auto sum2 = p1  + 2*p4 + p7 - p3 - 2*p6 - p9;
                     auto sum = sqrt(sum1*sum1 + sum2*sum2);
 
-                    tileOut[row * tileWidth + col] = sum;
+                    auto index = (row - 1) * tileWidth + (col - 1);
+
+                    assert(index < tileWidth * tileHeight);
+                    assert(index >= 0);
+
+                    tileOut[index] = sum;
 
 
                 }

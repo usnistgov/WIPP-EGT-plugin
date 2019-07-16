@@ -18,8 +18,8 @@
 namespace egt {
 
 
-//    std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
-    std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
+    std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+//    std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
     template <class T>
     class ThresholdFinder : public htgs::ITask<ConvOutMemoryData<T>, Threshold<T>> {
