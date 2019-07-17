@@ -1,0 +1,88 @@
+I0716 18:28:21.221978 18974 BlobMerger.h:89] merging blobs...
+I0716 20:23:04.035034 18974 BlobMerger.h:97] after last merge, we have : 926638 blobs left
+I0716 20:23:04.100409 18960 EGT.h:173] original nb of blobs : 926638
+I0716 20:23:04.100425 18960 EGT.h:174] objects too small have been removed : 918921
+I0716 20:23:04.100440 18960 EGT.h:175] blobs left : 7717
+Writing dot file for task graph with compute time coloring to color-compute-time-FeatureCollectionGraph.xdot
+I0716 20:23:25.656843 18960 EGT.h:199] Execution time: 7008804 mS
+
+
+
+======================
+        uint32_t MIN_HOLE_SIZE = 160;
+        uint32_t MIN_OBJECT_SIZE = 3000;
+
+
+=>  2 loaders, 10 views at the time
+
+I0717 07:24:28.450804 32682 BlobMerger.h:89] merging 6374blobs...
+I0717 07:25:03.494148 32682 BlobMerger.h:97] after last merge, we have : 2274 blobs left
+I0717 07:25:03.494606 32640 EGT.h:173] original nb of blobs : 2274
+I0717 07:25:03.494617 32640 EGT.h:174] objects too small have been removed : 1926
+I0717 07:25:03.494623 32640 EGT.h:175] blobs left : 348
+Writing dot file for task graph with compute time coloring to color-compute-time-FeatureCollectionGraph.xdot
+I0717 07:25:24.956676 32640 EGT.h:199] Execution time: 80153 mS
+
+Process finished with exit code 0
+
+I0717 07:36:27.896792  1663 BlobMerger.h:89] merging 6362 blobs...
+I0717 07:37:05.937970  1663 BlobMerger.h:97] after last merge, we have : 2287 blobs left
+I0717 07:37:05.938469  1611 EGT.h:175] original nb of blobs : 2287
+I0717 07:37:05.938479  1611 EGT.h:176] objects too small have been removed : 2085
+I0717 07:37:05.938482  1611 EGT.h:177] blobs left : 202
+Writing dot file for task graph with compute time coloring to color-compute-time-FeatureCollectionGraph.xdot
+I0717 07:37:26.499485  1611 EGT.h:201] Execution time: 83986 mS
+
+
+I0717 07:38:18.923143  1953 BlobMerger.h:89] merging 6359 blobs...
+I0717 07:38:53.636741  1953 BlobMerger.h:97] after last merge, we have : 2282 blobs left
+I0717 07:38:53.637069  1905 EGT.h:175] original nb of blobs : 2282
+I0717 07:38:53.637079  1905 EGT.h:176] objects too small have been removed : 2083
+I0717 07:38:53.637084  1905 EGT.h:177] blobs left : 199
+Writing dot file for task graph with compute time coloring to color-compute-time-FeatureCollectionGraph.xdot
+I0717 07:39:14.400262  1905 EGT.h:201] Execution time: 80134 mS
+
+I0717 07:41:04.468431  2288 BlobMerger.h:89] merging 6374 blobs...
+I0717 07:41:42.450671  2288 BlobMerger.h:97] after last merge, we have : 2272 blobs left
+I0717 07:41:42.451025  2246 EGT.h:175] original nb of blobs : 2272
+I0717 07:41:42.451033  2246 EGT.h:176] objects too small have been removed : 2072
+I0717 07:41:42.451036  2246 EGT.h:177] blobs left : 200
+Writing dot file for task graph with compute time coloring to color-compute-time-FeatureCollectionGraph.xdot
+I0717 07:42:02.983070  2246 EGT.h:201] Execution time: 83102 mS
+
+=> 1 loader, 1 view at the time
+
+I0717 07:29:32.510993   465 BlobMerger.h:89] merging 6427blobs...
+I0717 07:30:08.237851   465 BlobMerger.h:97] after last merge, we have : 2260 blobs left
+I0717 07:30:08.238224   459 EGT.h:173] original nb of blobs : 2260
+I0717 07:30:08.238232   459 EGT.h:174] objects too small have been removed : 1907
+I0717 07:30:08.238235   459 EGT.h:175] blobs left : 353
+Writing dot file for task graph with compute time coloring to color-compute-time-FeatureCollectionGraph.xdot
+I0717 07:30:29.960754   459 EGT.h:199] Execution time: 163961 mS
+
+
+
+I0717 07:33:26.865520   903 BlobMerger.h:89] merging 6427 blobs...
+I0717 07:34:01.115125   903 BlobMerger.h:97] after last merge, we have : 2258 blobs left
+I0717 07:34:01.115445   897 EGT.h:175] original nb of blobs : 2258
+I0717 07:34:01.115454   897 EGT.h:176] objects too small have been removed : 2060
+I0717 07:34:01.115456   897 EGT.h:177] blobs left : 198
+Writing dot file for task graph with compute time coloring to color-compute-time-FeatureCollectionGraph.xdot
+I0717 07:34:21.756589   897 EGT.h:201] Execution time: 157339 mS
+
+
+===============================================
+2 / 10
+
+        uint32_t MIN_HOLE_SIZE = 1000;
+        uint32_t MIN_OBJECT_SIZE = 3000;
+
+        plus merging  uint32_t MIN_OBJECT_SIZE = 3000;
+
+I0717 07:46:19.584074  2870 BlobMerger.h:89] merging 5263 blobs...
+I0717 07:46:23.735741  2870 BlobMerger.h:97] after last merge, we have : 2570 blobs left
+I0717 07:46:23.736073  2829 EGT.h:175] original nb of blobs : 2570
+I0717 07:46:23.736083  2829 EGT.h:176] objects too small have been removed : 2340
+I0717 07:46:23.736088  2829 EGT.h:177] blobs left : 230
+Writing dot file for task graph with compute time coloring to color-compute-time-FeatureCollectionGraph.xdot
+I0717 07:46:40.557996  2829 EGT.h:201] Execution time: 44328 mS

@@ -1,4 +1,12 @@
 //
+// Created by gerardin on 7/17/19.
+//
+
+#ifndef NEWEGT_CONVOUTDATAANALYZER_H
+#define NEWEGT_CONVOUTDATAANALYZER_H
+
+
+//
 // Created by Gerardin, Antoine D. (Assoc) on 2019-05-14.
 //
 
@@ -43,7 +51,7 @@
 #include<egt/FeatureCollection/Data/Blob.h>
 #include <egt/FeatureCollection/Data/ViewAnalyse.h>
 #include <egt/utils/Utils.h>
-#include <egt/FeatureCollection/Tasks/SegmentationOptions.h>
+#include <egt/data/ConvOutMemoryData.h>
 
 using namespace fc;
 
@@ -65,10 +73,9 @@ namespace egt {
   * @tparam UserType File pixel type
   **/
     template<class UserType>
-    class ViewAnalyser : public htgs::ITask<htgs::MemoryData<fi::View<UserType>>,
+    class ConvOutDataAnalyser : public htgs::ITask<ConvOutMemoryData<UserType>,
             ViewAnalyse> {
     public:
-
         /// \brief View analyser constructor, create a view analyser from the mask
         /// information
         /// \param numThreads Number of threads the view analyser will be executed in
@@ -77,7 +84,7 @@ namespace egt {
         /// \param rank Rank to the connectivity: 4=> 4-connectivity, 8=>
         /// 8-connectivity
         /// \param background Background value
-        ViewAnalyser(size_t numThreads,
+        ConvOutDataAnalyser(size_t numThreads,
                      const uint32_t imageHeight,
                      const uint32_t imageWidth,
                      const int32_t tileWidth,
@@ -95,10 +102,6 @@ namespace egt {
             _visited = std::vector<bool>((unsigned long)(tileWidth * tileHeight));
             _visited.flip();
 
-        }
-
-        void setSegmentationOptions(SegmentationOptions *options) {
-            ViewAnalyser::options = options;
         }
 
 
@@ -308,7 +311,7 @@ namespace egt {
 
         /// \brief Execute the task, do a view analyse
         /// \param view View given by the FI
-        void executeTask(std::shared_ptr<MemoryData<fi::View<UserType>>> view)
+        void executeTask(std::shared_ptr<ConvOutMemoryData<UserType>> view)
         override {
             _view = view->get();
             _tileHeight = _view->getTileHeight();
@@ -318,10 +321,6 @@ namespace egt {
             _visited.flip(); //clear container that keeps track of all nodes to be visited in a pass through the image.
             _currentBlob = nullptr;
             _previousBlob = nullptr;
-
-
-            auto MIN_HOLE_SIZE = options->getMinHoleSize();
-            auto MIN_OBJECT_SIZE = options->getMinObjectSize();
 
 //            printArray<uint16_t >("tile_" + std::to_string(_view->getGlobalXOffset()) + "_" + std::to_string(_view->getGlobalYOffset()) ,(uint16_t *)_view->getData(),_view->getViewWidth(),_view->getViewHeight());
 
@@ -357,7 +356,7 @@ namespace egt {
                         //to be perfectly correct, we would need to merge it
                         //with its neighbors to calculate its size if necessary.
 //                        if(_currentBlob->isBackground() && _currentBlob->isToMerge()) {
-                                //we would need to maintain a list of holes preferably
+                        //we would need to maintain a list of holes preferably
 //                            //_vAnalyse->insertBlob(_currentBlob);
 //                            _previousBlob = _currentBlob;
 //                            _currentBlob = nullptr;
@@ -380,10 +379,10 @@ namespace egt {
                             holesRemovedCount++;
                         }
 
-                    //TODO change but for now we delete every hole blob we create
-                    //we need a MAX_HOLE_SIZE. if > then we know it is background. If in between we add to holes_to_merge
-                    delete _currentBlob;
-                    _currentBlob = nullptr;
+                        //TODO change but for now we delete every hole blob we create
+                        //we need a MAX_HOLE_SIZE. if > then we know it is background. If in between we add to holes_to_merge
+                        delete _currentBlob;
+                        _currentBlob = nullptr;
                     }
 
                     //Find the next blob to create
@@ -484,7 +483,7 @@ namespace egt {
 
             _previousBlob = nullptr;
             // Release the view memory
-            view->releaseMemory();
+            view->getOutputdata()->releaseMemory();
 
 
 
@@ -501,8 +500,8 @@ namespace egt {
 
         /// \brief View analyser copy function
         /// \return A new View analyser
-        ViewAnalyser<UserType> *copy() override {
-            return new ViewAnalyser<UserType>(this->getNumThreads(),
+        ConvOutDataAnalyser<UserType> *copy() override {
+            return new ConvOutDataAnalyser<UserType>(this->getNumThreads(),
                                               _imageHeight,
                                               _imageWidth,
                                               _tileHeight,
@@ -517,13 +516,8 @@ namespace egt {
             return "View analyser";
         }
 
-
-        virtual ~ViewAnalyser() {
-            delete options;
-        }
-
     private:
-        fi::View<UserType> *
+        ConvOutMemoryData<UserType> *
                 _view{};                      ///< Current view
 
         UserType
@@ -551,17 +545,19 @@ namespace egt {
                 *_currentBlob = nullptr;      ///< Current blob
 
 
-                //TODO DELETE?
+        //TODO DELETE?
         Blob
                 *_previousBlob = nullptr;      ///< Current blob
 
         std::vector<bool> _visited;
 
+
+        uint32_t MIN_HOLE_SIZE = 1000;
+        uint32_t MIN_OBJECT_SIZE = 3000;
+
         uint32_t objectsRemovedCount = 0;
         uint32_t holesRemovedCount = 0;
 
-
-        SegmentationOptions *options = nullptr;
 
     };
 }
@@ -569,3 +565,6 @@ namespace egt {
 
 
 #endif //EGT_VIEWANALYZER_H
+
+
+#endif //NEWEGT_CONVOUTDATAANALYZER_H

@@ -36,8 +36,8 @@ namespace egt {
 
             counter++;
 
-
-            std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
+            std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+//            std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
             auto inputDepth = CV_32F;
 //                    auto inputDepth = convertToOpencvType(depth);
@@ -82,7 +82,7 @@ namespace egt {
 
 //            cv::Mat out;
 
-//                        printArray<float>("grad",(float*)grad.data,viewWidth,viewHeight);
+//                        printArray<float>("grad",(T*)grad.data,viewWidth,viewHeight);
 
 //            grad.convertTo(out, CV_8U);
 
@@ -96,32 +96,27 @@ namespace egt {
 
 
 
-//                        float *input = (float*)(unsigned char*)(grad.data);
+//                        float *input = (T*)(unsigned char*)(grad.data);
 //                        auto img4 = cv::Mat(viewHeight, viewWidth, CV_32F, input);
 
 //                        cv::imwrite(outputPath + "sobelmat" + std::to_string(counter)  + ".png" , img4);
 
 
-            std::vector<float> array;
+            std::vector<T> array;
             //we copy only the tile back
             if(grad.isContinuous()){
                 //  tileOut = (float*)grad.data;
-                array.assign((float*)grad.data, (float*)grad.data + grad.total());
+                array.assign((T*)grad.data, (T*)grad.data + grad.total());
             }
             else {
                 for (int i = 0; i < grad.rows; ++i) {
-                    array.insert(array.end(), grad.ptr<float>(i), grad.ptr<float>(i) + grad.cols);
+                    array.insert(array.end(), grad.ptr<T>(i), grad.ptr<T>(i) + grad.cols);
                 }
             }
 
-//            assert(grad.rows <= height + 4);
-//            assert(grad.cols <= width + 4);
-//            assert(viewWidth <= width + 4);
-//            assert(viewHeight <= height + 4);
-//            assert((radius - 1) == 1);
 
 
-//                        printArray<T>("grad",(float*)grad.data,viewWidth,viewHeight);
+//                        printArray<T>("grad",(T*)grad.data,viewWidth,viewHeight);
 //                        printArray<T>("gradasarray",array.data(),viewWidth,viewHeight);
 
 
@@ -141,9 +136,10 @@ namespace egt {
 
                 auto row = (int)std::ceil(view->getGlobalYOffset() / view->getTileHeight());
                 auto col = (int)std::ceil(view->getGlobalXOffset() / view->getTileWidth());
-
+//
 //                        auto img5 = cv::Mat(viewHeight, viewWidth, CV_32F, (T*)data->get()->getData());
 //                        cv::imwrite(outputPath + "tileout" + std::to_string(row) + "," + std::to_string(col)  + ".png" , img5);
+//                        img5.release();
 
 
             // Forwarding the modified view

@@ -85,8 +85,11 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     // If all the analyse has been collected, merge the blobs
     if (_count == _nbTiles) {
 
+
+        VLOG(1) << "merging " << this->_blobs->_blobs.size() << " blobs...";
+
         for(auto blob: this->_blobs->_blobs){
-            std::cout << *blob;
+            VLOG(4) << *blob;
         }
       _count = 0;
       merge();

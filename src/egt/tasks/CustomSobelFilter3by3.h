@@ -51,8 +51,6 @@ namespace egt {
             auto tileMemoryData = this-> template getDynamicMemory<T>("gradientTile", new ReleaseMemoryRule(1), tileWidth * tileHeight);
             auto tileOut = tileMemoryData->get();
 
-            assert(radius == 1 );
-
             //TODO check why this is not working
 //            // Iterate through each tile pixel
 //            for (auto row = 0; row < viewHeight; ++row) {
@@ -80,8 +78,8 @@ namespace egt {
 
             //Emulate Sobel as implemented in ImageJ
             //[description](https://imagejdocu.tudor.lu/faq/technical/what_is_the_algorithm_used_in_find_edges)
-            for (auto row = 1; row < tileHeight + 1; ++row) {
-                for (auto col = 1; col < tileWidth + 1; ++col) {
+            for (auto row = radius; row < tileHeight + radius; ++row) {
+                for (auto col = radius; col < tileWidth + radius; ++col) {
 
                     auto viewData = view->getData();
                     auto p1 = viewData[(row - 1)*viewWidth + (col - 1)];
@@ -97,7 +95,7 @@ namespace egt {
                     auto sum2 = p1  + 2*p4 + p7 - p3 - 2*p6 - p9;
                     auto sum = sqrt(sum1*sum1 + sum2*sum2);
 
-                    auto index = (row - 1) * tileWidth + (col - 1);
+                    auto index = (row - radius) * tileWidth + (col - radius);
 
                     assert(index < tileWidth * tileHeight);
                     assert(index >= 0);

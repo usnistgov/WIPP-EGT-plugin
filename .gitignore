@@ -27,3 +27,5 @@ dist/deps
 dist/build
 
 **/*.xdot
+
+heaptrack*

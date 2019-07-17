@@ -45,7 +45,7 @@ int main() {
     analyseGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
 
     //TODO set the right threshold for the image
-    auto viewAnalyseTask = new egt::ViewAnalyser<T>(1, fi, 4, 0);
+    auto viewAnalyseTask = new egt::ConvOutDataAnalyser<T>(1, fi, 4, 0);
     auto fileCreation = new BlobMerger(imageHeight, imageWidth, fi->getNumberTilesHeight() * fi->getNumberTilesWidth());
 
     analyseGraph->setGraphConsumerTask(viewAnalyseTask);

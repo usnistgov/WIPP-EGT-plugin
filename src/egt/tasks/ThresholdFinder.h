@@ -230,11 +230,11 @@ namespace egt {
                 for (auto k = lowerBound; k <= upperBound; k++) {
                     if(hist[k] > 0) {
                         area += hist[k];
-                        VLOG(1) << "add" << hist[k] << " to area = " << area;
+                        VLOG(4) << "add" << hist[k] << " to area = " << area;
                     }
                 }
 
-                assert((double)0.0 < area );
+                assert((double)0.0 <= area );
                 assert(area < (double)1.0);
 
                 //compute percentile threshold from the empirical model : Y = aX + b
