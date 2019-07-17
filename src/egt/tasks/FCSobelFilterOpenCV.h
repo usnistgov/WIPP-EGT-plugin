@@ -27,7 +27,7 @@ namespace egt {
 
     public:
 
-        FCSobelFilterOpenCV(size_t numThreads, ImageDepth depth) : htgs::ITask<htgs::MemoryData<fi::View<T>>, htgs::MemoryData<fi::View<T>>> (numThreads), depth(depth) {}
+        FCSobelFilterOpenCV(size_t numThreads, ImageDepth depth) : htgs::ITask<htgs::MemoryData<fi::View<T>>, htgs::MemoryData<fi::View<T>>> (numThreads), _depth(depth) {}
 
         /// \brief Do the convolution on a view
         /// \param data View
@@ -40,8 +40,8 @@ namespace egt {
             std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
 //            std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
-            auto inputDepth = convertToOpencvType(depth);
-            auto outputDepth = convertToOpencvType(depth);
+            auto inputDepth = convertToOpencvType(_depth);
+            auto outputDepth = convertToOpencvType(_depth);
 
             int scale = 1;
             int delta = 0;
@@ -136,10 +136,11 @@ namespace egt {
 
                 auto row = (int)std::ceil(view->getGlobalYOffset() / view->getTileHeight());
                 auto col = (int)std::ceil(view->getGlobalXOffset() / view->getTileWidth());
-//
-//                        auto img5 = cv::Mat(viewHeight, viewWidth, CV_32F, (T*)data->get()->getData());
-//                        cv::imwrite(outputPath + "tileout" + std::to_string(row) + "," + std::to_string(col)  + ".png" , img5);
-//                        img5.release();
+
+//FOR DEBUGGING
+                auto img5 = cv::Mat(viewHeight, viewWidth, outputDepth, (T*)data->get()->getData());
+                cv::imwrite(outputPath + "tileout" + std::to_string(row) + "," + std::to_string(col)  + ".tiff" , img5);
+                img5.release();
 
 
             // Forwarding the modified view
@@ -148,14 +149,14 @@ namespace egt {
 
 
         htgs::ITask<htgs::MemoryData<fi::View<T>>, htgs::MemoryData<fi::View<T>>> *copy() override {
-            return new FCSobelFilterOpenCV(this->getNumThreads(), this->depth);
+            return new FCSobelFilterOpenCV(this->getNumThreads(), this->_depth);
         }
 
         std::string getName() override { return "Sobel Filter OpenCV"; }
 
     private:
 
-        ImageDepth depth = ImageDepth::_8U;
+        ImageDepth _depth = ImageDepth::_8U;
         uint32_t counter = 0;
 
 

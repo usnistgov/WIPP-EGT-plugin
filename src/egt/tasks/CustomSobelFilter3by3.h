@@ -23,13 +23,15 @@ namespace egt {
     private:
 
         ImageDepth depth = ImageDepth::_8U;
+        uint32_t startRow = 1; //row at which the convolution starts
+        uint32_t startCol = 1; //col at which the convolution starts
 
         std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
 //        std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
     public:
 
-        CustomSobelFilter3by3(size_t numThreads, ImageDepth depth) : htgs::ITask<htgs::MemoryData<fi::View<T>>,ConvOutMemoryData<T>> (numThreads), depth(depth) {}
+        CustomSobelFilter3by3(size_t numThreads, ImageDepth depth, uint32_t startRow, uint32_t startCol) : htgs::ITask<htgs::MemoryData<fi::View<T>>,ConvOutMemoryData<T>> (numThreads), depth(depth), startRow(startRow), startCol(startCol) {}
 
         /// \brief Do the convolution on a view
         /// \param data View
@@ -42,6 +44,7 @@ namespace egt {
 //            printArray<T>("view",view->getData(),viewWidth,viewHeight);
 
             auto radius = view->getRadius();
+            assert(radius >= startRow && radius >= startCol);
             auto tileWidth = view->getTileWidth();
             auto tileHeight = view->getTileHeight();
 
@@ -53,8 +56,8 @@ namespace egt {
 
             //Emulate Sobel as implemented in ImageJ
             //[description](https://imagejdocu.tudor.lu/faq/technical/what_is_the_algorithm_used_in_find_edges)
-            for (auto row = radius; row < tileHeight + radius; ++row) {
-                for (auto col = radius; col < tileWidth + radius; ++col) {
+            for (auto row = startRow; row < tileHeight + startRow; ++row) {
+                for (auto col = startCol; col < tileWidth + startCol; ++col) {
 
                     auto viewData = view->getData();
                     auto p1 = viewData[(row - 1)*viewWidth + (col - 1)];
@@ -70,7 +73,7 @@ namespace egt {
                     auto sum2 = p1  + 2*p4 + p7 - p3 - 2*p6 - p9;
                     auto sum = sqrt(sum1*sum1 + sum2*sum2);
 
-                    auto index = (row - radius) * tileWidth + (col - radius);
+                    auto index = (row - startCol) * tileWidth + (col - startCol);
 
                     assert(index < tileWidth * tileHeight);
                     assert(index >= 0);
@@ -91,7 +94,7 @@ namespace egt {
         }
 
         htgs::ITask <htgs::MemoryData<fi::View<T>>, ConvOutMemoryData<T>> *copy() override {
-            return new CustomSobelFilter3by3(this->getNumThreads(), this->depth);
+            return new CustomSobelFilter3by3(this->getNumThreads(), this->depth, this->startRow, this->startCol);
         }
 
         std::string getName() override { return "Custom Sobel Filter 3 * 3"; }

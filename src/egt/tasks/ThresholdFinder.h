@@ -109,7 +109,7 @@ namespace egt {
                         //we round to closest integer
                         //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.
 //                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
-                        auto index = (uint32_t)((gradient[k] - minValue) * rescale);
+                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
 
 //                        VLOG(1) << index;
 

@@ -28,8 +28,10 @@ namespace egt {
 
     private:
 
-        uint32_t MIN_OBJECT_SIZE = 3000;
-        uint32_t MIN_HOLE_SIZE = 3000;
+//        uint32_t MIN_OBJECT_SIZE = 3000;
+//        uint32_t MIN_HOLE_SIZE = 3000;
+        uint32_t MIN_OBJECT_SIZE = 20;
+        uint32_t MIN_HOLE_SIZE = 10;
 
 
     public:
@@ -72,7 +74,7 @@ namespace egt {
                 assert(tileWidth == tileHeight); //we work with square tiles
 
                 auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
-                auto sobelFilter = new CustomSobelFilter3by3<T>(concurrentTiles, imageDepth);
+                auto sobelFilter = new CustomSobelFilter3by3<T>(concurrentTiles, imageDepth, 1, 1);
                 auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol, imageDepth);
                 graph->addEdge(fastImage,sobelFilter);
                 graph->addEdge(sobelFilter,thresholdFinder);
