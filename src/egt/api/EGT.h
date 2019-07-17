@@ -18,6 +18,7 @@
 #include <egt/tasks/FCSobelFilterOpenCV.h>
 #include <htgs/log/TaskGraphSignalHandler.hpp>
 #include <egt/tasks/CustomSobelFilter3by3.h>
+#include <egt/tasks/FCCustomSobelFilter3by3.h>
 #include <egt/memory/TileAllocator.h>
 
 
@@ -135,7 +136,9 @@ namespace egt {
                 uint32_t nbTiles = fi2->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                 fi2->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
 
-                auto sobelFilter2 = new FCSobelFilterOpenCV<T>(concurrentTiles, imageDepth);
+//                auto sobelFilter2 = new FCSobelFilterOpenCV<T>(concurrentTiles, imageDepth);
+                auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(concurrentTiles,imageDepth,1,1);
+
                 auto viewSegmentation = new egt::ViewAnalyser<T>(concurrentTiles,
                     imageHeightAtSegmentationLevel,
                     imageWidthAtSegmentationLevel,

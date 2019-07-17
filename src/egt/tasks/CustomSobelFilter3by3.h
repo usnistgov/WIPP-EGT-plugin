@@ -87,10 +87,12 @@ namespace egt {
 //            auto img5 = cv::Mat(tileHeight, tileWidth, convertToOpencvType(depth), tileOut);
 //            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tiff" , img5);
 
-            // Write the output tile
-            this->addResult(new ConvOutMemoryData<T>(tileMemoryData, view->getGlobalYOffset(), view->getGlobalXOffset(), tileWidth, tileHeight));
             // Release the view
             data->releaseMemory();
+
+            // Write the output tile
+            this->addResult(new ConvOutMemoryData<T>(tileMemoryData, view->getGlobalYOffset(), view->getGlobalXOffset(), tileWidth, tileHeight));
+
         }
 
         htgs::ITask <htgs::MemoryData<fi::View<T>>, ConvOutMemoryData<T>> *copy() override {

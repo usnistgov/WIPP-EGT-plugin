@@ -142,6 +142,10 @@ namespace egt {
                 cv::imwrite(outputPath + "tileout" + std::to_string(row) + "," + std::to_string(col)  + ".tiff" , img5);
                 img5.release();
 
+                //TODO test
+               // array.clear();
+               // delete[] inputArray;
+
 
             // Forwarding the modified view
             this->addResult(data);

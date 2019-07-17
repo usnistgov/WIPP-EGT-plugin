@@ -74,7 +74,7 @@ include_directories(src)
 add_subdirectory(test)
 
 
-set(SRC_FILES src src/egt/tasks/ViewToConvOutDataConverter.h src/egt/FeatureCollection/Tasks/ConvOutDataAnalyzer.h src/egt/FeatureCollection/Tasks/SegmentationOptions.h src/egt/api/CommandLineCli.h)
+set(SRC_FILES src src/egt/tasks/ViewToConvOutDataConverter.h src/egt/FeatureCollection/Tasks/ConvOutDataAnalyzer.h src/egt/FeatureCollection/Tasks/SegmentationOptions.h src/egt/api/CommandLineCli.h src/egt/tasks/FCCustomSobelFilter3by3.h)
 
 
 
