@@ -196,9 +196,7 @@ namespace egt {
 //FOR DEBUGGING
 //segmentationGraph->writeDotToFile("FeatureCollectionGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
-                // Delete HTGS graphs
-                delete (segmentationRuntime);
-                delete options;
+
 
                 VLOG(1) << "generating a segmentation mask";
                 auto fc = new FeatureCollection();
@@ -206,6 +204,9 @@ namespace egt {
                 fc->createBlackWhiteMask("output.tiff", tileWidthAtSegmentationLevel);
 
                 delete fc;
+                // Delete HTGS graphs
+                delete (segmentationRuntime);
+                delete options;
 
                 auto end = std::chrono::high_resolution_clock::now();
                 VLOG(1) << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;

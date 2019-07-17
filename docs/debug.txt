@@ -1,0 +1,83 @@
+I0717 18:23:29.365936 21188 ViewAnalyser.h:493] segmenting tile (2 , 0) :
+I0717 18:23:29.365947 21188 ViewAnalyser.h:494] holes turned to foreground : 3
+I0717 18:23:29.365952 21188 ViewAnalyser.h:495] objects removed because too small: 46
+I0717 18:23:29.365957 21188 ViewAnalyser.h:496] objects to merge: 4
+I0717 18:23:29.366973 21188 ViewAnalyser.h:493] segmenting tile (0 , 2) :
+I0717 18:23:29.366995 21188 ViewAnalyser.h:494] holes turned to foreground : 17
+I0717 18:23:29.367004 21188 ViewAnalyser.h:495] objects removed because too small: 94
+I0717 18:23:29.367012 21188 ViewAnalyser.h:496] objects to merge: 3
+I0717 18:23:29.376457 21181 FCCustomSobelFilter3by3.h:57] Custom Sobel Filter for tile (2 , 2) ...
+I0717 18:23:29.378249 21193 ViewAnalyser.h:493] segmenting tile (2 , 1) :
+I0717 18:23:29.378264 21193 ViewAnalyser.h:494] holes turned to foreground : 2
+I0717 18:23:29.378269 21193 ViewAnalyser.h:495] objects removed because too small: 51
+I0717 18:23:29.378274 21193 ViewAnalyser.h:496] objects to merge: 0
+I0717 18:23:29.379832 21185 ViewAnalyser.h:493] segmenting tile (2 , 2) :
+I0717 18:23:29.379846 21185 ViewAnalyser.h:494] holes turned to foreground : 8
+I0717 18:23:29.379851 21185 ViewAnalyser.h:495] objects removed because too small: 34
+I0717 18:23:29.379856 21185 ViewAnalyser.h:496] objects to merge: 2
+I0717 18:23:29.394476 21192 ViewAnalyser.h:493] segmenting tile (1 , 2) :
+I0717 18:23:29.394524 21192 ViewAnalyser.h:494] holes turned to foreground : 179
+I0717 18:23:29.394534 21192 ViewAnalyser.h:495] objects removed because too small: 741
+I0717 18:23:29.394542 21192 ViewAnalyser.h:496] objects to merge: 17
+I0717 18:23:29.404022 21186 ViewAnalyser.h:493] segmenting tile (0 , 1) :
+I0717 18:23:29.404043 21186 ViewAnalyser.h:494] holes turned to foreground : 101
+I0717 18:23:29.404049 21186 ViewAnalyser.h:495] objects removed because too small: 1167
+I0717 18:23:29.404062 21186 ViewAnalyser.h:496] objects to merge: 27
+I0717 18:23:29.404290 21190 ViewAnalyser.h:493] segmenting tile (1 , 1) :
+I0717 18:23:29.404299 21190 ViewAnalyser.h:494] holes turned to foreground : 91
+I0717 18:23:29.404304 21190 ViewAnalyser.h:495] objects removed because too small: 1049
+I0717 18:23:29.404307 21190 ViewAnalyser.h:496] objects to merge: 15
+I0717 18:23:29.409613 21187 ViewAnalyser.h:493] segmenting tile (0 , 0) :
+I0717 18:23:29.409638 21187 ViewAnalyser.h:494] holes turned to foreground : 38
+I0717 18:23:29.409649 21187 ViewAnalyser.h:495] objects removed because too small: 1282
+I0717 18:23:29.409654 21187 ViewAnalyser.h:496] objects to merge: 18
+I0717 18:23:29.412858 21191 ViewAnalyser.h:493] segmenting tile (1 , 0) :
+I0717 18:23:29.412879 21191 ViewAnalyser.h:494] holes turned to foreground : 94
+I0717 18:23:29.412885 21191 ViewAnalyser.h:495] objects removed because too small: 1254
+I0717 18:23:29.412889 21191 ViewAnalyser.h:496] objects to merge: 19
+I0717 18:23:29.412962 21194 BlobMerger.h:89] merging 105 blobs...
+I0717 18:23:29.413413 21194 BlobMerger.h:97] after last merge, we have : 87 blobs left
+
+
+
+
+I0717 18:26:15.161824 21439 ViewAnalyser.h:493] segmenting tile (2 , 1) :
+I0717 18:26:15.161834 21439 ViewAnalyser.h:494] holes turned to foreground : 2
+I0717 18:26:15.161840 21439 ViewAnalyser.h:495] objects removed because too small: 51
+I0717 18:26:15.161845 21439 ViewAnalyser.h:496] objects to merge: 0
+I0717 18:26:15.162649 21439 ViewAnalyser.h:493] segmenting tile (0 , 1) :
+I0717 18:26:15.162658 21439 ViewAnalyser.h:494] holes turned to foreground : 10
+I0717 18:26:15.162665 21439 ViewAnalyser.h:495] objects removed because too small: 104
+I0717 18:26:15.162670 21439 ViewAnalyser.h:496] objects to merge: 2
+I0717 18:26:15.163156 21425 FCCustomSobelFilter3by3.h:57] Custom Sobel Filter for tile (2 , 2) ...
+I0717 18:26:15.164463 21444 ViewAnalyser.h:493] segmenting tile (2 , 2) :
+I0717 18:26:15.164520 21444 ViewAnalyser.h:494] holes turned to foreground : 8
+I0717 18:26:15.164556 21444 ViewAnalyser.h:495] objects removed because too small: 34
+I0717 18:26:15.164592 21444 ViewAnalyser.h:496] objects to merge: 2
+I0717 18:26:15.165362 21436 FCCustomSobelFilter3by3.h:57] Custom Sobel Filter for tile (2 , 0) ...
+I0717 18:26:15.167011 21445 ViewAnalyser.h:493] segmenting tile (2 , 0) :
+I0717 18:26:15.167021 21445 ViewAnalyser.h:494] holes turned to foreground : 3
+I0717 18:26:15.167028 21445 ViewAnalyser.h:495] objects removed because too small: 46
+I0717 18:26:15.167042 21445 ViewAnalyser.h:496] objects to merge: 4
+I0717 18:26:15.175917 21438 ViewAnalyser.h:493] segmenting tile (1 , 2) :
+I0717 18:26:15.175932 21438 ViewAnalyser.h:494] holes turned to foreground : 179
+I0717 18:26:15.175937 21438 ViewAnalyser.h:495] objects removed because too small: 741
+I0717 18:26:15.175940 21438 ViewAnalyser.h:496] objects to merge: 17
+I0717 18:26:15.179385 21437 ViewAnalyser.h:493] segmenting tile (0 , 2) :
+I0717 18:26:15.179397 21437 ViewAnalyser.h:494] holes turned to foreground : 69
+I0717 18:26:15.179401 21437 ViewAnalyser.h:495] objects removed because too small: 726
+I0717 18:26:15.179406 21437 ViewAnalyser.h:496] objects to merge: 17
+I0717 18:26:15.180070 21440 ViewAnalyser.h:493] segmenting tile (0 , 0) :
+I0717 18:26:15.180079 21440 ViewAnalyser.h:494] holes turned to foreground : 38
+I0717 18:26:15.180083 21440 ViewAnalyser.h:495] objects removed because too small: 1282
+I0717 18:26:15.180088 21440 ViewAnalyser.h:496] objects to merge: 18
+I0717 18:26:15.180467 21442 ViewAnalyser.h:493] segmenting tile (1 , 1) :
+I0717 18:26:15.180476 21442 ViewAnalyser.h:494] holes turned to foreground : 91
+I0717 18:26:15.180482 21442 ViewAnalyser.h:495] objects removed because too small: 1049
+I0717 18:26:15.180486 21442 ViewAnalyser.h:496] objects to merge: 15
+I0717 18:26:15.185842 21443 ViewAnalyser.h:493] segmenting tile (1 , 0) :
+I0717 18:26:15.185848 21443 ViewAnalyser.h:494] holes turned to foreground : 94
+I0717 18:26:15.185851 21443 ViewAnalyser.h:495] objects removed because too small: 1254
+I0717 18:26:15.185854 21443 ViewAnalyser.h:496] objects to merge: 19
+I0717 18:26:15.185875 21447 BlobMerger.h:89] merging 94 blobs...
+I0717 18:26:15.186117 21447 BlobMerger.h:97] after last merge, we have : 81 blobs left

@@ -43,7 +43,7 @@ namespace egt {
             auto viewHeight = view->getViewHeight();
             auto viewData = view->getData();
 
-            auto img4 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), viewData);
+            auto img4 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), (T*)viewData);
             cv::imwrite(outputPath + "tileout" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img4);
             img4.release();
 
@@ -61,26 +61,22 @@ namespace egt {
 
             //Emulate Sobel as implemented in ImageJ
             //[description](https://imagejdocu.tudor.lu/faq/technical/what_is_the_algorithm_used_in_find_edges)
-            for (auto row = 1; row < viewHeight - 1; ++row) {
-                for (auto col = 1; col < viewWidth - 1; ++col) {
-                    auto p1 = viewData[(row - 1) * viewWidth + (col - 1)];
-                    auto p2 = viewData[(row - 1) * viewWidth + (col)];
-                    auto p3 =  viewData[(row - 1) * viewWidth + (col + 1)];
-                    auto p4 =  viewData[(row) * viewWidth + (col -1)];
-                    auto p6 =  viewData[(row) * viewWidth + (col +1)];
-                    auto p7 =  viewData[(row +1) * viewWidth + (col - 1)];
-                    auto p8 = viewData[(row + 1) * viewWidth + (col)];
-                    auto p9 =  viewData[(row + 1) * viewWidth + (col + 1)];
+            for (auto row = startRow; row < tileHeight + 2 * radius - startRow; ++row) {
+                for (auto col = startCol; col < tileWidth + 2 * radius - startCol; ++col) {
+                    auto p1 = viewData[(row-1) * viewWidth + (col-1)];
+                    auto p2 = viewData[(row-1) * viewWidth + (col)];
+                    auto p3 =  viewData[(row-1) * viewWidth + (col+1)];
+                    auto p4 =  viewData[(row) * viewWidth + (col - 1)];
+                    auto p6 =  viewData[(row) * viewWidth + (col+1)];
+                    auto p7 =  viewData[(row+1) * viewWidth + (col-1)];
+                    auto p8 = viewData[(row+1) * viewWidth + (col)];
+                    auto p9 =  viewData[(row+1) * viewWidth + (col+1)];
 
                     auto sum1 = p1 + 2*p2 + p3 - p7 - 2*p8 - p9;
                     auto sum2 = p1  + 2*p4 + p7 - p3 - 2*p6 - p9;
                     auto sum = sqrt(sum1*sum1 + sum2*sum2);
 
-                    auto index = (row - 1) * viewWidth + (col - 1);
-
-                    //TODO CHECK THIS IS WRONG
-       //             assert(index < tileWidth * tileHeight);
-                    assert(index >= 0);
+                    auto index = row * viewWidth + col;
 
                     tileOut[index] = (T)sum;
 
@@ -98,7 +94,7 @@ namespace egt {
             cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img5);
             img5.release();
 
-//            delete[] tileOut;
+            delete[] tileOut;
 
             // Write the output tile
             this->addResult(data);
