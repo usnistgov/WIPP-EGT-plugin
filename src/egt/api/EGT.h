@@ -30,7 +30,7 @@ namespace egt {
 
         uint32_t MIN_OBJECT_SIZE = 50;
         uint32_t MIN_HOLE_SIZE = 50;
-        T threshold = 108;
+        T threshold = 0;
 
     public:
 
@@ -40,8 +40,8 @@ namespace egt {
 
                 auto begin = std::chrono::high_resolution_clock::now();
 
-                uint32_t concurrentTiles = 1;
-                size_t nbLoaderThreads = 1;
+                size_t nbLoaderThreads = 2;
+                uint32_t concurrentTiles = 10;
                 ImageDepth depth = ImageDepth::_32F;
 
 
@@ -52,63 +52,63 @@ namespace egt {
                 VLOG(3) << options;
 
 
-//                //The first graph finds the threshold value used to segment the image
-//
-//                uint32_t pyramidLevelToRequestforThreshold = 0;
-//
-//
-//                auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, nbLoaderThreads);
-//                auto *fi = new fi::FastImage<T>(tileLoader, 1);
-//                fi->getFastImageOptions()->setNumberOfViewParallel(concurrentTiles);
-//                auto fastImage = fi->configureAndMoveToTaskGraphTask("Fast Image");
-//
-//
-//                uint32_t imageHeight = fi->getImageHeight(pyramidLevelToRequestforThreshold);     //< Image Height
-//                uint32_t imageWidth = fi->getImageWidth(pyramidLevelToRequestforThreshold);      //< Image Width
-//
-//                uint32_t tileWidth = fi->getTileWidth();
-//                uint32_t tileHeight = fi->getTileHeight();
-//                assert(tileWidth == tileHeight); //we work with square tiles
-//
-//                auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
-//                auto sobelFilter = new CustomSobelFilter3by3<T>(concurrentTiles, depth);
-//                auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
-//                auto numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold);
-//                auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol);
-//
-//                graph->addEdge(fastImage,sobelFilter);
-//                graph->addEdge(sobelFilter,thresholdFinder);
-//                graph->addGraphProducerTask(thresholdFinder);
-//
-//                //MEMORY MANAGEMENT
-//                //TODO CHECK that memoryPoolSize is it the number of tile data of size tileWidth * tileHeight we can allocate
-//                graph->addMemoryManagerEdge("gradientTile",sobelFilter, new TileAllocator<T>(tileWidth , tileHeight),concurrentTiles, htgs::MMType::Dynamic);
-//
-//                htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
-//                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
-//
-//                auto *runtime = new htgs::TaskGraphRuntime(graph);
-//                runtime->executeRuntime();
-//
-//                fi->requestAllTiles(true,pyramidLevelToRequestforThreshold);
-//                graph->finishedProducingData();
-//
-//
-//
-//                while (!graph->isOutputTerminated()) {
-//                        auto data = graph->consumeData();
-//
-//                        if (data != nullptr) {
-//                            threshold = data->getValue();
-//                            VLOG(1) << "Threshold value : " << threshold;
-//                        }
-//                }
-//
-//                runtime->waitForRuntime();
-//
-//                graph->writeDotToFile("colorGraph.xdot", DOTGEN_COLOR_COMP_TIME);
-//
-//                delete runtime;
+                //The first graph finds the threshold value used to segment the image
+
+                uint32_t pyramidLevelToRequestforThreshold = 0;
+
+
+                auto tileLoader = new egt::PyramidTiledTiffLoader<T>(path, nbLoaderThreads);
+                auto *fi = new fi::FastImage<T>(tileLoader, 1);
+                fi->getFastImageOptions()->setNumberOfViewParallel(concurrentTiles);
+                auto fastImage = fi->configureAndMoveToTaskGraphTask("Fast Image");
+
+
+                uint32_t imageHeight = fi->getImageHeight(pyramidLevelToRequestforThreshold);     //< Image Height
+                uint32_t imageWidth = fi->getImageWidth(pyramidLevelToRequestforThreshold);      //< Image Width
+
+                uint32_t tileWidth = fi->getTileWidth();
+                uint32_t tileHeight = fi->getTileHeight();
+                assert(tileWidth == tileHeight); //we work with square tiles
+
+                auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
+                auto sobelFilter = new CustomSobelFilter3by3<T>(concurrentTiles, depth);
+                auto numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
+                auto numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold);
+                auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol);
+
+                graph->addEdge(fastImage,sobelFilter);
+                graph->addEdge(sobelFilter,thresholdFinder);
+                graph->addGraphProducerTask(thresholdFinder);
+
+                //MEMORY MANAGEMENT
+                //TODO CHECK that memoryPoolSize is it the number of tile data of size tileWidth * tileHeight we can allocate
+                graph->addMemoryManagerEdge("gradientTile",sobelFilter, new TileAllocator<T>(tileWidth , tileHeight),concurrentTiles, htgs::MMType::Dynamic);
+
+                htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
+                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
+
+                auto *runtime = new htgs::TaskGraphRuntime(graph);
+                runtime->executeRuntime();
+
+                fi->requestAllTiles(true,pyramidLevelToRequestforThreshold);
+                graph->finishedProducingData();
+
+
+
+                while (!graph->isOutputTerminated()) {
+                        auto data = graph->consumeData();
+
+                        if (data != nullptr) {
+                            threshold = data->getValue();
+                            VLOG(1) << "Threshold value : " << threshold;
+                        }
+                }
+
+                runtime->waitForRuntime();
+
+                graph->writeDotToFile("colorGraph.xdot", DOTGEN_COLOR_COMP_TIME);
+
+                delete runtime;
 //                //TODO CHECK fi deleted by the graph when a TGTask?
 
                 //the second graph segment the image
@@ -194,6 +194,7 @@ namespace egt {
                 segmentationGraph->writeDotToFile("FeatureCollectionGraph.xdot", DOTGEN_COLOR_COMP_TIME);
                 // Delete HTGS graphs
                 delete (segmentationRuntime);
+                delete options;
 
                 auto fc = new FeatureCollection();
                 fc->createFCFromListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);

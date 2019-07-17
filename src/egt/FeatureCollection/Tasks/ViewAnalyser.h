@@ -98,7 +98,7 @@ namespace egt {
         }
 
         void setSegmentationOptions(SegmentationOptions *options) {
-            ViewAnalyser::options = options;
+            ViewAnalyser::_options = options;
         }
 
 
@@ -320,8 +320,8 @@ namespace egt {
             _previousBlob = nullptr;
 
 
-            auto MIN_HOLE_SIZE = options->getMinHoleSize();
-            auto MIN_OBJECT_SIZE = options->getMinObjectSize();
+            auto MIN_HOLE_SIZE = _options->getMinHoleSize();
+            auto MIN_OBJECT_SIZE = _options->getMinObjectSize();
 
 //            printArray<uint16_t >("tile_" + std::to_string(_view->getGlobalXOffset()) + "_" + std::to_string(_view->getGlobalYOffset()) ,(uint16_t *)_view->getData(),_view->getViewWidth(),_view->getViewHeight());
 
@@ -502,13 +502,15 @@ namespace egt {
         /// \brief View analyser copy function
         /// \return A new View analyser
         ViewAnalyser<UserType> *copy() override {
-            return new ViewAnalyser<UserType>(this->getNumThreads(),
+            auto viewAnalyzer = new ViewAnalyser<UserType>(this->getNumThreads(),
                                               _imageHeight,
                                               _imageWidth,
                                               _tileHeight,
                                               _tileWidth,
                                               _rank,
                                               _background);
+            viewAnalyzer->setSegmentationOptions(_options);
+            return viewAnalyzer;
         }
 
         /// \brief Get task name
@@ -517,10 +519,6 @@ namespace egt {
             return "View analyser";
         }
 
-
-        virtual ~ViewAnalyser() {
-            delete options;
-        }
 
     private:
         fi::View<UserType> *
@@ -561,7 +559,7 @@ namespace egt {
         uint32_t holesRemovedCount = 0;
 
 
-        SegmentationOptions *options = nullptr;
+        SegmentationOptions *_options = nullptr;
 
     };
 }
