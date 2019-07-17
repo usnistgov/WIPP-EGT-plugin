@@ -12,6 +12,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 #TODO CHECK release flags
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -funwind-tables -g")
 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+
 
 #TODO DOES NOT USEFUL. REMOVE
 # make_unique is not available on current OSX libc++
@@ -72,7 +74,7 @@ include_directories(src)
 add_subdirectory(test)
 
 
-set(SRC_FILES src src/egt/tasks/ViewToConvOutDataConverter.h src/egt/FeatureCollection/Tasks/ConvOutDataAnalyzer.h src/egt/FeatureCollection/Tasks/SegmentationOptions.h)
+set(SRC_FILES src src/egt/tasks/ViewToConvOutDataConverter.h src/egt/FeatureCollection/Tasks/ConvOutDataAnalyzer.h src/egt/FeatureCollection/Tasks/SegmentationOptions.h src/egt/api/CommandLineCli.h)
 
 
 

@@ -1,5 +1,7 @@
 #include <iostream>
 #include <egt/api/EGT.h>
+#include <egt/api/DataTypes.h>
+#include <egt/api/CommandLineCli.h>
 
 int main() {
 
@@ -15,13 +17,27 @@ int main() {
     std::string path = "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif";
 
 
-    auto egt = new egt::EGT<float>();
+    ImageDepth depth = egt::parseImageDepth("32F");
 
+    auto egt = new egt::EGT();
 
     //TODO should we choose the userType? We should just get it from the tif image and stick to it.
-    egt->run(path);
+    switch (depth) {
+        case ImageDepth::_32F:
+            egt->run<float>(path);
+            break;
+        case ImageDepth::_16U:
+            egt->run<uint16_t>(path);
+            break;
+        case ImageDepth::_8U:
+            egt->run<uint8_t >(path);
+            break;
+    }
 
     delete egt;
 
     return 0;
 }
+
+
+

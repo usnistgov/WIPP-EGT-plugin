@@ -253,6 +253,8 @@ namespace egt {
 
                 VLOG(3) << "percentile of pixels threshold value : " << (uint32_t)percentileThreshold;
 
+                T threshold2 = percentileThreshold / rescale;
+
                 //find the threshold pixel value.
                 //we get all non zero pixels and sort them in ascending order, the percentilePixelThreshold'th pixel has the
                 //intensity we will use for thresholding.

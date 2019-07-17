@@ -90,9 +90,9 @@ namespace egt {
 
 //                        cv::imwrite(outputPath + "segComp" + std::to_string(counter) + ".png" , out);
 
-            VLOG(4) << grad_x.depth();
-            VLOG(4) << abs_grad_x.depth();
-            VLOG(4) << grad.depth();
+            VLOG(5) << grad_x.depth();
+            VLOG(5) << abs_grad_x.depth();
+            VLOG(5) << grad.depth();
 
 
 
@@ -127,7 +127,7 @@ namespace egt {
             //TODO push to the EGTView constructor
             //auto *tileOut = new T[(width + 1) * (height + 1)]();
 
-            float* inputArray = &array[0];
+            T* inputArray = &array[0];
 //            for (auto rangeRow = 0; rangeRow < height + 4; ++rangeRow) {
 //                std::copy_n( inputArray + rangeRow * (width + 4), (width + 4), (T*)data->get()->getData() + rangeRow * (width + 4));
 //            }
