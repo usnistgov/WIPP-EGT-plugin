@@ -40,7 +40,7 @@ namespace egt {
         /// with a single radius. It would be possible to rewrite the algo by taking the widest radius and calculate
         /// smaller radius from there, but it probably do not worth the complexity introduced.
         template<class T>
-        void run(std::string path) {
+        void run(std::string path, ImageDepth depth) {
 
 
 
@@ -48,7 +48,6 @@ namespace egt {
 
                 size_t nbLoaderThreads = 2;
                 uint32_t concurrentTiles = 10;
-                ImageDepth depth = ImageDepth::_32F;
 
                 //----------------------------------
                 //The first graph finds the threshold value used to segment the image
@@ -73,7 +72,7 @@ namespace egt {
                 assert(tileWidth == tileHeight); //we work with square tiles
 
                 auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
-                auto sobelFilter = new CustomSobelFilter3by3<T>(concurrentTiles, depth);;
+                auto sobelFilter = new CustomSobelFilter3by3<T>(concurrentTiles, depth);
                 auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol);
                 graph->addEdge(fastImage,sobelFilter);
                 graph->addEdge(sobelFilter,thresholdFinder);

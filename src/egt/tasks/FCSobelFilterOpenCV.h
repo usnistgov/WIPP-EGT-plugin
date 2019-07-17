@@ -17,6 +17,7 @@
 #include <egt/api/DataTypes.h>
 #include <egt/data/ThresholdOrView.h>
 #include <egt/utils/Utils.h>
+#include <egt/api/DataTypes.h>
 
 namespace egt {
 
@@ -39,10 +40,9 @@ namespace egt {
             std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
 //            std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
-            auto inputDepth = CV_32F;
-//                    auto inputDepth = convertToOpencvType(depth);
-            auto outputDepth = CV_32F;
-//                    auto outputDepth = convertToOpencvType(depth);
+            auto inputDepth = convertToOpencvType(depth);
+            auto outputDepth = convertToOpencvType(depth);
+
             int scale = 1;
             int delta = 0;
 
@@ -78,7 +78,7 @@ namespace egt {
 
             /// Total Gradient (approximate)
 //                        addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad );
-            addWeighted( abs(grad_x), 0.5, abs(grad_y), 0.5, 0, grad, CV_32F );
+            addWeighted( abs(grad_x), 0.5, abs(grad_y), 0.5, 0, grad, outputDepth );
 
 //            cv::Mat out;
 

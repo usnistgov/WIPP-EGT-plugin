@@ -24,13 +24,13 @@ int main() {
     //TODO should we choose the userType? We should just get it from the tif image and stick to it.
     switch (depth) {
         case ImageDepth::_32F:
-            egt->run<float>(path);
+            egt->run<float>(path, depth);
             break;
         case ImageDepth::_16U:
-            egt->run<uint16_t>(path);
+            egt->run<uint16_t>(path, depth);
             break;
         case ImageDepth::_8U:
-            egt->run<uint8_t >(path);
+            egt->run<uint8_t >(path, depth);
             break;
     }
 
