@@ -365,7 +365,7 @@ namespace egt {
 
 
 
-                        VLOG(4) << "hole size: " << _currentBlob->getCount();
+                        VLOG(5) << "hole size: " << _currentBlob->getCount();
                         //WE REMOVE SMALL HOLES AND MARK THEM AS FOREGROUND
                         if (_currentBlob->getCount() < MIN_HOLE_SIZE) {
                             for(auto it = _currentBlob->getRowCols().begin(); it != _currentBlob->getRowCols().end(); ++it ) {

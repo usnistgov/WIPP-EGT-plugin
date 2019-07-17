@@ -29,7 +29,7 @@ namespace egt {
     private:
 
         uint32_t MIN_OBJECT_SIZE = 3000;
-        uint32_t MIN_HOLE_SIZE = 1000;
+        uint32_t MIN_HOLE_SIZE = 3000;
         T threshold = 0;
 
     public:
@@ -84,8 +84,8 @@ namespace egt {
                 //TODO CHECK that memoryPoolSize is it the number of tile data of size tileWidth * tileHeight we can allocate
                 graph->addMemoryManagerEdge("gradientTile",sobelFilter, new TileAllocator<T>(tileWidth , tileHeight),concurrentTiles, htgs::MMType::Dynamic);
 
-                htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
-                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
+//                htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
+//                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
 
                 auto *runtime = new htgs::TaskGraphRuntime(graph);
                 runtime->executeRuntime();
@@ -106,7 +106,7 @@ namespace egt {
 
                 runtime->waitForRuntime();
 
-                graph->writeDotToFile("colorGraph.xdot", DOTGEN_COLOR_COMP_TIME);
+//                graph->writeDotToFile("colorGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
                 delete runtime;
 //                //TODO CHECK fi deleted by the graph when a TGTask?
@@ -191,7 +191,7 @@ namespace egt {
                 segmentationRuntime->waitForRuntime();
 
 
-                segmentationGraph->writeDotToFile("FeatureCollectionGraph.xdot", DOTGEN_COLOR_COMP_TIME);
+//                segmentationGraph->writeDotToFile("FeatureCollectionGraph.xdot", DOTGEN_COLOR_COMP_TIME);
                 // Delete HTGS graphs
                 delete (segmentationRuntime);
                 delete options;

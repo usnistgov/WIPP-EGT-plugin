@@ -34,13 +34,14 @@ namespace egt {
                                                                                            {
             this->totalTiles = numTileRow * numTileCol;
             gradient = new T[width * height]();
-            hist.resize(NUM_HISTOGRAM_BINS + 1);
+            hist.reserve(NUM_HISTOGRAM_BINS + 1);
                                                                                            }
 
 
         void executeTask(std::shared_ptr<ConvOutMemoryData<T>> data) override {
 
             //TODO NO NEED TO COPY data. Just accumulate. Or maybe build the histogram on the fly.
+            //SAMPLING SHOULD BE GOOD ENOUGH? ANOTHER APPROACH IS TO MERGE A LIST FROM THE SOBEL OPERATION
             copyTile(data);
             data->getOutputdata()->releaseMemory();
             //TODO when do we delete the ConvOutMemoryData object?
@@ -48,13 +49,13 @@ namespace egt {
             counter++;
 
             if(counter == totalTiles) {
-                VLOG(3) << "we are done running gradient on the total " << totalTiles << " tiles.";
 
+                VLOG(3) << "Determining Threshold..." ;
 
+                VLOG(4) << "we have run gradient on : " << totalTiles << " tiles.";
+
+//FOR DEBUGGING
 //                printArray<T>("full gradient",gradient,imageWidth,imageHeight);
-
-
-
 
 //                cv::Mat image2(imageHeight, imageWidth, CV_32F, gradient);
 //                cv::imwrite(outputPath + "fullGradient.png", image2);
@@ -65,9 +66,6 @@ namespace egt {
 //                image2.release();
 ////                out.release();
 
-                //TODO MINVALUE IS ALWAYS > 0 AFTER SOBEL? WHAT IS FLOAT? DO WE HAVE TO EXHAUSTIVELY SEARCH?
-                // SAMPLING SHOULD BE GOOD ENOUGH? ANOTHER APPROACH IS TO GET IT FROM THE SOBEL OPERATION
-                //How to find min and max value for T?
                 T minValue = std::numeric_limits<T>::max() , maxValue = std::numeric_limits<T>::min();
 
                 auto nonZeroGradient = std::vector<T>();
@@ -87,6 +85,10 @@ namespace egt {
                         nonZeroGradient.push_back(gradient[k]);
                     }
                 }
+
+
+                VLOG(4) << "Nb of gradient pixels : " << imageWidth * imageHeight;
+                VLOG(4) << "Nb of gradient pixels with value of 0 : " << imageWidth * imageHeight - nonZeroGradient.size();
 
 
 
@@ -226,7 +228,6 @@ namespace egt {
                 for (auto k = lowerBound; k <= upperBound; k++) {
                     if(hist[k] > 0) {
                         area += hist[k];
-                        VLOG(4) << "add" << hist[k] << " to area = " << area;
                     }
                 }
 
@@ -250,7 +251,7 @@ namespace egt {
                 percentileThreshold = (percentileThreshold > 100) ? 100 : percentileThreshold;
                 percentileThreshold = (percentileThreshold < 0) ? 0 : percentileThreshold;
 
-                VLOG(3) << "percentile of pixels threshold value : " << (int)percentileThreshold;
+                VLOG(3) << "percentile of pixels threshold value : " << (uint32_t)percentileThreshold;
 
                 //find the threshold pixel value.
                 //we get all non zero pixels and sort them in ascending order, the percentilePixelThreshold'th pixel has the
@@ -318,7 +319,6 @@ namespace egt {
                  }
         }
 
-        T* gradient;
         uint32_t imageWidth;
         uint32_t imageHeight;
         uint32_t numTileRow;
@@ -326,10 +326,15 @@ namespace egt {
         uint32_t totalTiles;
         uint32_t greedy = 0; //TODO add to constructor
 
+        //TODO REMOVE for now we match previous implementation and reconstruct the whole image gradient
+        //we could rather build the histogram on the fly, which on low resolution will save a tremendous amount of memory
+        T* gradient;
+
         uint32_t counter = 0;
 
         const uint32_t NUM_HISTOGRAM_MODES = 3;
-        const uint32_t NUM_HISTOGRAM_BINS = 1000; // TODO add to constructor param
+        const uint32_t NUM_HISTOGRAM_BINS = 1000;
+
         std::vector<double> hist = {};
 
     };
