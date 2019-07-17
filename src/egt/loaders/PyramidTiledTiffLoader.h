@@ -47,6 +47,8 @@
 #undef int64
 #else
 #include <tiffio.h>
+#include <glog/logging.h>
+
 #endif
 
 #include "FastImage/api/ATileLoader.h"

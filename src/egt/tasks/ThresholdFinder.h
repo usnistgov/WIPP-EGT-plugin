@@ -26,11 +26,12 @@ namespace egt {
 
 
     public:
-        ThresholdFinder(uint32_t width, uint32_t height, uint32_t numTileRow, uint32_t numTileCol) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(1),
+        ThresholdFinder(uint32_t width, uint32_t height, uint32_t numTileRow, uint32_t numTileCol, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(1),
                                                                                            imageWidth(width),
                                                                                            imageHeight(height),
                                                                                            numTileRow(numTileRow),
-                                                                                           numTileCol(numTileCol)
+                                                                                           numTileCol(numTileCol),
+                                                                                           imageDepth(imageDepth)
                                                                                            {
             this->totalTiles = numTileRow * numTileCol;
             gradient = new T[width * height]();
@@ -55,15 +56,16 @@ namespace egt {
                 VLOG(4) << "we have run gradient on : " << totalTiles << " tiles.";
 
 //FOR DEBUGGING
-//                printArray<T>("full gradient",gradient,imageWidth,imageHeight);
+             //   printArray<T>("full gradient",gradient,imageWidth,imageHeight);
 
-//                cv::Mat image2(imageHeight, imageWidth, CV_32F, gradient);
+                cv::Mat image2(imageHeight, imageWidth, convertToOpencvType(imageDepth), gradient);
 //                cv::imwrite(outputPath + "fullGradient.png", image2);
 //                cv::Mat out;
+
 ////                image2.convertTo(out, CV_8U);
-////                cv::imwrite(outputPath + "fullGradient.tiff", out);
-//                cv::imwrite(outputPath + "fullGradient.tiff", image2);
-//                image2.release();
+//               cv::imwrite(outputPath + "fullGradient.tiff", out);
+                cv::imwrite(outputPath + "fullGradient.tiff", image2);
+                image2.release();
 ////                out.release();
 
                 T minValue = std::numeric_limits<T>::max() , maxValue = std::numeric_limits<T>::min();
@@ -90,36 +92,24 @@ namespace egt {
                 VLOG(4) << "Nb of gradient pixels : " << imageWidth * imageHeight;
                 VLOG(4) << "Nb of gradient pixels with value of 0 : " << imageWidth * imageHeight - nonZeroGradient.size();
 
-
-
-                //TODO [CHECK]
-//                //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.
-//                //also we use NUM_HISTOGRAM_BINS - 1 so values are bined in the [0,999] range.
-//                //TODO DO WE NEED TO WORK WITH 0 VALUES? OR CAN WE USE DIRECTLY NON-ZEROS GRADIENTS?
-//                double rescale = (NUM_HISTOGRAM_BINS - 1) / (maxValue - minValue);
-//                double sum = 0;
-//                for(auto k = 0; k < imageWidth * imageHeight; k++ ){
-//                    if(gradient[k] != 0){
-//                        auto index = (uint32_t)((gradient[k] - minValue) * rescale);
-//                        hist[index]++;
-//                        sum++;
-//                    }
-//                }
-
                 VLOG(4) << "min : " << minValue;
                 VLOG(4) << "max : " << maxValue;
 
 
-                //TODO [CHECK]  to match previous implementation
-                double rescale = NUM_HISTOGRAM_BINS / (maxValue - minValue);
+                //cast to double so we can handle integer values in gradient
+                double rescale = (double)NUM_HISTOGRAM_BINS / (maxValue - minValue);
                 double sum = 0;
                 for(auto k = 0; k < imageWidth * imageHeight; k++ ){
+                    //TODO DO WE NEED TO WORK WITH 0 VALUES? OR CAN WE USE DIRECTLY NON-ZEROS GRADIENTS?
                     if(gradient[k] != 0.0) {
 
+//                        VLOG(1) << gradient[k];
 //                        VLOG(1) << (gradient[k] - minValue) * rescale + 0.5;
 
-
-                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
+                        //we round to closest integer
+                        //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.
+//                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
+                        auto index = (uint32_t)((gradient[k] - minValue) * rescale);
 
 //                        VLOG(1) << index;
 
@@ -131,8 +121,8 @@ namespace egt {
                 }
 
                 //TODO FOR DEBUG
-        //        T* histAsRawArray = &hist[0];
-        //        printArray<T>("histogram",histAsRawArray,20,50);
+                double* histAsRawArray = &hist[0];
+                printArray<double>("histogram",histAsRawArray,20,50);
 
                 //TODO [CHECK] in the book it is described as before modloc but not in original code
 //                //normalize the histogram so that sum(histData)=1;
@@ -140,10 +130,10 @@ namespace egt {
 //                    hist[k] /= sum;
 //                }
 
-//                printArray<float>("histogram normalized",&hist[0],20,50);
+//                printArray<double>("histogram normalized",&hist[0],20,50);
 
                 //Get peak mode locations
-                std::vector<T> modes = {0}; //temp array to store histogram value. Default values to 0.
+                std::vector<double> modes = {0}; //temp array to store histogram value. Default values to 0.
                 std::vector<uint32_t> modesIdx = {0}; //index of histogram value
                 modes.resize(NUM_HISTOGRAM_MODES);
                 modesIdx.resize(NUM_HISTOGRAM_MODES);
@@ -179,7 +169,7 @@ namespace egt {
                     VLOG(4) << "peak value " << l << " : " << modes[l];
                     VLOG(4) << "peak index " << l << " : " << modesIdx[l];
                 }
-                auto modeLoc = (uint32_t)std::round((float)sumModes / NUM_HISTOGRAM_MODES);
+                auto modeLoc = (uint32_t)std::round((double)sumModes / NUM_HISTOGRAM_MODES);
 
                 VLOG(4) << "mode loc : " << modeLoc << " of " << NUM_HISTOGRAM_BINS << "buckets.";
 
@@ -299,7 +289,7 @@ namespace egt {
         }
 
         htgs::ITask <ConvOutMemoryData<T>, Threshold<T>> *copy() override {
-            return new ThresholdFinder(imageWidth, imageHeight, numTileRow, numTileCol);
+            return new ThresholdFinder(imageWidth, imageHeight, numTileRow, numTileCol, imageDepth);
         }
 
         std::string getName() override { return "Threshold Finder"; }
@@ -327,6 +317,9 @@ namespace egt {
         uint32_t numTileCol;
         uint32_t totalTiles;
         uint32_t greedy = 0; //TODO add to constructor
+        ImageDepth imageDepth = ImageDepth::_8U;
+
+
 
         //TODO REMOVE for now we match previous implementation and reconstruct the whole image gradient
         //we could rather build the histogram on the fly, which on low resolution will save a tremendous amount of memory

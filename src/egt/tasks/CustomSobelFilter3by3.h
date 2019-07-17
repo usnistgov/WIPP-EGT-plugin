@@ -49,7 +49,7 @@ namespace egt {
 
 
             auto tileMemoryData = this-> template getDynamicMemory<T>("gradientTile", new ReleaseMemoryRule(1), (size_t)(tileWidth * tileHeight));
-            auto tileOut = tileMemoryData->get();
+            T* tileOut = tileMemoryData->get();
 
             //Emulate Sobel as implemented in ImageJ
             //[description](https://imagejdocu.tudor.lu/faq/technical/what_is_the_algorithm_used_in_find_edges)
@@ -75,14 +75,13 @@ namespace egt {
                     assert(index < tileWidth * tileHeight);
                     assert(index >= 0);
 
-                    tileOut[index] = sum;
-
+                    tileOut[index] = (T)sum;
 
                 }
             }
 
 // FOR DEBUGGING
-//            auto img5 = cv::Mat(tileHeight, tileWidth, CV_32F, tileOut);
+//            auto img5 = cv::Mat(tileHeight, tileWidth, convertToOpencvType(depth), tileOut);
 //            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tiff" , img5);
 
             // Write the output tile

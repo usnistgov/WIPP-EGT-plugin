@@ -40,7 +40,7 @@ namespace egt {
         /// with a single radius. It would be possible to rewrite the algo by taking the widest radius and calculate
         /// smaller radius from there, but it probably do not worth the complexity introduced.
         template<class T>
-        void run(std::string path, ImageDepth depth) {
+        void run(std::string path, ImageDepth imageDepth) {
 
 
 
@@ -72,8 +72,8 @@ namespace egt {
                 assert(tileWidth == tileHeight); //we work with square tiles
 
                 auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
-                auto sobelFilter = new CustomSobelFilter3by3<T>(concurrentTiles, depth);
-                auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol);
+                auto sobelFilter = new CustomSobelFilter3by3<T>(concurrentTiles, imageDepth);
+                auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol, imageDepth);
                 graph->addEdge(fastImage,sobelFilter);
                 graph->addEdge(sobelFilter,thresholdFinder);
                 graph->addGraphProducerTask(thresholdFinder);
@@ -133,7 +133,7 @@ namespace egt {
                 uint32_t nbTiles = fi2->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                 fi2->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
 
-                auto sobelFilter2 = new FCSobelFilterOpenCV<T>(concurrentTiles, depth);
+                auto sobelFilter2 = new FCSobelFilterOpenCV<T>(concurrentTiles, imageDepth);
                 auto viewSegmentation = new egt::ViewAnalyser<T>(concurrentTiles,
                     imageHeightAtSegmentationLevel,
                     imageWidthAtSegmentationLevel,
