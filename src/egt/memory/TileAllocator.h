@@ -29,7 +29,7 @@ namespace egt {
         }
 
         void memFree(T *&memory) override {
-            VLOG(3) << "tile data reclaimed.";
+            VLOG(5) << "tile data reclaimed.";
             delete[] memory;
         }
 

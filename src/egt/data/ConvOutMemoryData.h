@@ -54,7 +54,7 @@ public:
     }
 
     ~ConvOutMemoryData() {
-        VLOG(3) << "ConvOutMemoryData destroyed : " << getGlobalRow() << "," << getGlobalCol();
+        VLOG(5) << "ConvOutMemoryData destroyed : " << getGlobalRow() << "," << getGlobalCol();
     }
 
 };

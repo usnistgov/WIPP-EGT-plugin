@@ -48,7 +48,7 @@ namespace egt {
             counter++;
 
             if(counter == totalTiles) {
-                VLOG(1) << "we are done producing the " << totalTiles << " tiles.";
+                VLOG(3) << "we are done running gradient on the total " << totalTiles << " tiles.";
 
 
 //                printArray<T>("full gradient",gradient,imageWidth,imageHeight);
@@ -68,8 +68,7 @@ namespace egt {
                 //TODO MINVALUE IS ALWAYS > 0 AFTER SOBEL? WHAT IS FLOAT? DO WE HAVE TO EXHAUSTIVELY SEARCH?
                 // SAMPLING SHOULD BE GOOD ENOUGH? ANOTHER APPROACH IS TO GET IT FROM THE SOBEL OPERATION
                 //How to find min and max value for T?
-                T minValue = 65000 , maxValue = 0;
-//                T minValue = std::numeric_limits<T>::max() , maxValue = std::numeric_limits<T>::min();
+                T minValue = std::numeric_limits<T>::max() , maxValue = std::numeric_limits<T>::min();
 
                 auto nonZeroGradient = std::vector<T>();
 
@@ -80,12 +79,6 @@ namespace egt {
                         auto value = gradient[k];
                         auto row = k / imageWidth;
                         auto col = k % imageWidth;
-
-
-                        if(gradient[k] > 5000){
-                            VLOG(1) << "row : " << row << " col : " << col << " value : " << value;
-                        }
-
 
                         minValue = gradient[k] < minValue ? gradient[k] : minValue;
                         maxValue = gradient[k] > maxValue ? gradient[k] : maxValue;
@@ -104,7 +97,6 @@ namespace egt {
 //                double rescale = (NUM_HISTOGRAM_BINS - 1) / (maxValue - minValue);
 //                double sum = 0;
 //                for(auto k = 0; k < imageWidth * imageHeight; k++ ){
-//                    //TODO see. here test non-zeros!
 //                    if(gradient[k] != 0){
 //                        auto index = (uint32_t)((gradient[k] - minValue) * rescale);
 //                        hist[index]++;
@@ -112,17 +104,22 @@ namespace egt {
 //                    }
 //                }
 
-                VLOG(1) << "min : " << minValue;
-                VLOG(1) << "max : " << maxValue;
+                VLOG(4) << "min : " << minValue;
+                VLOG(4) << "max : " << maxValue;
 
 
                 //TODO [CHECK]  to match previous implementation
                 double rescale = NUM_HISTOGRAM_BINS / (maxValue - minValue);
                 double sum = 0;
                 for(auto k = 0; k < imageWidth * imageHeight; k++ ){
-                    //TODO see. here test non-zeros!
                     if(gradient[k] != 0.0) {
+
+//                        VLOG(1) << (gradient[k] - minValue) * rescale + 0.5;
+
+
                         auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
+
+//                        VLOG(1) << index;
 
                         assert(index >= 0 && index < NUM_HISTOGRAM_BINS + 1);
 
@@ -132,8 +129,8 @@ namespace egt {
                 }
 
                 //TODO FOR DEBUG
-                T* histAsRawArray = &hist[0];
-                printArray<T>("histogram",histAsRawArray,20,50);
+        //        T* histAsRawArray = &hist[0];
+        //        printArray<T>("histogram",histAsRawArray,20,50);
 
                 //TODO [CHECK] in the book it is described as before modloc but not in original code
 //                //normalize the histogram so that sum(histData)=1;
@@ -174,16 +171,15 @@ namespace egt {
 
 
                 //find the approximate mode location (average of all values)
-                auto sumModes = 0;
+                uint32_t sumModes = 0;
                 for(uint32_t l = 0; l < NUM_HISTOGRAM_MODES; l++) {
                     sumModes += modesIdx[l];
-                    VLOG(1) << "peak value " << l << " : " << modes[l];
-                    VLOG(1) << "peak index " << l << " : " << modesIdx[l];
+                    VLOG(4) << "peak value " << l << " : " << modes[l];
+                    VLOG(4) << "peak index " << l << " : " << modesIdx[l];
                 }
-                uint32_t modeLoc = sumModes / NUM_HISTOGRAM_MODES;
+                auto modeLoc = (uint32_t)std::round((float)sumModes / NUM_HISTOGRAM_MODES);
 
-                VLOG(1) << "mode loc : " << modeLoc << " of " << NUM_HISTOGRAM_BINS << "buckets.";
-
+                VLOG(4) << "mode loc : " << modeLoc << " of " << NUM_HISTOGRAM_BINS << "buckets.";
 
                 //TODO [CHECK] in previous implementation, it is here
                 //normalize the histogram so that sum(histData)=1;
@@ -207,14 +203,14 @@ namespace egt {
 
                 //TODO [CHECK] here we match previous implementation
                 //lower bound
-                auto lowerBound = 3 * (modeLoc + 1) - 1 < NUM_HISTOGRAM_BINS ? 3 * (modeLoc + 1) - 1 : NUM_HISTOGRAM_BINS - 1;
+                uint64_t lowerBound = 3 * (modeLoc + 1) - 1 < NUM_HISTOGRAM_BINS ? 3 * (modeLoc + 1) - 1 : NUM_HISTOGRAM_BINS - 1;
 
                 //upper bound
-                auto upperBound = 18 * (modeLoc + 1) - 1  < NUM_HISTOGRAM_BINS ? 18 * (modeLoc + 1) - 1  : NUM_HISTOGRAM_BINS -1;
+                uint64_t upperBound = 18 * (modeLoc + 1) - 1  < NUM_HISTOGRAM_BINS ? 18 * (modeLoc + 1) - 1  : NUM_HISTOGRAM_BINS -1;
                 auto cutoff = hist[modeLoc] * 0.05; //95% dropoff from the mode location
                 for(uint32_t k = modeLoc; k < NUM_HISTOGRAM_BINS; k++) {
                     if(hist[k] <= cutoff && hist[k] > upperBound){
-                        upperBound = hist[k];
+                        upperBound = (uint64_t)hist[k];
                     break;
                     }
                 }
@@ -238,6 +234,7 @@ namespace egt {
                 assert(area < (double)1.0);
 
                 //compute percentile threshold from the empirical model : Y = aX + b
+                //TODO CHECK - taken from the book - in java code we have other values
                 double s1 = 3;
                 double s2 = 50;
                 double a = -1.3517;
@@ -253,7 +250,7 @@ namespace egt {
                 percentileThreshold = (percentileThreshold > 100) ? 100 : percentileThreshold;
                 percentileThreshold = (percentileThreshold < 0) ? 0 : percentileThreshold;
 
-                VLOG(1) << "percentile of pixels threshold value : " << (int)percentileThreshold;
+                VLOG(3) << "percentile of pixels threshold value : " << (int)percentileThreshold;
 
                 //find the threshold pixel value.
                 //we get all non zero pixels and sort them in ascending order, the percentilePixelThreshold'th pixel has the
@@ -265,7 +262,7 @@ namespace egt {
 
                 T threshold = nonZeroGradient[percentilePixelThreshold];
 
-                VLOG(1) << "threshold pixel gradient intensity value : " << (T)threshold;
+                VLOG(3) << "threshold pixel gradient intensity value : " << (T)threshold;
 
                 this->addResult(new Threshold<T>(threshold));
 
@@ -333,7 +330,7 @@ namespace egt {
 
         const uint32_t NUM_HISTOGRAM_MODES = 3;
         const uint32_t NUM_HISTOGRAM_BINS = 1000; // TODO add to constructor param
-        std::vector<T> hist = {};
+        std::vector<double> hist = {};
 
     };
 }

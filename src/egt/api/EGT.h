@@ -28,8 +28,8 @@ namespace egt {
 
     private:
 
-        uint32_t MIN_OBJECT_SIZE = 50;
-        uint32_t MIN_HOLE_SIZE = 50;
+        uint32_t MIN_OBJECT_SIZE = 3000;
+        uint32_t MIN_HOLE_SIZE = 1000;
         T threshold = 0;
 
     public:

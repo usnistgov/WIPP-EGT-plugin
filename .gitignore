@@ -28,4 +28,6 @@ dist/build
 
 **/*.xdot
 
+output.tiff
+
 heaptrack*
