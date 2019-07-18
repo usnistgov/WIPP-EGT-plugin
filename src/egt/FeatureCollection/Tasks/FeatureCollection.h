@@ -46,6 +46,8 @@
 #include <egt/FeatureCollection/Data/Blob.h>
 #include <egt/FeatureCollection/Data/ListBlobs.h>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
 //#include <libltdl/lt_system.h>
 
 using namespace fc;
@@ -797,8 +799,9 @@ class FeatureCollection {
               std::pair<uint32_t, uint32_t>(indexRow, indexCol);
           // If it doesn't exist write the blank tile
           if (loadedTiles.find(currentCoordinates) == loadedTiles.end()) {
+
             TIFFWriteTile(tif,
-                          emptyTile,
+                          emptyTile->data(),
                           indexCol * tileSize,
                           indexRow * tileSize,
                           0,

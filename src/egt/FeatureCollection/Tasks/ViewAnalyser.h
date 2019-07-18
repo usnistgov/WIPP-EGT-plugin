@@ -326,86 +326,86 @@ namespace egt {
 //            printArray<uint16_t >("tile_" + std::to_string(_view->getGlobalXOffset()) + "_" + std::to_string(_view->getGlobalYOffset()) ,(uint16_t *)_view->getData(),_view->getViewWidth(),_view->getViewHeight());
 
 
-            //WE FIRST VISIT BACKGROUND PIXELS TO REMOVE HOLES
-            for (int32_t row = 0; row < _tileHeight; ++row) {
-                for (int32_t col = 0; col < _tileWidth; ++col) {
-
-                    while (!_toVisit.empty()) {
-                        auto neighbourCoord = *_toVisit.begin();
-                        _toVisit.erase(_toVisit.begin());
-                        //mark pixel as visited so we don't look at it again
-                        markAsVisited(neighbourCoord.first,
-                                      neighbourCoord.second);
-                        bool color = getColor(neighbourCoord.first, neighbourCoord.second);
-
-                        _currentBlob->addPixel(
-                                _view->getGlobalYOffset() + neighbourCoord.first,
-                                _view->getGlobalXOffset() + neighbourCoord.second);
-
-
-                        if (_rank == 4) {
-                            analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, color, true);
-                        } else {
-                            analyseNeighbour8(neighbourCoord.first, neighbourCoord.second, color);
-                        }
-                    }
-
-                    //HOLE IS COMPLETE, WHAT TO DO
-                    if (_currentBlob != nullptr) {
-
-                        //TODO ignore for now
-                        //to be perfectly correct, we would need to merge it
-                        //with its neighbors to calculate its size if necessary.
-//                        if(_currentBlob->isBackground() && _currentBlob->isToMerge()) {
-                                //we would need to maintain a list of holes preferably
-//                            //_vAnalyse->insertBlob(_currentBlob);
-//                            _previousBlob = _currentBlob;
-//                            _currentBlob = nullptr;
+//            //WE FIRST VISIT BACKGROUND PIXELS TO REMOVE HOLES
+//            for (int32_t row = 0; row < _tileHeight; ++row) {
+//                for (int32_t col = 0; col < _tileWidth; ++col) {
+//
+//                    while (!_toVisit.empty()) {
+//                        auto neighbourCoord = *_toVisit.begin();
+//                        _toVisit.erase(_toVisit.begin());
+//                        //mark pixel as visited so we don't look at it again
+//                        markAsVisited(neighbourCoord.first,
+//                                      neighbourCoord.second);
+//                        bool color = getColor(neighbourCoord.first, neighbourCoord.second);
+//
+//                        _currentBlob->addPixel(
+//                                _view->getGlobalYOffset() + neighbourCoord.first,
+//                                _view->getGlobalXOffset() + neighbourCoord.second);
+//
+//
+//                        if (_rank == 4) {
+//                            analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, color, true);
+//                        } else {
+//                            analyseNeighbour8(neighbourCoord.first, neighbourCoord.second, color);
 //                        }
-
-
-
-                        VLOG(5) << "hole size: " << _currentBlob->getCount();
-                        //WE REMOVE SMALL HOLES AND MARK THEM AS FOREGROUND
-                        if (_currentBlob->getCount() < MIN_HOLE_SIZE) {
-                            for(auto it = _currentBlob->getRowCols().begin(); it != _currentBlob->getRowCols().end(); ++it ) {
-                                auto row = it->first;
-                                for(auto col : it->second) {
-                                    auto xOffset = _view->getGlobalXOffset();
-                                    auto yOffset = _view->getGlobalYOffset();
-                                    unmarkAsVisited(row - yOffset,col - xOffset);
-                                    _view->setPixel(row - yOffset,col - xOffset, _background + 1);
-                                }
-                            }
-                            holesRemovedCount++;
-                        }
-
-                    //TODO change but for now we delete every hole blob we create
-                    //we need a MAX_HOLE_SIZE. if > then we know it is background. If in between we add to holes_to_merge
-                    delete _currentBlob;
-                    _currentBlob = nullptr;
-                    }
-
-                    //Find the next blob to create
-                    if (!visited(row, col) && getColor(row, col) == IS_BACKGROUND) {
-
-                        markAsVisited(row, col);
-
-                        //add pixel to a new blob
-                        _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col,
-                                                IS_BACKGROUND);
-                        _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
-                        //make sure we don't look at it again
-
-                        //look at its neighbors
-                        if (_rank == 4) {
-                            analyseNeighbour4(row, col, IS_BACKGROUND, true);
-                        } else {
-                            analyseNeighbour8(row, col, IS_BACKGROUND);
-                        }
-                    }
-                }
-            }
+//                    }
+//
+//                    //HOLE IS COMPLETE, WHAT TO DO
+//                    if (_currentBlob != nullptr) {
+//
+//                        //TODO ignore for now
+//                        //to be perfectly correct, we would need to merge it
+//                        //with its neighbors to calculate its size if necessary.
+////                        if(_currentBlob->isBackground() && _currentBlob->isToMerge()) {
+//                                //we would need to maintain a list of holes preferably
+////                            //_vAnalyse->insertBlob(_currentBlob);
+////                            _previousBlob = _currentBlob;
+////                            _currentBlob = nullptr;
+////                        }
+//
+//
+//
+//                        VLOG(5) << "hole size: " << _currentBlob->getCount();
+//                        //WE REMOVE SMALL HOLES AND MARK THEM AS FOREGROUND
+//                        if (_currentBlob->getCount() < MIN_HOLE_SIZE) {
+//                            for(auto it = _currentBlob->getRowCols().begin(); it != _currentBlob->getRowCols().end(); ++it ) {
+//                                auto row = it->first;
+//                                for(auto col : it->second) {
+//                                    auto xOffset = _view->getGlobalXOffset();
+//                                    auto yOffset = _view->getGlobalYOffset();
+//                                    unmarkAsVisited(row - yOffset,col - xOffset);
+//                                    _view->setPixel(row - yOffset,col - xOffset, _background + 1);
+//                                }
+//                            }
+//                            holesRemovedCount++;
+//                        }
+//
+//                    //TODO change but for now we delete every hole blob we create
+//                    //we need a MAX_HOLE_SIZE. if > then we know it is background. If in between we add to holes_to_merge
+//                    delete _currentBlob;
+//                    _currentBlob = nullptr;
+//                    }
+//
+//                    //Find the next blob to create
+//                    if (!visited(row, col) && getColor(row, col) == IS_BACKGROUND) {
+//
+//                        markAsVisited(row, col);
+//
+//                        //add pixel to a new blob
+//                        _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col,
+//                                                IS_BACKGROUND);
+//                        _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
+//                        //make sure we don't look at it again
+//
+//                        //look at its neighbors
+//                        if (_rank == 4) {
+//                            analyseNeighbour4(row, col, IS_BACKGROUND, true);
+//                        } else {
+//                            analyseNeighbour8(row, col, IS_BACKGROUND);
+//                        }
+//                    }
+//                }
+//            }
 
 
 
@@ -485,8 +485,6 @@ namespace egt {
             _previousBlob = nullptr;
             // Release the view memory
             view->releaseMemory();
-
-
 
 
 

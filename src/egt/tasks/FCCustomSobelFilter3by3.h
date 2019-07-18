@@ -43,9 +43,10 @@ namespace egt {
             auto viewHeight = view->getViewHeight();
             auto viewData = view->getData();
 
-            auto img4 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), (T*)viewData);
-            cv::imwrite(outputPath + "tileout" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img4);
-            img4.release();
+////FOR DEBUGGING
+//            auto img4 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), (T*)viewData);
+//            cv::imwrite(outputPath + "tileout" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img4);
+//            img4.release();
 
 //            printArray<T>("view",view->getData(),viewWidth,viewHeight);
 
@@ -94,10 +95,10 @@ namespace egt {
 
             std::copy_n(tileOut, viewHeight * viewWidth, view->getData());
 
-// FOR DEBUGGING
-            auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
-            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img5);
-            img5.release();
+//// FOR DEBUGGING
+//            auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
+//            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img5);
+//            img5.release();
 
             delete[] tileOut;
 
