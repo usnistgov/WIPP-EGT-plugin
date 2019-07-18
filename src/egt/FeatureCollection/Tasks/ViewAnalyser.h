@@ -315,7 +315,7 @@ namespace egt {
             _tileWidth = _view->getTileWidth();
             _vAnalyse = new ViewAnalyse();
             _toVisit.clear(); //clear queue that keeps track of neighbors to visit when flooding
-            _visited.flip(); //clear container that keeps track of all nodes to be visited in a pass through the image.
+            _visited.assign(_visited.size(), false); //clear container that keeps track of all nodes to be visited in a pass through the image.
             _currentBlob = nullptr;
             _previousBlob = nullptr;
 
@@ -553,10 +553,10 @@ namespace egt {
         Blob
                 *_previousBlob = nullptr;      ///< Current blob
 
-        std::vector<bool> _visited;
+        std::vector<bool> _visited{};
 
-        uint32_t objectsRemovedCount = 0;
-        uint32_t holesRemovedCount = 0;
+        uint32_t objectsRemovedCount{};
+        uint32_t holesRemovedCount{};
 
 
         SegmentationOptions *_options = nullptr;
