@@ -88,9 +88,9 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
 
         VLOG(1) << "merging " << this->_blobs->_blobs.size() << " blobs...";
 
-        for(auto blob: this->_blobs->_blobs){
-            VLOG(5) << *blob;
-        }
+//        for(auto blob: this->_blobs->_blobs){
+//            VLOG(5) << *blob;
+//        }
       _count = 0;
       merge();
 

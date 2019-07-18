@@ -70,6 +70,7 @@ namespace egt {
                     }
                 }
 
+                delete[] gradient;
 
                 VLOG(4) << "Nb of gradient pixels : " << imageWidth * imageHeight;
                 VLOG(4) << "Nb of gradient pixels with value of 0 : " << imageWidth * imageHeight - nonZeroGradient.size();
@@ -81,21 +82,16 @@ namespace egt {
                 //cast to double so we can handle integer values in gradient
                 double rescale = (double)NUM_HISTOGRAM_BINS / (maxValue - minValue);
                 double sum = 0;
-                for(auto k = 0; k < imageWidth * imageHeight; k++ ){
-                    //TODO DO WE NEED TO WORK WITH 0 VALUES? OR CAN WE USE DIRECTLY NON-ZEROS GRADIENTS?
-                    if(gradient[k] != 0.0) {
-
-
+                for(auto k = 0; k < nonZeroGradient.size(); k++ ){
                         //we round to closest integer
                         //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.
 //                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
-                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
+                        auto index = (uint32_t)((nonZeroGradient[k] - minValue) * rescale + 0.5);
 
                         assert(index >= 0 && index < NUM_HISTOGRAM_BINS + 1);
 
                         hist[index]++;
                         sum++;
-                    }
                 }
 
                 //TODO FOR DEBUG
@@ -238,9 +234,9 @@ namespace egt {
 
                 this->addResult(new Threshold<T>(threshold));
 
-                //clean up before the graph is destroyed.
-                delete[] gradient;
                 hist.clear();
+
+                nonZeroGradient.clear();
             }
 
 
@@ -278,9 +274,6 @@ namespace egt {
         ImageDepth imageDepth = ImageDepth::_8U;
 
 
-
-        //TODO REMOVE for now we match previous implementation and reconstruct the whole image gradient
-        //we could rather build the histogram on the fly, which on low resolution will save a tremendous amount of memory
         T* gradient;
 
         uint32_t counter = 0;

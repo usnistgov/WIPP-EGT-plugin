@@ -29,10 +29,10 @@ namespace egt {
 
     private:
 
-        uint32_t MIN_OBJECT_SIZE = 3000;
-        uint32_t MIN_HOLE_SIZE = 1000;
-//        uint32_t MIN_OBJECT_SIZE = 20;
-//        uint32_t MIN_HOLE_SIZE = 10;
+//        uint32_t MIN_OBJECT_SIZE = 3000;
+//        uint32_t MIN_HOLE_SIZE = 1000;
+        uint32_t MIN_OBJECT_SIZE = 20;
+        uint32_t MIN_HOLE_SIZE = 10;
 //        uint32_t MIN_OBJECT_SIZE = 2;
 //        uint32_t MIN_HOLE_SIZE = 1;
 
@@ -44,7 +44,7 @@ namespace egt {
         template<class T>
         T runThresholdFinder(std::string path, ImageDepth imageDepth) {
 
-            const size_t nbLoaderThreads = 2;
+            const size_t nbLoaderThreads = 1;
             const uint32_t concurrentTiles = 10;
             const uint32_t pyramidLevelToRequestforThreshold = 0;
             const uint32_t radiusForThreshold = 1;
@@ -94,7 +94,8 @@ namespace egt {
 
             runtime->waitForRuntime();
 //FOR DEBUGGING
-//                graph->writeDotToFile("colorGraph.xdot", DOTGEN_COLOR_COMP_TIME);
+            graph->writeDotToFile("thresholdGraph.xdot", DOTGEN_COLOR_COMP_TIME);
+
             delete runtime; //this will also delete fastImage and the TileLoader
 
             return threshold;
@@ -112,7 +113,7 @@ namespace egt {
 
                 auto begin = std::chrono::high_resolution_clock::now();
 
-                size_t nbLoaderThreads = 2;
+                size_t nbLoaderThreads = 1;
                 uint32_t concurrentTiles = 10;
 
                 auto beginThreshold = std::chrono::high_resolution_clock::now();
@@ -209,11 +210,14 @@ namespace egt {
                 // Wait for the analyse graph to finish processing tiles to make the FC
                 // available
                 segmentationRuntime->waitForRuntime();
+
+                //FOR DEBUGGING
+                segmentationGraph->writeDotToFile("SegmentationGraph.xdot", DOTGEN_COLOR_COMP_TIME);
+
                 delete (segmentationRuntime);
                 auto endSegmentation = std::chrono::high_resolution_clock::now();
 
-//FOR DEBUGGING
-//segmentationGraph->writeDotToFile("FeatureCollectionGraph.xdot", DOTGEN_COLOR_COMP_TIME);
+
 
 
 
