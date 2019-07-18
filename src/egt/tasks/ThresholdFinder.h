@@ -41,11 +41,8 @@ namespace egt {
 
         void executeTask(std::shared_ptr<ConvOutMemoryData<T>> data) override {
 
-            //TODO NO NEED TO COPY data. Just accumulate. Or maybe build the histogram on the fly.
-            //SAMPLING SHOULD BE GOOD ENOUGH? ANOTHER APPROACH IS TO MERGE A LIST FROM THE SOBEL OPERATION
             copyTile(data);
             data->getOutputdata()->releaseMemory();
-            //TODO when do we delete the ConvOutMemoryData object?
 
             counter++;
 
@@ -54,19 +51,6 @@ namespace egt {
                 VLOG(3) << "Determining Threshold..." ;
 
                 VLOG(4) << "we have run gradient on : " << totalTiles << " tiles.";
-
-//FOR DEBUGGING
-             //   printArray<T>("full gradient",gradient,imageWidth,imageHeight);
-
-                cv::Mat image2(imageHeight, imageWidth, convertToOpencvType(imageDepth), gradient);
-//                cv::imwrite(outputPath + "fullGradient.png", image2);
-//                cv::Mat out;
-
-////                image2.convertTo(out, CV_8U);
-//               cv::imwrite(outputPath + "fullGradient.tiff", out);
-                cv::imwrite(outputPath + "fullGradient.tiff", image2);
-                image2.release();
-////                out.release();
 
                 T minValue = std::numeric_limits<T>::max() , maxValue = std::numeric_limits<T>::min();
 
@@ -82,8 +66,6 @@ namespace egt {
 
                         minValue = gradient[k] < minValue ? gradient[k] : minValue;
                         maxValue = gradient[k] > maxValue ? gradient[k] : maxValue;
-//                        VLOG(1) << "min : " << minValue;
-//                        VLOG(1) << "max : " << maxValue;
                         nonZeroGradient.push_back(gradient[k]);
                     }
                 }
@@ -103,15 +85,11 @@ namespace egt {
                     //TODO DO WE NEED TO WORK WITH 0 VALUES? OR CAN WE USE DIRECTLY NON-ZEROS GRADIENTS?
                     if(gradient[k] != 0.0) {
 
-//                        VLOG(1) << gradient[k];
-//                        VLOG(1) << (gradient[k] - minValue) * rescale + 0.5;
 
                         //we round to closest integer
                         //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.
 //                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
                         auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
-
-//                        VLOG(1) << index;
 
                         assert(index >= 0 && index < NUM_HISTOGRAM_BINS + 1);
 
@@ -207,8 +185,6 @@ namespace egt {
                     }
                 }
 
-
-
                 VLOG(1) << "lower bound : " << (uint32_t)lowerBound;
                 VLOG(1) << "upper bound : " << (uint32_t)upperBound;
 
@@ -241,14 +217,17 @@ namespace egt {
                 percentileThreshold = (percentileThreshold > 100) ? 100 : percentileThreshold;
                 percentileThreshold = (percentileThreshold < 0) ? 0 : percentileThreshold;
 
-                VLOG(3) << "percentile of pixels threshold value : " << (uint32_t)percentileThreshold;
-
-                T threshold2 = percentileThreshold / rescale;
+                //TODO CHECK calculations are made in float so there is always a chance that this value vary slightly.
+                //rounding should avoid most problems but there always can be cases where this won't work.
+                VLOG(3) << "percentile of pixels threshold value : " << std::round(percentileThreshold);
 
                 //find the threshold pixel value.
                 //we get all non zero pixels and sort them in ascending order, the percentilePixelThreshold'th pixel has the
                 //intensity we will use for thresholding.
+                //TODO this is slow. It could be parallelized
+                VLOG(3) << "sorting all pixel values... ";
                 sort(nonZeroGradient.begin(), nonZeroGradient.end());
+
                 auto percentilePixelThreshold = percentileThreshold / 100 * nonZeroGradient.size();
 
                 assert(0 <= percentilePixelThreshold <= nonZeroGradient.size());
@@ -262,27 +241,6 @@ namespace egt {
                 //clean up before the graph is destroyed.
                 delete[] gradient;
                 hist.clear();
-
-//                uint32_t count;
-                //TODO remove for debug only
-                // apply the threshold to the gradient pixels (not just the nonzero ones)
-//                for (int k = 0; k < imageWidth * imageHeight; k++) {
-//                    if (gradient[k] >= threshold) {
-//                        count++;
-//                    }
-//                    gradient[k] = (gradient[k] >= threshold) ? 255 : 0;
-//
-//                }
-//
-//                egt::printArray<T>("mask",gradient,imageWidth,imageHeight);
-
-//                VLOG(1) << " number of pixel in foreground : " << count;
-
-//                cv::Mat image2(imageHeight, imageWidth, CV_32F, gradient);
-//                cv::imwrite(outputPath + "mask.png", image2);
-//                image2.release();
-
-
             }
 
 

@@ -1,0 +1,11 @@
+Different resolutions can be asked for.
+
+For a 16U image,
+Threshold computation is always the same if using 32F.
+With 16U, calculation of threshold loose precision and we might have small differences if numbers are rounded up or down.
+
+
+Determining Threshold :
+percentile might be derived from the histogram (so less data need to be stored)
+but we then we sort all the pixels to figure out the pixel intensity at which we can cut off, that is extremely inefficient
+since we need to sort billions of pixels in ascending order, and stored the result.

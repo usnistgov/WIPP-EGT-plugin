@@ -29,10 +29,10 @@ namespace egt {
 
     private:
 
-//        uint32_t MIN_OBJECT_SIZE = 3000;
-//        uint32_t MIN_HOLE_SIZE = 3000;
-        uint32_t MIN_OBJECT_SIZE = 20;
-        uint32_t MIN_HOLE_SIZE = 10;
+        uint32_t MIN_OBJECT_SIZE = 3000;
+        uint32_t MIN_HOLE_SIZE = 1000;
+//        uint32_t MIN_OBJECT_SIZE = 20;
+//        uint32_t MIN_HOLE_SIZE = 10;
 //        uint32_t MIN_OBJECT_SIZE = 2;
 //        uint32_t MIN_HOLE_SIZE = 1;
 
@@ -115,15 +115,18 @@ namespace egt {
                 size_t nbLoaderThreads = 2;
                 uint32_t concurrentTiles = 10;
 
+                auto beginThreshold = std::chrono::high_resolution_clock::now();
                 T threshold = runThresholdFinder<T>(path, imageDepth);
 //              T threshold = 123; //the threshold value to determine
-
+                auto endThreshold = std::chrono::high_resolution_clock::now();
 
 
 
                 //----------------------------------
                 //the second graph segment the image
                 //----------------------------------
+
+                auto beginSegmentation = std::chrono::high_resolution_clock::now();
                 auto options = new SegmentationOptions();
                 options->setMinHoleSize(MIN_HOLE_SIZE);
                 options->setMinObjectSize(MIN_OBJECT_SIZE);
@@ -206,6 +209,8 @@ namespace egt {
                 // Wait for the analyse graph to finish processing tiles to make the FC
                 // available
                 segmentationRuntime->waitForRuntime();
+                delete (segmentationRuntime);
+                auto endSegmentation = std::chrono::high_resolution_clock::now();
 
 //FOR DEBUGGING
 //segmentationGraph->writeDotToFile("FeatureCollectionGraph.xdot", DOTGEN_COLOR_COMP_TIME);
@@ -213,17 +218,23 @@ namespace egt {
 
 
                 VLOG(1) << "generating a segmentation mask";
+                auto beginFC = std::chrono::high_resolution_clock::now();
                 auto fc = new FeatureCollection();
                 fc->createFCFromListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
                 fc->createBlackWhiteMask("output.tiff", tileWidthAtSegmentationLevel);
-
                 delete fc;
-                // Delete HTGS graphs
-                delete (segmentationRuntime);
+                auto endFC = std::chrono::high_resolution_clock::now();
+
                 delete options;
 
                 auto end = std::chrono::high_resolution_clock::now();
-                VLOG(1) << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
+
+
+                VLOG(1) << "Execution time: ";
+                VLOG(1) << "    Threshold Detection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endThreshold - beginThreshold).count() << " mS";
+                VLOG(1) << "    Segmentation: " << std::chrono::duration_cast<std::chrono::milliseconds>(endSegmentation - beginSegmentation).count() << " mS";
+                VLOG(1) << "    Feature Collection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endFC - beginFC).count() << " mS";
+                VLOG(1) << "    Total: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
 
 
 
