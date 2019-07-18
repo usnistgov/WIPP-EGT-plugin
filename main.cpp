@@ -17,7 +17,7 @@ int main() {
 //    std::string path = "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif";
 
 
-    ImageDepth depth = egt::parseImageDepth("16U");
+    ImageDepth depth = egt::parseImageDepth("32F");
 
     auto egt = new egt::EGT();
 

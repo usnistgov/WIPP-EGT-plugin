@@ -61,6 +61,8 @@ namespace egt {
 
             //Emulate Sobel as implemented in ImageJ
             //[description](https://imagejdocu.tudor.lu/faq/technical/what_is_the_algorithm_used_in_find_edges)
+            // IMPORTANT NOTE : viewHeight/viewWidth are always the same, while tileHeight/tileWidth can be different at
+            // the borders, so we use tileHeight/tileWidth + 2 * radius to do less work.
             for (auto row = startRow; row < tileHeight + 2 * radius - startRow; ++row) {
                 for (auto col = startCol; col < tileWidth + 2 * radius - startCol; ++col) {
                     auto p1 = viewData[(row-1) * viewWidth + (col-1)];
@@ -78,16 +80,19 @@ namespace egt {
 
                     auto index = row * viewWidth + col;
 
+                    //would be true if we wrote only the tile but we write it inside the whole view
+//                    assert(index >= (tileWidth + 2*radius) * startRow + startCol);
+//                    assert(index <= ((tileWidth + 2*radius) - startRow) * (tileHeight + 2*radius) - startCol );
+                    assert(index >= viewWidth * startRow + startCol);
+                    assert(index <= (viewWidth - startRow) * viewHeight - startCol );
+
+
                     tileOut[index] = (T)sum;
 
                 }
             }
 
             std::copy_n(tileOut, viewHeight * viewWidth, view->getData());
-
-//            for(auto row = startRow; row < tileHeight + startRow; ++row){
-//                std::copy_n(tileOut + row * tileWidth, tileWidth, view->getData() + (startRow + row ) * viewWidth + startCol);
-//            }
 
 // FOR DEBUGGING
             auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
