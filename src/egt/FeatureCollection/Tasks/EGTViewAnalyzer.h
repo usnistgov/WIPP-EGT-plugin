@@ -45,6 +45,7 @@
 #include <egt/api/SegmentationOptions.h>
 #include <egt/FeatureCollection/Data/ViewAnalyse.h>
 #include <egt/FeatureCollection/Data/ViewOrViewAnalyse.h>
+#include <egt/api/DataTypes.h>
 
 using namespace fc;
 
@@ -120,6 +121,16 @@ namespace egt {
             run(BACKGROUND);
             run(FOREGROUND);
 
+            std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+            auto img5 = cv::Mat(_view->getViewHeight(),_view->getViewWidth(), convertToOpencvType(ImageDepth::_16U), _view->getData());
+            cv::Mat dst;
+            img5.convertTo(dst,CV_8U);
+            cv::imwrite(outputPath + "mask-" + std::to_string(_view->getRow()) + "-" + std::to_string(_view->getCol())  + ".png" , dst);
+
+            printArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
+
+            img5.release();
+
             // Release the view memory
             view->releaseMemory();
 
@@ -180,8 +191,6 @@ namespace egt {
             if (_currentBlob != nullptr) {
                 bloblCompleted(blobColor);
             }
-
-
        }
 
         void expandBlob(Color blobColor){
@@ -190,6 +199,11 @@ namespace egt {
             //mark pixel as visited so we don't look at it again
             markAsVisited(neighbourCoord.first,
                           neighbourCoord.second);
+
+            if(_options->MASK_ONLY){
+                auto maskValue = (getColor(neighbourCoord.first, neighbourCoord.second) == FOREGROUND) ? 255 : 0;
+                _view->setPixel(neighbourCoord.first,neighbourCoord.second, maskValue);
+            }
 
             _currentBlob->addPixel(
                     _view->getGlobalYOffset() + neighbourCoord.first,
@@ -217,8 +231,14 @@ namespace egt {
                             for (auto pCol : it->second) {
                                 auto xOffset = _view->getGlobalXOffset();
                                 auto yOffset = _view->getGlobalYOffset();
-                                markAsUnvisited(pRow - yOffset, pCol - xOffset);
-                                _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
+
+                                if(_options->MASK_ONLY){
+                                    _view->setPixel(pRow - yOffset, pCol - xOffset,255);
+                                }
+                                else {
+                                    markAsUnvisited(pRow - yOffset, pCol - xOffset);
+                                    _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
+                                }
                             }
                         }
                         delete _currentBlob;
@@ -239,6 +259,19 @@ namespace egt {
                 else {
                     //WE HAVE A SMALL OBJECT THAT DOES NOT NEED MERGE, WE REMOVE IT
                     if (_currentBlob->getCount() < _options->MIN_OBJECT_SIZE && !_currentBlob->isToMerge()) {
+
+                        if(_options->MASK_ONLY){
+                            for (auto it = _currentBlob->getRowCols().begin();
+                                 it != _currentBlob->getRowCols().end(); ++it) {
+                                auto pRow = it->first;
+                                for (auto pCol : it->second) {
+                                    auto xOffset = _view->getGlobalXOffset();
+                                    auto yOffset = _view->getGlobalYOffset();
+                                    _view->setPixel(pRow - yOffset, pCol - xOffset,0);
+                                }
+                            }
+                        }
+
                         delete _currentBlob;
                         objectRemovedCount++;
                     }

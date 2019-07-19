@@ -16,6 +16,8 @@ public:
     uint32_t MIN_HOLE_SIZE{};
     uint32_t MAX_HOLE_SIZE{};
     uint32_t MIN_OBJECT_SIZE{};
+
+    bool MASK_ONLY = false;
 };
 
 #endif //NEWEGT_SEGMENTATIONOPTIONS_H

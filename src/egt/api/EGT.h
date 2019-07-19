@@ -135,6 +135,8 @@ namespace egt {
                 segmentationOptions->MIN_OBJECT_SIZE = MIN_OBJECT_SIZE;
                 segmentationOptions->MAX_HOLE_SIZE = MAX_HOLE_SIZE;
 
+                segmentationOptions->MASK_ONLY = true;
+
 
                 htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
                 htgs::TaskGraphRuntime *segmentationRuntime;
