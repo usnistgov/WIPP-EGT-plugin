@@ -232,11 +232,12 @@ namespace egt {
                                 auto xOffset = _view->getGlobalXOffset();
                                 auto yOffset = _view->getGlobalYOffset();
 
+                                markAsUnvisited(pRow - yOffset, pCol - xOffset);
+
                                 if(_options->MASK_ONLY){
                                     _view->setPixel(pRow - yOffset, pCol - xOffset,255);
                                 }
                                 else {
-                                    markAsUnvisited(pRow - yOffset, pCol - xOffset);
                                     _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
                                 }
                             }

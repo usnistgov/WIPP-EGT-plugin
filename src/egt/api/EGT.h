@@ -135,7 +135,7 @@ namespace egt {
                 segmentationOptions->MIN_OBJECT_SIZE = MIN_OBJECT_SIZE;
                 segmentationOptions->MAX_HOLE_SIZE = MAX_HOLE_SIZE;
 
-                segmentationOptions->MASK_ONLY = true;
+                segmentationOptions->MASK_ONLY = false;
 
 
                 htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
@@ -168,7 +168,7 @@ namespace egt {
                     4,
                     threshold,
                     segmentationOptions);
-                auto filter = new ViewAnalyseFilter<T>(concurrentTiles);
+                auto labelingFilter = new ViewAnalyseFilter<T>(concurrentTiles);
                 auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
                                                imageWidthAtSegmentationLevel,
                                                nbTiles);
@@ -176,8 +176,8 @@ namespace egt {
                 segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
                 segmentationGraph->addEdge(fastImage2,sobelFilter2);
                 segmentationGraph->addEdge(sobelFilter2,viewSegmentation);
-                segmentationGraph->addEdge(viewSegmentation, filter);
-                segmentationGraph->addEdge(filter, merge);
+                segmentationGraph->addEdge(viewSegmentation, labelingFilter);
+                segmentationGraph->addEdge(labelingFilter, merge);
                 segmentationGraph->addGraphProducerTask(merge);
 
                 htgs::TaskGraphSignalHandler::registerTaskGraph(segmentationGraph);
@@ -224,10 +224,6 @@ namespace egt {
 
                 delete (segmentationRuntime);
                 auto endSegmentation = std::chrono::high_resolution_clock::now();
-
-
-
-
 
                 VLOG(1) << "generating a segmentation mask";
                 auto beginFC = std::chrono::high_resolution_clock::now();
