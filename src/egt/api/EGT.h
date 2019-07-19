@@ -12,6 +12,7 @@
 #include <egt/FeatureCollection/Tasks/EGTViewAnalyzer.h>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
 #include <egt/FeatureCollection/Tasks/FeatureCollection.h>
+#include <egt/FeatureCollection/Tasks/ViewAnalyseFilter.h>
 #include "DataTypes.h"
 #include <egt/tasks/ThresholdFinder.h>
 #include <egt/tasks/SobelFilterOpenCV.h>
@@ -165,6 +166,7 @@ namespace egt {
                     4,
                     threshold,
                     segmentationOptions);
+                auto filter = new ViewAnalyseFilter<T>(concurrentTiles);
                 auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
                                                imageWidthAtSegmentationLevel,
                                                nbTiles);
@@ -172,7 +174,8 @@ namespace egt {
                 segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
                 segmentationGraph->addEdge(fastImage2,sobelFilter2);
                 segmentationGraph->addEdge(sobelFilter2,viewSegmentation);
-                segmentationGraph->addEdge(viewSegmentation, merge);
+                segmentationGraph->addEdge(viewSegmentation, filter);
+                segmentationGraph->addEdge(filter, merge);
                 segmentationGraph->addGraphProducerTask(merge);
 
                 htgs::TaskGraphSignalHandler::registerTaskGraph(segmentationGraph);

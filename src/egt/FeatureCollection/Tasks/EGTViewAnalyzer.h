@@ -44,6 +44,7 @@
 #include <egt/utils/Utils.h>
 #include <egt/api/SegmentationOptions.h>
 #include <egt/FeatureCollection/Data/ViewAnalyse.h>
+#include <egt/FeatureCollection/Data/ViewOrViewAnalyse.h>
 
 using namespace fc;
 
@@ -65,7 +66,7 @@ namespace egt {
   **/
     template<class UserType>
     class EGTViewAnalyzer : public htgs::ITask<htgs::MemoryData<fi::View<UserType>>,
-            ViewAnalyse> {
+            ViewOrViewAnalyse<UserType>> {
 
     public:
 
@@ -80,7 +81,7 @@ namespace egt {
                 const UserType background,
                 SegmentationOptions* options
                 )
-                : ITask<htgs::MemoryData<fi::View<UserType>>, ViewAnalyse>(numThreads),
+                : ITask<htgs::MemoryData<fi::View<UserType>>, ViewOrViewAnalyse<UserType>>(numThreads),
                   _imageHeight(imageHeight),
                   _imageWidth(imageWidth),
                   _tileHeight(tileHeight),
@@ -128,7 +129,7 @@ namespace egt {
             VLOG(3) << "objects to merge: " << _vAnalyse->getBlobs().size();
 
             // Add the analyse
-            this->addResult(_vAnalyse);
+            this->addResult(new ViewOrViewAnalyse<UserType>(_vAnalyse));
         }
 
         /// \brief View analyser copy function
