@@ -43,7 +43,7 @@
 #include<egt/FeatureCollection/Data/Blob.h>
 #include <egt/FeatureCollection/Data/ViewAnalyse.h>
 #include <egt/utils/Utils.h>
-#include <egt/FeatureCollection/Tasks/SegmentationOptions.h>
+#include <egt/api/SegmentationOptions.h>
 
 using namespace fc;
 
@@ -93,7 +93,6 @@ namespace egt {
                   _rank(rank),
                   _vAnalyse(nullptr) {
             _visited = std::vector<bool>((unsigned long)(tileWidth * tileHeight));
-            _visited.flip();
 
         }
 
@@ -206,7 +205,7 @@ namespace egt {
                 // Add blob to merge list if tile right pixel has the same value than the view pixel on its right (continuity)
                 // test that we are also not at the edge of the full image.
                 if (col + 1 == _tileWidth && col + _view->getGlobalXOffset() + 1 != _imageWidth) {
-                    if (sameColor(row + 1, col, color)) {
+                    if (sameColor(row, col + 1, color)) {
                         _vAnalyse->addToMerge(_currentBlob,
                                               std::pair<int32_t, int32_t>(
                                                       row + _view->getGlobalYOffset(),
@@ -321,8 +320,8 @@ namespace egt {
             _previousBlob = nullptr;
 
 
-            auto MIN_HOLE_SIZE = _options->getMinHoleSize();
-            auto MIN_OBJECT_SIZE = _options->getMinObjectSize();
+            auto MIN_HOLE_SIZE = _options->MIN_HOLE_SIZE;
+            auto MIN_OBJECT_SIZE = _options->MAX_HOLE_SIZE;
 
 //            printArray<uint16_t >("tile_" + std::to_string(_view->getGlobalXOffset()) + "_" + std::to_string(_view->getGlobalYOffset()) ,(uint16_t *)_view->getData(),_view->getViewWidth(),_view->getViewHeight());
 

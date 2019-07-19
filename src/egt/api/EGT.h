@@ -9,7 +9,7 @@
 #include <string>
 #include <egt/loaders/PyramidTiledTiffLoader.h>
 #include <FastImage/api/FastImage.h>
-#include <egt/FeatureCollection/Tasks/ViewAnalyser.h>
+#include <egt/FeatureCollection/Tasks/EGTViewAnalyzer.h>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
 #include <egt/FeatureCollection/Tasks/FeatureCollection.h>
 #include "DataTypes.h"
@@ -31,6 +31,7 @@ namespace egt {
 
 //        uint32_t MIN_OBJECT_SIZE = 3000;
 //        uint32_t MIN_HOLE_SIZE = 1000;
+        uint32_t MAX_HOLE_SIZE = 3000;
         uint32_t MIN_OBJECT_SIZE = 20;
         uint32_t MIN_HOLE_SIZE = 10;
 //        uint32_t MIN_OBJECT_SIZE = 2;
@@ -76,8 +77,8 @@ namespace egt {
             graph->addMemoryManagerEdge("gradientTile",sobelFilter, new TileAllocator<T>(tileWidth , tileHeight),concurrentTiles, htgs::MMType::Dynamic);
 
 //FOR DEBUGGING
-//                htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
-//                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
+                htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
+                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
 
             auto *runtime = new htgs::TaskGraphRuntime(graph);
             runtime->executeRuntime();
@@ -128,11 +129,10 @@ namespace egt {
                 //----------------------------------
 
                 auto beginSegmentation = std::chrono::high_resolution_clock::now();
-                auto options = new SegmentationOptions();
-                options->setMinHoleSize(MIN_HOLE_SIZE);
-                options->setMinObjectSize(MIN_OBJECT_SIZE);
-
-                VLOG(3) << options;
+                auto segmentationOptions = new SegmentationOptions();
+                segmentationOptions->MIN_HOLE_SIZE = MIN_HOLE_SIZE;
+                segmentationOptions->MIN_OBJECT_SIZE = MIN_OBJECT_SIZE;
+                segmentationOptions->MAX_HOLE_SIZE = MAX_HOLE_SIZE;
 
 
                 htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
@@ -149,22 +149,22 @@ namespace egt {
                 auto fastImage2 = fi2->configureAndMoveToTaskGraphTask("Fast Image 2");
                 uint32_t imageHeightAtSegmentationLevel = fi2->getImageHeight(pyramidLevelToRequestForSegmentation);
                 uint32_t imageWidthAtSegmentationLevel = fi2->getImageWidth(pyramidLevelToRequestForSegmentation);
-                uint32_t tileHeigthAtSegmentationLevel = fi2->getTileHeight(pyramidLevelToRequestForSegmentation);
-                uint32_t tileWidthAtSegmentationLevel = fi2->getTileWidth(pyramidLevelToRequestForSegmentation);
+                int32_t tileHeigthAtSegmentationLevel = fi2->getTileHeight(pyramidLevelToRequestForSegmentation);
+                int32_t tileWidthAtSegmentationLevel = fi2->getTileWidth(pyramidLevelToRequestForSegmentation);
                 uint32_t nbTiles = fi2->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                 fi2->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
 
 //                auto sobelFilter2 = new FCSobelFilterOpenCV<T>(concurrentTiles, imageDepth);
                 auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(concurrentTiles,imageDepth,1,1);
 
-                auto viewSegmentation = new egt::ViewAnalyser<T>(concurrentTiles,
+                auto viewSegmentation = new egt::EGTViewAnalyzer<T>(concurrentTiles,
                     imageHeightAtSegmentationLevel,
                     imageWidthAtSegmentationLevel,
-                    static_cast<int32_t>(tileHeigthAtSegmentationLevel),
-                    static_cast<int32_t>(tileWidthAtSegmentationLevel),
+                    tileHeigthAtSegmentationLevel,
+                    tileWidthAtSegmentationLevel,
                     4,
-                    threshold);
-                viewSegmentation->setSegmentationOptions(options);
+                    threshold,
+                    segmentationOptions);
                 auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
                                                imageWidthAtSegmentationLevel,
                                                nbTiles);
@@ -174,6 +174,9 @@ namespace egt {
                 segmentationGraph->addEdge(sobelFilter2,viewSegmentation);
                 segmentationGraph->addEdge(viewSegmentation, merge);
                 segmentationGraph->addGraphProducerTask(merge);
+
+                htgs::TaskGraphSignalHandler::registerTaskGraph(segmentationGraph);
+                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
 
                 segmentationRuntime = new htgs::TaskGraphRuntime(segmentationGraph);
                 segmentationRuntime->executeRuntime();
@@ -229,7 +232,7 @@ namespace egt {
                 delete fc;
                 auto endFC = std::chrono::high_resolution_clock::now();
 
-                delete options;
+                delete segmentationOptions;
 
                 auto end = std::chrono::high_resolution_clock::now();
 
