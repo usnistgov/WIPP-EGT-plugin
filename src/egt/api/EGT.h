@@ -45,7 +45,7 @@ namespace egt {
         T runThresholdFinder(std::string path, ImageDepth imageDepth) {
 
             const size_t nbLoaderThreads = 1;
-            const uint32_t concurrentTiles = 10;
+            const uint32_t concurrentTiles = 1;
             const uint32_t pyramidLevelToRequestforThreshold = 0;
             const uint32_t radiusForThreshold = 1;
 
@@ -114,7 +114,7 @@ namespace egt {
                 auto begin = std::chrono::high_resolution_clock::now();
 
                 size_t nbLoaderThreads = 1;
-                uint32_t concurrentTiles = 10;
+                uint32_t concurrentTiles = 1;
 
                 auto beginThreshold = std::chrono::high_resolution_clock::now();
                 T threshold = runThresholdFinder<T>(path, imageDepth);

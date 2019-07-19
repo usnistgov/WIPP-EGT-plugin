@@ -98,7 +98,7 @@ namespace egt {
         }
 
         void setSegmentationOptions(SegmentationOptions *options) {
-            ViewAnalyser::_options = options;
+            _options = options;
         }
 
 
@@ -310,6 +310,7 @@ namespace egt {
         /// \param view View given by the FI
         void executeTask(std::shared_ptr<MemoryData<fi::View<UserType>>> view)
         override {
+
             _view = view->get();
             _tileHeight = _view->getTileHeight();
             _tileWidth = _view->getTileWidth();
