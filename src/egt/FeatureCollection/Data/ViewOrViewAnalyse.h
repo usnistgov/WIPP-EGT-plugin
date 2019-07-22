@@ -19,10 +19,10 @@ namespace egt {
 
         explicit ViewOrViewAnalyse(fc::ViewAnalyse *viewAnalyse) : viewAnalyse(viewAnalyse) {}
 
-        explicit ViewOrViewAnalyse(htgs::MemoryData<fi::View<T>> *view) : view(view) {}
+        explicit ViewOrViewAnalyse(std::shared_ptr<MemoryData<fi::View<T>>> view) : view(view) {}
 
 
-        htgs::MemoryData<fi::View<T>>* getView() {
+        std::shared_ptr<MemoryData<fi::View<T>>> getView() {
             return view;
         }
 
@@ -32,7 +32,7 @@ namespace egt {
 
     private:
         fc::ViewAnalyse* viewAnalyse = nullptr;
-        htgs::MemoryData<fi::View<T>>* view = nullptr;
+        std::shared_ptr<MemoryData<fi::View<T>>> view = nullptr;
 
     };
 

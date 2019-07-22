@@ -21,6 +21,8 @@
 #include <egt/tasks/CustomSobelFilter3by3.h>
 #include <egt/tasks/FCCustomSobelFilter3by3.h>
 #include <egt/memory/TileAllocator.h>
+#include <egt/FeatureCollection/Tasks/ViewFilter.h>
+#include <egt/tasks/TiffTileWriter.h>
 
 
 namespace egt {
@@ -30,14 +32,16 @@ namespace egt {
 
     private:
 
-//        uint32_t MIN_OBJECT_SIZE = 3000;
-//        uint32_t MIN_HOLE_SIZE = 1000;
-        uint32_t MAX_HOLE_SIZE = 3000;
-        uint32_t MIN_OBJECT_SIZE = 20;
-        uint32_t MIN_HOLE_SIZE = 10;
+        uint32_t MAX_HOLE_SIZE = 10000;
+        uint32_t MIN_OBJECT_SIZE = 3000;
+        uint32_t MIN_HOLE_SIZE = 1000;
+//        uint32_t MAX_HOLE_SIZE = 3000;
+//        uint32_t MIN_OBJECT_SIZE = 20;
+//        uint32_t MIN_HOLE_SIZE = 10;
 //        uint32_t MIN_OBJECT_SIZE = 2;
 //        uint32_t MIN_HOLE_SIZE = 1;
 
+        std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
 
     public:
         /// ----------------------------------
@@ -46,8 +50,8 @@ namespace egt {
         template<class T>
         T runThresholdFinder(std::string path, ImageDepth imageDepth) {
 
-            const size_t nbLoaderThreads = 1;
-            const uint32_t concurrentTiles = 1;
+            const size_t nbLoaderThreads = 2;
+            const uint32_t concurrentTiles = 10;
             const uint32_t pyramidLevelToRequestforThreshold = 0;
             const uint32_t radiusForThreshold = 1;
 
@@ -135,10 +139,10 @@ namespace egt {
                 segmentationOptions->MIN_OBJECT_SIZE = MIN_OBJECT_SIZE;
                 segmentationOptions->MAX_HOLE_SIZE = MAX_HOLE_SIZE;
 
-                segmentationOptions->MASK_ONLY = false;
+                segmentationOptions->MASK_ONLY = true;
 
-
-                htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
+            htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, VoidData> *segmentationGraph;
+//                htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
                 htgs::TaskGraphRuntime *segmentationRuntime;
 
                 uint32_t pyramidLevelToRequestForSegmentation = 0;
@@ -168,53 +172,65 @@ namespace egt {
                     4,
                     threshold,
                     segmentationOptions);
-                auto labelingFilter = new ViewAnalyseFilter<T>(concurrentTiles);
+//              auto labelingFilter = new ViewAnalyseFilter<T>(concurrentTiles);
+                auto maskFilter = new ViewFilter<T>(concurrentTiles);
                 auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
                                                imageWidthAtSegmentationLevel,
                                                nbTiles);
+                auto writeMask = new TiffTileWriter<T>(
+                        1,
+                        imageHeightAtSegmentationLevel,
+                        imageWidthAtSegmentationLevel,
+                        (uint32_t)tileHeigthAtSegmentationLevel,
+                        outputPath + "mask.tif"
+                        );
 
-                segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
+            segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, VoidData>;
+//                segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
                 segmentationGraph->addEdge(fastImage2,sobelFilter2);
                 segmentationGraph->addEdge(sobelFilter2,viewSegmentation);
-                segmentationGraph->addEdge(viewSegmentation, labelingFilter);
-                segmentationGraph->addEdge(labelingFilter, merge);
-                segmentationGraph->addGraphProducerTask(merge);
+  //              segmentationGraph->addEdge(viewSegmentation, labelingFilter);
+//                segmentationGraph->addEdge(labelingFilter, merge);
+                segmentationGraph->addEdge(viewSegmentation, maskFilter);
+                segmentationGraph->addEdge(maskFilter,writeMask);
 
-                htgs::TaskGraphSignalHandler::registerTaskGraph(segmentationGraph);
-                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
-
+//                segmentationGraph->addGraphProducerTask(merge);
+//
+//                htgs::TaskGraphSignalHandler::registerTaskGraph(segmentationGraph);
+//                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
+//
                 segmentationRuntime = new htgs::TaskGraphRuntime(segmentationGraph);
                 segmentationRuntime->executeRuntime();
                 fi2->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
                 segmentationGraph->finishedProducingData();
-
-                //we only generate one output, the list of all objects
-                auto blob = segmentationGraph->consumeData();
-                if (blob != nullptr) {
-                        auto listblob = blob->_blobs;
-
-                        uint32_t nbBlobsTooSmall = 0;
-
-                        auto originalNbOfBlobs = blob->_blobs.size();
-
-
-                        auto i = blob->_blobs.begin();
-                        while (i != blob->_blobs.end()) {
-                                //We removed objects that are still too small after the merge occured.
-                                if((*i)->isForeground() && (*i)->getCount() < this->MIN_OBJECT_SIZE){
-                                        nbBlobsTooSmall++;
-                                        i = blob->_blobs.erase(i);
-                                }
-                                else {
-                                        i++;
-                                }
-                        }
-
-                        auto nbBlobs = blob->_blobs.size();
-                        VLOG(3) << "original nb of blobs : " << originalNbOfBlobs;
-                        VLOG(3) << "nb of small objects that have been removed : " << nbBlobsTooSmall;
-                        VLOG(1) << "total nb of objects: " <<nbBlobs;
-                }
+//
+//                //we only generate one output, the list of all objects
+//                auto blob = segmentationGraph->consumeData();
+//                if (blob != nullptr) {
+//                        auto listblob = blob->_blobs;
+//
+//                        uint32_t nbBlobsTooSmall = 0;
+//
+//                        auto originalNbOfBlobs = blob->_blobs.size();
+//
+//
+//                        auto i = blob->_blobs.begin();
+//                        while (i != blob->_blobs.end()) {
+//                                //We removed objects that are still too small after the merge occured.
+//                                if((*i)->isForeground() && (*i)->getCount() < this->MIN_OBJECT_SIZE){
+//                                        nbBlobsTooSmall++;
+//                                        i = blob->_blobs.erase(i);
+//                                }
+//                                else {
+//                                        i++;
+//                                }
+//                        }
+//
+//                        auto nbBlobs = blob->_blobs.size();
+//                        VLOG(3) << "original nb of blobs : " << originalNbOfBlobs;
+//                        VLOG(3) << "nb of small objects that have been removed : " << nbBlobsTooSmall;
+//                        VLOG(1) << "total nb of objects: " <<nbBlobs;
+//                }
                 // Wait for the analyse graph to finish processing tiles to make the FC
                 // available
                 segmentationRuntime->waitForRuntime();
@@ -225,13 +241,13 @@ namespace egt {
                 delete (segmentationRuntime);
                 auto endSegmentation = std::chrono::high_resolution_clock::now();
 
-                VLOG(1) << "generating a segmentation mask";
-                auto beginFC = std::chrono::high_resolution_clock::now();
-                auto fc = new FeatureCollection();
-                fc->createFCFromListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
-                fc->createBlackWhiteMask("output.tiff", tileWidthAtSegmentationLevel);
-                delete fc;
-                auto endFC = std::chrono::high_resolution_clock::now();
+//                VLOG(1) << "generating a segmentation mask";
+//                auto beginFC = std::chrono::high_resolution_clock::now();
+//                auto fc = new FeatureCollection();
+//                fc->createFCFromListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
+//                fc->createBlackWhiteMask("output.tiff", tileWidthAtSegmentationLevel);
+//                delete fc;
+//                auto endFC = std::chrono::high_resolution_clock::now();
 
                 delete segmentationOptions;
 
@@ -241,7 +257,7 @@ namespace egt {
                 VLOG(1) << "Execution time: ";
                 VLOG(1) << "    Threshold Detection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endThreshold - beginThreshold).count() << " mS";
                 VLOG(1) << "    Segmentation: " << std::chrono::duration_cast<std::chrono::milliseconds>(endSegmentation - beginSegmentation).count() << " mS";
-                VLOG(1) << "    Feature Collection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endFC - beginFC).count() << " mS";
+//                VLOG(1) << "    Feature Collection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endFC - beginFC).count() << " mS";
                 VLOG(1) << "    Total: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
 
 

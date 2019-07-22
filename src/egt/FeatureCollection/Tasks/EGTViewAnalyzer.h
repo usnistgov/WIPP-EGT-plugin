@@ -121,26 +121,36 @@ namespace egt {
             run(BACKGROUND);
             run(FOREGROUND);
 
-            std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
-            auto img5 = cv::Mat(_view->getViewHeight(),_view->getViewWidth(), convertToOpencvType(ImageDepth::_16U), _view->getData());
-            cv::Mat dst;
-            img5.convertTo(dst,CV_8U);
-            cv::imwrite(outputPath + "mask-" + std::to_string(_view->getRow()) + "-" + std::to_string(_view->getCol())  + ".png" , dst);
+//            std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+//            auto img5 = cv::Mat(_view->getViewHeight(),_view->getViewWidth(), convertToOpencvType(ImageDepth::_16U), _view->getData());
+//            cv::Mat dst;
+//            img5.convertTo(dst,CV_8U);
+//            cv::imwrite(outputPath + "mask-" + std::to_string(_view->getRow()) + "-" + std::to_string(_view->getCol())  + ".png" , dst);
+//
+//            printArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
+//
+//            img5.release();
 
-            printArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
+            if(_options->MASK_ONLY) {
+                this->addResult(new ViewOrViewAnalyse<UserType>(view));
+                VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
+                VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
+                VLOG(3) << "objects removed because too small: " << objectRemovedCount;
+            }
 
-            img5.release();
+            else {
 
-            // Release the view memory
-            view->releaseMemory();
+                VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
+                VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
+                VLOG(3) << "objects removed because too small: " << objectRemovedCount;
+                VLOG(3) << "objects to merge: " << _vAnalyse->getBlobs().size();
 
-            VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
-            VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
-            VLOG(3) << "objects removed because too small: " << objectRemovedCount;
-            VLOG(3) << "objects to merge: " << _vAnalyse->getBlobs().size();
 
-            // Add the analyse
-            this->addResult(new ViewOrViewAnalyse<UserType>(_vAnalyse));
+                view->releaseMemory();
+                // Add the analyse
+                this->addResult(new ViewOrViewAnalyse<UserType>(_vAnalyse));
+            }
+
         }
 
         /// \brief View analyser copy function

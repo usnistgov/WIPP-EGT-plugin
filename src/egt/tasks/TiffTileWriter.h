@@ -28,7 +28,8 @@ namespace egt {
                 TIFFSetField(tif, TIFFTAG_IMAGELENGTH, imageHeight);
                 TIFFSetField(tif, TIFFTAG_TILELENGTH, tileSize);
                 TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileSize);
-                TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8 * sizeof(UserType));
+                //TODO writes only 8bits image, should be a conversion step
+                TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8 );
                 TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
                 TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
                 TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
@@ -42,19 +43,33 @@ namespace egt {
 
         void executeTask(std::shared_ptr<htgs::MemoryData<fi::View<UserType>>> data) override {
 
-            fi::View<UserType> view = data->get();
+            fi::View<UserType> *view = data->get();
 
+            auto *tile = new int8_t[_tileSize * _tileSize]();
 
+            for( auto row = 0 ; row < _tileSize ; row++){
+                std::copy_n(view->getPointerTile() + row * view->getViewWidth(),_tileSize, tile + row * _tileSize);
+            }
 
             TIFFWriteTile(tif,
-                          (tdata_t)view.getData(),
-                          view.getCol() * _tileSize,
-                          view.getRow() * _tileSize,
+                          (tdata_t)tile,
+                          view->getCol() * _tileSize,
+                          view->getRow() * _tileSize,
                           0,
                           0);
 
+            delete tile;
             data->releaseMemory();
         }
+
+
+        /// \brief Close the tiff file
+        void shutdown() override {
+            TIFFClose(tif);
+        }
+
+
+
 
         htgs::ITask <htgs::MemoryData<fi::View<UserType>>, htgs::VoidData> *copy() override {
             return new TiffTileWriter(this->getNumThreads(), _imageHeight, _imageWidth, _tileSize, _outputPath);
@@ -63,7 +78,7 @@ namespace egt {
         TIFF *tif;
         uint32_t _imageHeight;
         uint32_t _imageWidth;
-        int32_t _tileSize;
+        uint32_t _tileSize;
         std::string _outputPath;
 
     };
