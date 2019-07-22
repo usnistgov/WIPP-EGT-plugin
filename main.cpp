@@ -40,7 +40,7 @@ int main() {
     uint32_t MIN_HOLE_SIZE = 10;
 //        uint32_t MIN_OBJECT_SIZE = 2;
 //        uint32_t MIN_HOLE_SIZE = 1;
-    bool MASK_ONLY=true;
+    bool MASK_ONLY=false;
 
     auto segmentationOptions = new SegmentationOptions();
     segmentationOptions->MIN_HOLE_SIZE = MIN_HOLE_SIZE;

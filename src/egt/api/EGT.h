@@ -23,6 +23,7 @@
 #include <egt/memory/TileAllocator.h>
 #include <egt/FeatureCollection/Tasks/ViewFilter.h>
 #include <egt/tasks/TiffTileWriter.h>
+#include <random>
 
 
 namespace egt {
@@ -43,6 +44,9 @@ namespace egt {
             uint32_t concurrentTiles = 1;
 
         };
+
+
+    private:
 
 
     public:
@@ -67,13 +71,17 @@ namespace egt {
             uint32_t imageWidth = fi->getImageWidth(pyramidLevelToRequestforThreshold);      //< Image Width
             uint32_t tileWidth = fi->getTileWidth();
             uint32_t tileHeight = fi->getTileHeight();
+            assert(tileWidth == tileHeight); //we work with square tiles
             uint32_t numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
             uint32_t numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold);
-            assert(tileWidth == tileHeight); //we work with square tiles
+            uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold) *
+                               fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
+            auto nbOfSamples = std::min(nbTiles, (uint32_t)10);
 
             auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
             auto sobelFilter = new CustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
-            auto thresholdFinder = new egt::ThresholdFinder<T>(imageWidth, imageHeight , numTileRow, numTileCol, options->imageDepth);
+
+            auto thresholdFinder = new egt::ThresholdFinder<T>(tileHeight * tileWidth , nbOfSamples, options->imageDepth);
             graph->addEdge(fastImage,sobelFilter);
             graph->addEdge(sobelFilter,thresholdFinder);
             graph->addGraphProducerTask(thresholdFinder);
@@ -87,7 +95,19 @@ namespace egt {
 
             auto *runtime = new htgs::TaskGraphRuntime(graph);
             runtime->executeRuntime();
-            fi->requestAllTiles(true,pyramidLevelToRequestforThreshold);
+
+            std::default_random_engine generator;
+            std::uniform_int_distribution<uint32_t > distributionRowRange(0,numTileRow - 1);
+            std::uniform_int_distribution<uint32_t > distributionColRange(0,numTileCol - 1);
+
+            for(auto i = 0; i < nbOfSamples ; i++){
+                uint32_t randomRow = distributionRowRange(generator);
+                uint32_t randomCol = distributionColRange(generator);
+                VLOG(3) << "Requesting tile : (" << randomRow << ", " << randomCol <<")";
+                fi->requestTile(randomRow, randomCol, false, pyramidLevelToRequestforThreshold);
+            }
+
+            fi->finishedRequestingTiles();
             graph->finishedProducingData();
 
             while (!graph->isOutputTerminated()) {

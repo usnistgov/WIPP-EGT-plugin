@@ -26,55 +26,33 @@ namespace egt {
 
 
     public:
-        ThresholdFinder(uint32_t width, uint32_t height, uint32_t numTileRow, uint32_t numTileCol, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(1),
-                                                                                           imageWidth(width),
-                                                                                           imageHeight(height),
-                                                                                           numTileRow(numTileRow),
-                                                                                           numTileCol(numTileCol),
+        ThresholdFinder(uint32_t sampleSize, uint32_t numberOfSamples, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(1),
+                                                                                           sampleSize(sampleSize),
+                                                                                           nbOfSamples(numberOfSamples),
                                                                                            imageDepth(imageDepth)
                                                                                            {
-            this->totalTiles = numTileRow * numTileCol;
-            gradient = new T[width * height]();
+            gradient.reserve(nbOfSamples * sampleSize);
             hist.reserve(NUM_HISTOGRAM_BINS + 1);
                                                                                            }
 
 
         void executeTask(std::shared_ptr<ConvOutMemoryData<T>> data) override {
 
-            copyTile(data);
+            copySample(data);
             data->getOutputdata()->releaseMemory();
 
             counter++;
 
-            if(counter == totalTiles) {
+            if(counter == nbOfSamples) {
 
                 VLOG(3) << "Determining Threshold..." ;
 
-                VLOG(4) << "we have run gradient on : " << totalTiles << " tiles.";
-
-                T minValue = std::numeric_limits<T>::max() , maxValue = std::numeric_limits<T>::min();
-
-                auto nonZeroGradient = std::vector<T>();
+                VLOG(4) << "we have run gradient on : " << nbOfSamples << " sample tiles.";
 
                 //create an histogram of NUM_HISTOGRAM_BINS bins
                 //we also collect none zero values as we need them for the final step when applying the percentileThreshold.
-                for(auto k = 0; k < imageWidth * imageHeight; k++ ){
-                    if(gradient[k] != 0.0) {
-                        auto value = gradient[k];
-                        auto row = k / imageWidth;
-                        auto col = k % imageWidth;
 
-                        minValue = gradient[k] < minValue ? gradient[k] : minValue;
-                        maxValue = gradient[k] > maxValue ? gradient[k] : maxValue;
-                        nonZeroGradient.push_back(gradient[k]);
-                    }
-                }
-
-                delete[] gradient;
-
-                VLOG(4) << "Nb of gradient pixels : " << imageWidth * imageHeight;
-                VLOG(4) << "Nb of gradient pixels with value of 0 : " << imageWidth * imageHeight - nonZeroGradient.size();
-
+                VLOG(4) << "Nb of gradient pixels : " << nbOfSamples * sampleSize;
                 VLOG(4) << "min : " << minValue;
                 VLOG(4) << "max : " << maxValue;
 
@@ -82,11 +60,11 @@ namespace egt {
                 //cast to double so we can handle integer values in gradient
                 double rescale = (double)NUM_HISTOGRAM_BINS / (maxValue - minValue);
                 double sum = 0;
-                for(auto k = 0; k < nonZeroGradient.size(); k++ ){
+                for(auto k = 0; k < gradient.size(); k++ ){
                         //we round to closest integer
                         //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.
 //                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
-                        auto index = (uint32_t)((nonZeroGradient[k] - minValue) * rescale + 0.5);
+                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
 
                         assert(index >= 0 && index < NUM_HISTOGRAM_BINS + 1);
 
@@ -196,28 +174,27 @@ namespace egt {
                 //intensity we will use for thresholding.
                 //TODO this is slow.
                 VLOG(3) << "sorting all pixel values... ";
-                sort(nonZeroGradient.begin(), nonZeroGradient.end());
+                sort(gradient.begin(), gradient.end());
 
-                auto percentilePixelThreshold = percentileThreshold / 100 * nonZeroGradient.size();
+                auto percentilePixelThreshold = percentileThreshold / 100 * gradient.size();
 
-                assert(0 <= percentilePixelThreshold <= nonZeroGradient.size());
+                assert(0 <= percentilePixelThreshold <= gradient.size());
 
-                T threshold = nonZeroGradient[percentilePixelThreshold];
+                T threshold = gradient[percentilePixelThreshold];
 
                 VLOG(3) << "threshold pixel gradient intensity value : " << (T)threshold;
 
                 this->addResult(new Threshold<T>(threshold));
 
                 hist.clear();
-
-                nonZeroGradient.clear();
+                gradient.clear();
             }
 
 
         }
 
         htgs::ITask <ConvOutMemoryData<T>, Threshold<T>> *copy() override {
-            return new ThresholdFinder(imageWidth, imageHeight, numTileRow, numTileCol, imageDepth);
+            return new ThresholdFinder(sampleSize, nbOfSamples,  imageDepth);
         }
 
         std::string getName() override { return "Threshold Finder"; }
@@ -225,30 +202,29 @@ namespace egt {
 
     private:
 
-        void copyTile(std::shared_ptr<ConvOutMemoryData<T>> data){
+        void copySample(std::shared_ptr<ConvOutMemoryData<T>> data){
             auto tile = data->getOutputdata()->get();
-            auto row = data->getGlobalRow(),
-                 col = data->getGlobalCol();
-            auto
-                 tileHeight = data->getTileHeight(),
-                 tileWidth = data->getTileWidth();
-                 for(auto tileRow = 0 ; tileRow < tileHeight; tileRow++) {
-                     assert((row + tileRow) * imageWidth + col <= imageWidth * imageHeight);
-                     assert((row + tileRow) * imageWidth + col >= 0);
-                     std::copy_n(tile + tileRow * tileWidth, tileWidth, gradient + (row + tileRow) * imageWidth + col);
-                 }
+            auto sampleSize = data->getTileWidth() * data->getTileHeight();
+            for(auto k = 0; k < sampleSize; k++ ){
+                if(tile[k] != 0){
+                    //we also compute min max while at it
+                    minValue = tile[k] < minValue ? tile[k] : minValue;
+                    maxValue = tile[k] > maxValue ? tile[k] : maxValue;
+                    gradient.push_back(tile[k]);
+                }
+            }
         }
 
-        uint32_t imageWidth;
-        uint32_t imageHeight;
-        uint32_t numTileRow;
-        uint32_t numTileCol;
-        uint32_t totalTiles;
+        uint32_t nbOfSamples{}, sampleSize{};
+
+        T minValue = std::numeric_limits<T>::max(),
+          maxValue = std::numeric_limits<T>::min();
+
         uint32_t greedy = 0; //TODO add to constructor
         ImageDepth imageDepth = ImageDepth::_8U;
 
 
-        T* gradient;
+        std::vector<T> gradient{};
 
         uint32_t counter = 0;
 
