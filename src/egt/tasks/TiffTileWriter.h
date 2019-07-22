@@ -44,8 +44,10 @@ namespace egt {
 
             fi::View<UserType> view = data->get();
 
+
+
             TIFFWriteTile(tif,
-                          view.getData(),
+                          (tdata_t)view.getData(),
                           view.getCol() * _tileSize,
                           view.getRow() * _tileSize,
                           0,
