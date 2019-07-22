@@ -17,9 +17,15 @@ namespace egt {
     class TiffTileWriter : public htgs::ITask<htgs::MemoryData<fi::View<UserType>>, htgs::VoidData> {
 
     public:
-
-        TiffTileWriter(size_t numThreads,uint32_t imageHeight, uint32_t imageWidth, uint32_t tileSize, std::string outputPath) :
-        _imageHeight(imageHeight), _imageWidth(imageWidth), _tileSize(tileSize), _outputPath(outputPath) {
+        ///
+        /// \param numThreads
+        /// \param imageHeight
+        /// \param imageWidth
+        /// \param tileSize
+        /// \param outputDepth The depth of the Output Image.
+        /// \param outputPath
+        TiffTileWriter(size_t numThreads,uint32_t imageHeight, uint32_t imageWidth, uint32_t tileSize, ImageDepth outputDepth, std::string outputPath) :
+        _imageHeight(imageHeight), _imageWidth(imageWidth), _tileSize(tileSize), outputDepth(outputDepth), _outputPath(outputPath) {
             // Create the tiff file
             tif = TIFFOpen(outputPath.c_str(), "w");
 
@@ -28,8 +34,7 @@ namespace egt {
                 TIFFSetField(tif, TIFFTAG_IMAGELENGTH, imageHeight);
                 TIFFSetField(tif, TIFFTAG_TILELENGTH, tileSize);
                 TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileSize);
-                //TODO writes only 8bits image, should be a conversion step
-                TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8 );
+                TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8 * calculateBitsPerSample(outputDepth) );
                 TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
                 TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
                 TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
@@ -48,7 +53,7 @@ namespace egt {
             auto *tile = new int8_t[_tileSize * _tileSize]();
 
             for( auto row = 0 ; row < _tileSize ; row++){
-                std::copy_n(view->getPointerTile() + row * view->getViewWidth(),_tileSize, tile + row * _tileSize);
+                std::copy_n(view->getPointerTile() + row * view->getViewWidth(), _tileSize, tile + row * _tileSize);
             }
 
             TIFFWriteTile(tif,
@@ -58,10 +63,9 @@ namespace egt {
                           0,
                           0);
 
-            delete tile;
+            delete[] tile;
             data->releaseMemory();
         }
-
 
         /// \brief Close the tiff file
         void shutdown() override {
@@ -69,10 +73,8 @@ namespace egt {
         }
 
 
-
-
         htgs::ITask <htgs::MemoryData<fi::View<UserType>>, htgs::VoidData> *copy() override {
-            return new TiffTileWriter(this->getNumThreads(), _imageHeight, _imageWidth, _tileSize, _outputPath);
+            return new TiffTileWriter(this->getNumThreads(), _imageHeight, _imageWidth, _tileSize, outputDepth ,_outputPath);
         }
 
         TIFF *tif;
@@ -80,6 +82,7 @@ namespace egt {
         uint32_t _imageWidth;
         uint32_t _tileSize;
         std::string _outputPath;
+        ImageDepth outputDepth;
 
     };
 

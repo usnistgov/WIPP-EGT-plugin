@@ -28,4 +28,18 @@ int convertToOpencvType(ImageDepth depth){
     }
 }
 
+
+int calculateBitsPerSample(ImageDepth depth){
+    switch (depth) {
+        case ImageDepth::_8U:
+            return 1;
+        case ImageDepth::_16U:
+            return 2;
+        case ImageDepth ::_32F:
+            return 4;
+        default:
+            return 2;
+    }
+}
+
 #endif //EGT_DATATYPES_H
