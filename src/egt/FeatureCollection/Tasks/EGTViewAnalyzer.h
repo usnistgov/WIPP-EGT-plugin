@@ -136,19 +136,17 @@ namespace egt {
                 VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
                 VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
                 VLOG(3) << "objects removed because too small: " << objectRemovedCount;
+                delete _vAnalyse;
             }
 
             else {
-
+                _vAnalyse->tidy();
+                this->addResult(new ViewOrViewAnalyse<UserType>(_vAnalyse));
                 VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
                 VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
                 VLOG(3) << "objects removed because too small: " << objectRemovedCount;
                 VLOG(3) << "objects to merge: " << _vAnalyse->getBlobs().size();
-
-
                 view->releaseMemory();
-                // Add the analyse
-                this->addResult(new ViewOrViewAnalyse<UserType>(_vAnalyse));
             }
 
         }
@@ -288,7 +286,9 @@ namespace egt {
                     }
                     else{
                         //WE ADD IT
-                        _vAnalyse->insertBlob(_currentBlob);
+                        if(!_options->MASK_ONLY) {
+                            _vAnalyse->insertBlob(_currentBlob);
+                        }
                     }
                 }
 
@@ -357,6 +357,10 @@ namespace egt {
                 }
             }
 
+            //WE DON'T NEED MERGING IN WE GENERATE ONLY THE MASK
+            if(_options->MASK_ONLY){
+                return;
+            }
 
             //Check if the blob in this tile belongs to a bigger blob extending several tiles.
             //We only to look at EAST and SOUTH so we can later merge only once, TOP to BOTTOM and LEFT to RIGHT.

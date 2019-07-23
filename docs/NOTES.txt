@@ -1,11 +1,27 @@
+=======================
+### Resolutions
+
 Different resolutions can be asked for.
 
 For a 16U image,
 Threshold computation is always the same if using 32F.
 With 16U, calculation of threshold loose precision and we might have small differences if numbers are rounded up or down.
+=> Done, but no clear gain?
 
 
-Determining Threshold :
+========================
+### Determining Threshold
+
 percentile might be derived from the histogram (so less data need to be stored)
 but we then we sort all the pixels to figure out the pixel intensity at which we can cut off, that is extremely inefficient
 since we need to sort billions of pixels in ascending order, and stored the result.
+
+=> using an higher level of pyramid is not working since intensity is averaged. It is complicated to figure out exactly the loss.
+=> a sampling approach on a small subset of data seems to work well.
+
+
+========================
+### Merging blob is slow
+
+In Analyzer, We could collapse the pixels to do less comparions later?
+Very little gain

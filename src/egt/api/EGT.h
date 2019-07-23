@@ -39,6 +39,7 @@ namespace egt {
             std::string outputPath{};
 
             ImageDepth imageDepth = ImageDepth::_8U;
+            uint32_t pyramidLevel = 0;
 
             size_t nbLoaderThreads = 1;
             uint32_t concurrentTiles = 1;
@@ -56,7 +57,7 @@ namespace egt {
         template<class T>
         T runThresholdFinder(EGTOptions *options) {
 
-            const uint32_t pyramidLevelToRequestforThreshold = 0;
+            const uint32_t pyramidLevelToRequestforThreshold = options->pyramidLevel;
             const uint32_t radiusForThreshold = 1;
 
             T threshold = 0;
@@ -150,7 +151,7 @@ namespace egt {
             htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, VoidData> *localMaskGenerationGraph;
             htgs::TaskGraphRuntime *localMaskGenerationGraphRuntime;
 
-            uint32_t pyramidLevelToRequestForSegmentation = 0;
+            uint32_t pyramidLevelToRequestForSegmentation =  options->pyramidLevel;
             //radius of 2 since we need first apply convo, obtain a gradient of size n+1,
             //and then check the ghost region for potential merges for each tile of size n.
             uint32_t segmentationRadius = 2;
@@ -210,7 +211,7 @@ namespace egt {
             htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
             htgs::TaskGraphRuntime *segmentationRuntime;
 
-            uint32_t pyramidLevelToRequestForSegmentation = 0;
+            uint32_t pyramidLevelToRequestForSegmentation =  options->pyramidLevel;
             //radius of 2 since we need first apply convo, obtain a gradient of size n+1,
             //and then check the ghost region for potential merges for each tile of size n.
             uint32_t segmentationRadius = 2;
@@ -225,8 +226,6 @@ namespace egt {
             int32_t tileWidthAtSegmentationLevel = fi2->getTileWidth(pyramidLevelToRequestForSegmentation);
             uint32_t nbTiles = fi2->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                fi2->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
-
-//                auto sobelFilter2 = new FCSobelFilterOpenCV<T>(concurrentTiles, imageDepth);
             auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(options->concurrentTiles,options->imageDepth,1,1);
 
             auto viewSegmentation = new egt::EGTViewAnalyzer<T>(options->concurrentTiles,
@@ -312,7 +311,6 @@ namespace egt {
 
                 auto beginThreshold = std::chrono::high_resolution_clock::now();
                 T threshold = runThresholdFinder<T>(options);
-//                T threshold = 88; //the threshold value to determine
                 auto endThreshold = std::chrono::high_resolution_clock::now();
 
 

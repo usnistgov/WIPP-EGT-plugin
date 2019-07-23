@@ -57,6 +57,13 @@ namespace fc {
   **/
 class ViewAnalyse : public htgs::IData {
  public:
+
+    void tidy(){
+            //TODO we could remove from merge list if we have tiny amount of pixel
+            VLOG(1) << "tidying up contiguous pixels";
+    }
+
+
   /// \brief Getter to the merge map
   /// \return Merge map
   const std::unordered_map<Blob *, std::list<Coordinate>> &getToMerge() const {

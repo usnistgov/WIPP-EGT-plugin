@@ -85,6 +85,8 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     // If all the analyse has been collected, merge the blobs
     if (_count == _nbTiles) {
 
+      auto startMerge = std::chrono::high_resolution_clock::now();
+
 
         VLOG(1) << "merging " << this->_blobs->_blobs.size() << " blobs...";
 
@@ -95,6 +97,10 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
       merge();
 
       VLOG(1) << "after last merge, we have : " << _blobs->_blobs.size() << " blobs left";
+
+      auto endMerge = std::chrono::high_resolution_clock::now();
+      VLOG(1) << "    Merge blobs: " << std::chrono::duration_cast<std::chrono::milliseconds>(endMerge - startMerge).count() << " mS";
+
       this->addResult(_blobs);
     }
   }
@@ -135,7 +141,7 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     // Apply the UF algorithm to every linked blob
     for (auto blobCoords : _toMerge) {
       for (auto coord : blobCoords.second) {
-          if(auto other = getBlobFromCoord(coord.first, coord.second)){
+          if(auto other = getBlobFromCoord(coord.first, coord.second)) {
               if(blobCoords.first->getColor() == other->getColor()) {
                   uf.unionElements(blobCoords.first, other);
               }

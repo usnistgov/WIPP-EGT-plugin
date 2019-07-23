@@ -1,7 +1,19 @@
 #include <iostream>
 #include <egt/api/EGT.h>
 #include <egt/api/DataTypes.h>
-#include <egt/api/CommandLineCli.h>
+
+ImageDepth parseImageDepth(const std::string &depth) {
+    if (depth == "16U") {
+        return ImageDepth::_16U;
+    } else if (depth == "8U") {
+        return ImageDepth::_8U;
+    } else if (depth == "32F") {
+        return ImageDepth::_32F;
+    } else {
+        throw std::invalid_argument("image depth not recognized. Should  be one of : 8U, 16U, 32F");
+    }
+}
+
 
 int main() {
 
@@ -20,7 +32,7 @@ int main() {
 
     std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
 
-    ImageDepth depth = egt::parseImageDepth("16U");
+    ImageDepth depth = parseImageDepth("16U");
 
     auto egt = new egt::EGT();
 
@@ -30,23 +42,21 @@ int main() {
     options->imageDepth = depth;
     options->nbLoaderThreads = 2;
     options->concurrentTiles = 10;
+    options->pyramidLevel = 1;
 
 
-            uint32_t MAX_HOLE_SIZE = 10000;
-        uint32_t MIN_OBJECT_SIZE = 3000;
-        uint32_t MIN_HOLE_SIZE = 1000;
+
 //    uint32_t MAX_HOLE_SIZE = 3000;
 //    uint32_t MIN_OBJECT_SIZE = 20;
 //    uint32_t MIN_HOLE_SIZE = 10;
 //        uint32_t MIN_OBJECT_SIZE = 2;
 //        uint32_t MIN_HOLE_SIZE = 1;
-    bool MASK_ONLY=false;
 
     auto segmentationOptions = new SegmentationOptions();
-    segmentationOptions->MIN_HOLE_SIZE = MIN_HOLE_SIZE;
-    segmentationOptions->MIN_OBJECT_SIZE = MIN_OBJECT_SIZE;
-    segmentationOptions->MAX_HOLE_SIZE = MAX_HOLE_SIZE;
-    segmentationOptions->MASK_ONLY = MASK_ONLY;
+    segmentationOptions->MIN_HOLE_SIZE = 1000;
+    segmentationOptions->MIN_OBJECT_SIZE = 3000;
+    segmentationOptions->MAX_HOLE_SIZE = 10000;
+    segmentationOptions->MASK_ONLY = false;
 
 
 
