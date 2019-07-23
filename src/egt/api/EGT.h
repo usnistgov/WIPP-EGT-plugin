@@ -76,12 +76,14 @@ namespace egt {
             uint32_t numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold);
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
+
             auto nbOfSamples = std::min(nbTiles, (uint32_t)10);
+            size_t nbOfSamplingExperiment = 5;
 
             auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
             auto sobelFilter = new CustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
 
-            auto thresholdFinder = new egt::ThresholdFinder<T>(tileHeight * tileWidth , nbOfSamples, options->imageDepth);
+            auto thresholdFinder = new egt::ThresholdFinder<T>(nbOfSamplingExperiment, tileHeight * tileWidth , nbOfSamples, options->imageDepth);
             graph->addEdge(fastImage,sobelFilter);
             graph->addEdge(sobelFilter,thresholdFinder);
             graph->addGraphProducerTask(thresholdFinder);
@@ -96,11 +98,12 @@ namespace egt {
             auto *runtime = new htgs::TaskGraphRuntime(graph);
             runtime->executeRuntime();
 
-            std::default_random_engine generator;
+            auto seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+            std::default_random_engine generator(seed1);
             std::uniform_int_distribution<uint32_t > distributionRowRange(0,numTileRow - 1);
             std::uniform_int_distribution<uint32_t > distributionColRange(0,numTileCol - 1);
 
-            for(auto i = 0; i < nbOfSamples ; i++){
+            for(auto i = 0; i < nbOfSamplingExperiment * nbOfSamples ; i++){
                 uint32_t randomRow = distributionRowRange(generator);
                 uint32_t randomCol = distributionColRange(generator);
                 VLOG(3) << "Requesting tile : (" << randomRow << ", " << randomCol <<")";
@@ -110,13 +113,28 @@ namespace egt {
             fi->finishedRequestingTiles();
             graph->finishedProducingData();
 
+            std::vector<T> thresholdCandidates = {};
+
             while (!graph->isOutputTerminated()) {
                 auto data = graph->consumeData();
                 if (data != nullptr) {
-                    threshold = data->getValue();
-                    VLOG(1) << "Threshold value : " << threshold;
+                    thresholdCandidates.push_back(data->getValue());
                 }
             }
+
+            double sum = 0;
+            for(T t : thresholdCandidates){
+                sum += t;
+            }
+            threshold = sum/thresholdCandidates.size();
+            VLOG(3) << "Threshold value using average: " << threshold;
+
+            std::sort(thresholdCandidates.begin(),thresholdCandidates.end());
+            auto medianIndex = std::ceil(thresholdCandidates.size()/2);
+            threshold = thresholdCandidates[medianIndex];
+            VLOG(3) << "Threshold value using median : " << threshold;
+
+            VLOG(1) << "Threshold value : " << threshold;
 
             runtime->waitForRuntime();
 //FOR DEBUGGING

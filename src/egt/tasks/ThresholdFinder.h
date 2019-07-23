@@ -26,7 +26,7 @@ namespace egt {
 
 
     public:
-        ThresholdFinder(uint32_t sampleSize, uint32_t numberOfSamples, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(1),
+        ThresholdFinder(size_t numThreads, uint32_t sampleSize, uint32_t numberOfSamples, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(numThreads),
                                                                                            sampleSize(sampleSize),
                                                                                            nbOfSamples(numberOfSamples),
                                                                                            imageDepth(imageDepth)
@@ -194,7 +194,7 @@ namespace egt {
         }
 
         htgs::ITask <ConvOutMemoryData<T>, Threshold<T>> *copy() override {
-            return new ThresholdFinder(sampleSize, nbOfSamples,  imageDepth);
+            return new ThresholdFinder(this->getNumThreads(), sampleSize, nbOfSamples,  imageDepth);
         }
 
         std::string getName() override { return "Threshold Finder"; }
