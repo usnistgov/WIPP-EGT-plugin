@@ -80,6 +80,10 @@ class ViewAnalyse : public htgs::IData {
       _toMerge[b].push_back(c);
   }
 
+    void addToMergeCompact(CompactBlob *b, Coordinate c) {
+        _toMergeCompact[b].push_back(c);
+    }
+
   void deleteBlob(Blob *b) {
       _toMerge.erase(b);
       _blobs.remove(b);

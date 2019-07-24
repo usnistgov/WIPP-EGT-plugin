@@ -141,9 +141,7 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     for (auto blobCoords : _toMerge) {
       for (auto coord : blobCoords.second) {
           if(auto other = getBlobFromCoord(coord.first, coord.second)) {
-              if(blobCoords.first->getColor() == other->getColor()) {
-                  uf.unionElements(blobCoords.first, other);
-              }
+            uf.unionElements(blobCoords.first, other);
           }
       }
     }

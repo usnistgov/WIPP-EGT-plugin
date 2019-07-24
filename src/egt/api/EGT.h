@@ -307,7 +307,7 @@ namespace egt {
                     auto i = blob->_blobs.begin();
                     while (i != blob->_blobs.end()) {
                             //We removed objects that are still too small after the merge occured.
-                            if((*i)->isForeground() && (*i)->getCount() < segmentationOptions->MIN_OBJECT_SIZE){
+                            if((*i)->getCount() < segmentationOptions->MIN_OBJECT_SIZE) {
                                     nbBlobsTooSmall++;
                                     i = blob->_blobs.erase(i);
                             }
@@ -318,7 +318,7 @@ namespace egt {
 
                     auto nbBlobs = blob->_blobs.size();
                     VLOG(3) << "original nb of blobs : " << originalNbOfBlobs;
-                    VLOG(3) << "nb of small objects that have been removed : " << nbBlobsTooSmall;
+                    VLOG(3) << "nb of small objects that have been removed after merge : " << nbBlobsTooSmall;
                     VLOG(1) << "total nb of objects: " <<nbBlobs;
             }
             // Wait for the analyse graph to finish processing tiles to make the FC

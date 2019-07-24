@@ -64,14 +64,13 @@ using Coordinate = std::pair<int32_t, int32_t>;
 class Blob {
  public:
   /// \brief Blob construction and initialisation
-  Blob(uint32_t row, uint32_t col, bool color = true)
+  Blob(uint32_t row, uint32_t col)
       : _parent(this),
         _rank(0),
         _rowMin(std::numeric_limits<int32_t>::max()),
         _rowMax(0),
         _colMin(std::numeric_limits<int32_t>::max()),
         _colMax(0),
-        _color(color),
         _startRow(row),
         _startCol(col) {
     static uint32_t
@@ -88,25 +87,6 @@ class Blob {
   /// \brief Get Blob tag
   /// \return Blob tag
   uint32_t getTag() const { return _tag; }
-
-
-  bool getColor() const {
-      return _color;
-  }
-
-  bool isForeground() const {
-      return _color == true;
-  }
-
-    bool isBackground() const {
-        return _color == false;
-    }
-
-    bool flipColor(){
-        _color = !_color;
-        return _color;
-    }
-
 
     bool isToMerge() const {
         return _toMerge;
@@ -237,16 +217,7 @@ class Blob {
         *toDelete = nullptr,
         *destination = nullptr;
 
-    // Decide which one (between this and blob) will be deleted
-    if(this->isForeground() && blob->isBackground()){
-        destination = this;
-        toDelete = blob;
-    }
-    else if(this->isBackground() && blob->isForeground()){
-        destination = blob;
-        toDelete = this;
-    }
-    else if (this->getCount() >= blob->getCount()) {
+    if (this->getCount() >= blob->getCount()) {
       destination = this;
       toDelete = blob;
     } else {
@@ -321,7 +292,6 @@ class Blob {
       _rowCols
       {};         ///< Sparse matrix of unique coordinates composing the blob
 
-  bool _color = false;
   bool _toMerge = false;
 
   uint32_t _startRow = 0;
