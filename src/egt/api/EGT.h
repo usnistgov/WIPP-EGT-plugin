@@ -51,6 +51,46 @@ namespace egt {
 
 
     public:
+
+
+        /// This algorithm is divided in several graph, each fed by a different fast image.
+        /// The reason is that we request different radius each time and each fastImage instance is associated
+        /// with a single radius. It would be possible to rewrite the algo by taking the widest radius and calculate
+        /// smaller radius from there, but marginal gains would not worth the complexity introduced.
+        template<class T>
+        void run(EGTOptions *options, SegmentationOptions *segmentationOptions) {
+
+            auto begin = std::chrono::high_resolution_clock::now();
+
+            auto beginThreshold = std::chrono::high_resolution_clock::now();
+            T threshold = runThresholdFinder<T>(options);
+            auto endThreshold = std::chrono::high_resolution_clock::now();
+
+
+            auto beginSegmentation = std::chrono::high_resolution_clock::now();
+            if(segmentationOptions->MASK_ONLY) {
+                runLocalMaskGenerator<T>(threshold, options, segmentationOptions);
+            }
+            else {
+                runSegmentation(threshold, options, segmentationOptions);
+            }
+            auto endSegmentation = std::chrono::high_resolution_clock::now();
+
+
+
+            delete segmentationOptions;
+
+            auto end = std::chrono::high_resolution_clock::now();
+
+
+            VLOG(1) << "Execution time: ";
+            VLOG(1) << "    Threshold Detection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endThreshold - beginThreshold).count() << " mS";
+            VLOG(1) << "    Segmentation: " << std::chrono::duration_cast<std::chrono::milliseconds>(endSegmentation - beginSegmentation).count() << " mS";
+            VLOG(1) << "    Feature Collection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endFC - beginFC).count() << " mS";
+            VLOG(1) << "    Total: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
+        }
+
+
         /// ----------------------------------
         /// The first graph finds the threshold value used to segment the image
         /// ----------------------------------
@@ -300,45 +340,7 @@ namespace egt {
         }
 
 
-        /// This algorithm is divided in several graph, each fed by a different fast image.
-        /// The reason is that we request different radius each time and each fastImage instance is associated
-        /// with a single radius. It would be possible to rewrite the algo by taking the widest radius and calculate
-        /// smaller radius from there, but marginal gains would not worth the complexity introduced.
-        template<class T>
-        void run(EGTOptions *options, SegmentationOptions *segmentationOptions) {
 
-                auto begin = std::chrono::high_resolution_clock::now();
-
-                auto beginThreshold = std::chrono::high_resolution_clock::now();
-                T threshold = runThresholdFinder<T>(options);
-                auto endThreshold = std::chrono::high_resolution_clock::now();
-
-
-                auto beginSegmentation = std::chrono::high_resolution_clock::now();
-                if(segmentationOptions->MASK_ONLY) {
-                    runLocalMaskGenerator<T>(threshold, options, segmentationOptions);
-                }
-                else {
-                    runSegmentation(threshold, options, segmentationOptions);
-                }
-                auto endSegmentation = std::chrono::high_resolution_clock::now();
-
-
-
-                delete segmentationOptions;
-
-                auto end = std::chrono::high_resolution_clock::now();
-
-
-                VLOG(1) << "Execution time: ";
-                VLOG(1) << "    Threshold Detection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endThreshold - beginThreshold).count() << " mS";
-                VLOG(1) << "    Segmentation: " << std::chrono::duration_cast<std::chrono::milliseconds>(endSegmentation - beginSegmentation).count() << " mS";
-                VLOG(1) << "    Feature Collection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endFC - beginFC).count() << " mS";
-                VLOG(1) << "    Total: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
-
-
-
-        }
 
         std::chrono::system_clock::time_point beginFC;
         std::chrono::system_clock::time_point endFC;

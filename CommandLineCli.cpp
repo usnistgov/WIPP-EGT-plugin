@@ -59,10 +59,10 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::uint32_t> MaxHoleSizeArg("M", "maxhole", "Maximum Hole Size", false, 3000, "uint32_t");
         cmd.add(MaxHoleSizeArg);
 
-        TCLAP::ValueArg<std::uint32_t> MinObjectSizeArg("s", "maxobject", "Maximum Object Size", false, 3000, "uint32_t");
+        TCLAP::ValueArg<std::uint32_t> MinObjectSizeArg("s", "minobject", "Maximum Object Size", false, 3000, "uint32_t");
         cmd.add(MinObjectSizeArg);
 
-        TCLAP::ValueArg<bool> MaskOnlyArg("x", "maskOnly", "Mask only", false, false, "boolean");
+        TCLAP::ValueArg<bool> MaskOnlyArg("x", "maskonly", "Mask only", false, false, "bool");
         cmd.add(MaskOnlyArg);
 
         cmd.parse(argc, argv);
@@ -86,6 +86,7 @@ int main(int argc, const char **argv) {
         VLOG(1) << MinHoleSizeArg.getDescription() << ": " << minHoleSize << std::endl;
         VLOG(1) << MaxHoleSizeArg.getDescription() << ": " << maxHoleSize << std::endl;
         VLOG(1) << MinObjectSizeArg.getDescription() << ": " << minObjectSize << std::endl;
+        VLOG(1) << MaskOnlyArg.getDescription() << ": " << std::noboolalpha  << maskOnly << ":" << std::boolalpha << maskOnly << std::endl;
 
         ImageDepth imageDepth = parseImageDepth(depth);
 
