@@ -32,8 +32,8 @@
 /// @brief Blob object representing a part of a feature
 
 
-#ifndef FEATURECOLLECTION_BLOB_H
-#define FEATURECOLLECTION_BLOB_H
+#ifndef EGT_FEATURECOLLECTION_BLOB_H
+#define EGT_FEATURECOLLECTION_BLOB_H
 
 #include <cstdint>
 #include <utility>
@@ -46,7 +46,7 @@
 #include <unordered_set>
 
 /// \namespace fc FeatureCollection namespace
-namespace fc {
+namespace egt {
 
 /// \brief Coordinate structure as a pair of int32_t for <row, col>
 using Coordinate = std::pair<int32_t, int32_t>;
@@ -177,51 +177,6 @@ class Blob {
 
   bool isPixelinBoundingBox(int32_t row, int32_t col){
       return (row >= _rowMin && row < _rowMax && col >= _colMin && col < _colMax);
-  }
-
-  Feature transformToFeature(){
-
-    uint32_t
-            idFeature = 0,
-            rowMin = 0,
-            colMin = 0,
-            rowMax = 0,
-            colMax = 0,
-            ulRowL = 0,
-            ulColL = 0,
-            wordPosition = 0,
-            bitPositionInDecimal = 0,
-            absolutePosition = 0,
-            bitPositionInBinary = 0;
-
-    //TODO change coords to uint32_t?
-    fc::BoundingBox bB((uint32_t)_rowMin, (uint32_t)_colMin, (uint32_t)_rowMax, (uint32_t)_colMax);
-
-    auto *bitMask = new uint32_t[(uint32_t) ceil( (bB.getHeight() * bB.getWidth() ) / 32.)]();
-
-    // For every pixel in the bit mask
-    for (auto row = (uint32_t)_rowMin; row < _rowMax; ++row) {
-      for (auto col = (uint32_t)_colMin; col < _colMax; ++col) {
-        // Test if the pixel is in the current feature (using global coordinates)
-        if (isPixelinFeature(row, col)) {
-          // Add it to the bit mask
-          ulRowL = row - bB.getUpperLeftRow(); //convert to local coordinates
-          ulColL = col - bB.getUpperLeftCol();
-          absolutePosition = ulRowL * bB.getWidth() + ulColL; //to 1D array coordinates
-          //optimization : right-shifting binary representation by 5 is equivalent to dividing by 32
-          wordPosition = absolutePosition >> (uint32_t) 5;
-          //left-shifting back previous result gives the 1D array coordinates of the word beginning
-          auto beginningOfWord = ((int32_t) (wordPosition << (uint32_t) 5));
-          // substracting original value gives the remainder of the division by 32.
-          auto remainder = ((int32_t) absolutePosition - beginningOfWord);
-          //we encode the remainder as a position in a 32bit.
-          bitPositionInDecimal = (uint32_t) abs(32 - remainder);
-          bitPositionInBinary = ((uint32_t) 1 << (bitPositionInDecimal - (uint32_t) 1));
-          //adding the bitPosition to the word
-          bitMask[wordPosition] = bitMask[wordPosition] | bitPositionInBinary;
-        }
-      }
-    }
   }
 
 
@@ -375,4 +330,4 @@ class Blob {
 
 }
 
-#endif //FEATURECOLLECTION_BLOB_H
+#endif //EGT_FEATURECOLLECTION_BLOB_H

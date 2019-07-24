@@ -39,18 +39,17 @@
 #include <htgs/api/ITask.hpp>
 #include <cstdint>
 #include <utility>
-#include <egt/FeatureCollection/Tasks/ViewAnalyser.h>
-#include "egt/FeatureCollection/tools/UnionFind.h"
-#include "egt/FeatureCollection/Data/ListBlobs.h"
+#include <FastImage/FeatureCollection/tools/UnionFind.h>
+#include <egt/FeatureCollection/Data/ListBlobs.h>
 
 
-namespace fc {
-/// \namespace fc FeatureCollection namespace
+namespace egt {
+/// \namespace egt EGT namespace
 
 /**
   * @class BlobMerger BlobMerger.h <FastImage/FeatureCollection/Tasks/BlobMerger.h>
   *
-  * @brief Merges multiple fc::ViewAnalyse to build the Feature Collection.
+  * @brief Merges multiple egt::ViewAnalyse to build the Feature Collection.
   *
   *  Merge the different analyse with a disjoint-set data structure to represent
   *  each blobs and merge them easily:
@@ -132,7 +131,7 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
 
   /// \brief Merge all the blobs from all the view analyser
   void merge() {
-    UnionFind<Blob>
+    fc::UnionFind<Blob>
         uf{};
 
     std::map<Blob *, std::set<Blob *>>

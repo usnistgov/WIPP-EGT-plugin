@@ -32,15 +32,15 @@
 /// @brief Main interface to construct a tile loader
 
 
-#ifndef REGIONLABELING_VIEWANALYSE_H
-#define REGIONLABELING_VIEWANALYSE_H
+#ifndef EGT_REGIONLABELING_VIEWANALYSE_H
+#define EGT_REGIONLABELING_VIEWANALYSE_H
 
 #include <unordered_map>
 #include <htgs/api/IData.hpp>
+#include <egt/FeatureCollection/Data/CompactBlob.h>
+#include <egt/FeatureCollection/Data/Blob.h>
 
-#include "Blob.h"
-
-namespace fc {
+namespace egt {
 /// \namespace fc FeatureCollection namespace
 
 
@@ -89,13 +89,23 @@ class ViewAnalyse : public htgs::IData {
   /// \param b blob to add
   void insertBlob(Blob *b) { _blobs.push_back(b); }
 
+/// \brief Insert a blob to the list of blobs
+/// \param b blob to add
+void insertCompactBlob(CompactBlob *b) { _compactBlobs.push_back(b); }
+
  private:
-  std::unordered_map<fc::Blob *, std::list<Coordinate>>
+  std::unordered_map<egt::Blob *, std::list<Coordinate>>
       _toMerge;   ///< Map of blob which will need to be merged to a list of
                   ///< coordinates
 
+  std::unordered_map<egt::CompactBlob *, std::list<Coordinate>>
+            _toMergeCompact;   ///< Map of blob which will need to be merged to a list of
+    ///< coordinates
+
+  std::list<CompactBlob *>  _compactBlobs{};
+
   std::list<Blob *>
-      _blobs;   ///< List of blobs created
+      _blobs{};   ///< List of blobs created
 };
 }
-#endif //REGIONLABELING_VIEWANALYSE_H
+#endif //EGT_REGIONLABELING_VIEWANALYSE_H

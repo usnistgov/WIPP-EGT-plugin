@@ -47,7 +47,6 @@
 #include <egt/FeatureCollection/Data/ViewOrViewAnalyse.h>
 #include <egt/api/DataTypes.h>
 
-using namespace fc;
 
 namespace egt {
 
@@ -288,6 +287,9 @@ namespace egt {
                         //WE ADD IT
                         if(!_options->MASK_ONLY) {
                             _vAnalyse->insertBlob(_currentBlob);
+                            auto compactBlob = new CompactBlob(_currentBlob);
+                            _vAnalyse->insertCompactBlob(compactBlob);
+                            //TODO delete blob and remove insert
                         }
                     }
                 }

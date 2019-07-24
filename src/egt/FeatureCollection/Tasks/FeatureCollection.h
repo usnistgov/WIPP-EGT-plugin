@@ -36,13 +36,13 @@
 
 #include <sstream>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
-#include <egt/FeatureCollection/tools/AABBTree.h>
-#include <egt/FeatureCollection/Feature.h>
-#include <egt/FeatureCollection/BoundingBox.h>
+#include <FastImage/FeatureCollection/tools/AABBTree.h>
+#include <egt/FeatureCollection/Data/Feature.h>
+#include <egt/FeatureCollection/Data/BoundingBox.h>
 #include "FastImage/exception/FastImageException.h"
 
-#include <egt/FeatureCollection/tools/UnionFind.h>
-#include <egt/FeatureCollection/Tasks/ViewAnalyser.h>
+#include <FastImage/FeatureCollection/tools/UnionFind.h>
+#include <FastImage/FeatureCollection/Tasks/ViewAnalyser.h>
 #include <egt/FeatureCollection/Data/Blob.h>
 #include <egt/FeatureCollection/Data/ListBlobs.h>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
@@ -145,7 +145,7 @@ class FeatureCollection {
 //    auto sobelFilter = new FCSobelFilterOpenCV<UserType>(1, ImageDepth::_8U);
 
 
-    auto viewAnalyseTask = new egt::ViewAnalyser<UserType>(numberOfThreadsParallel,
+    auto viewAnalyseTask = new fc::ViewAnalyser<UserType>(numberOfThreadsParallel,
                                                       fi,
                                                       rank,
                                                       background);
@@ -862,7 +862,7 @@ class FeatureCollection {
       colMax = (uint32_t) blob->getColMax();
 
       // Create the bounding box
-      fc::BoundingBox bB(rowMin, colMin, rowMax, colMax);
+      BoundingBox bB(rowMin, colMin, rowMax, colMax);
 
       bitMask = new uint32_t[(uint32_t) ceil(
           (bB.getHeight() * bB.getWidth()) / 32.)]();

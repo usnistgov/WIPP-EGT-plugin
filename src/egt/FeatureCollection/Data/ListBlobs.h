@@ -35,7 +35,7 @@
 #define FASTIMAGE_LISTBLOBS_H
 
 #include "Blob.h"
-namespace fc {
+namespace egt {
 /// \namespace fc FeatureCollection namespace
 
 /**
@@ -44,7 +44,7 @@ namespace fc {
  * @brief Convenient class holding a list of blobs. Derived from IData.
  */
 struct ListBlobs : public IData {
-  std::list<fc::Blob *>
+  std::list<Blob *>
       _blobs{};
 
   ~ListBlobs() override {
