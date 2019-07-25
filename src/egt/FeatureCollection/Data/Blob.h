@@ -255,7 +255,8 @@ class Blob {
     return destination;
   }
 
-  void compactBlobDataIntoFeature(){
+  /// transform the sparse matrix representation from addrows to feature to reduce memory footprint
+  void compactBlobDataIntoFeature() {
 
     uint32_t
             idFeature = 0,
@@ -276,7 +277,7 @@ class Blob {
             rowMax,
             colMax);
 
-    uint32_t* bitMask = new uint32_t[(uint32_t) ceil((boundingBox.getHeight() * boundingBox.getWidth()) / 32.)]();
+    auto bitMask = new uint32_t[(uint32_t) ceil((boundingBox.getHeight() * boundingBox.getWidth()) / 32.)]();
 
     // For every pixel in the bit mask
     for (auto row = (uint32_t) rowMin; row < rowMax; ++row) {
@@ -304,10 +305,6 @@ class Blob {
     }
 
     _feature = new Feature(this->getTag(), boundingBox, bitMask);
-
-//    VLOG(3) << "Blob created: ";
-//    VLOG(3) << (*_feature);
-
   }
 
   void addToBitMask(uint32_t* bitMask, BoundingBox *bb) {
@@ -332,7 +329,7 @@ class Blob {
     for (auto row = (uint32_t) rowMin; row < rowMax; ++row) {
       for (auto col = (uint32_t) colMin; col < colMax; ++col) {
         // Test if the pixel is in the current feature (using global coordinates)
-        if (this->isPixelinFeature(row, col)) {
+        if (this->getFeature()->isInBitMask(row,col)) {
           // Add it to the bit mask
           ulRowL = row - bb->getUpperLeftRow(); //convert to local coordinates
           ulColL = col - bb->getUpperLeftCol();
