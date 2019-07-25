@@ -25,3 +25,9 @@ since we need to sort billions of pixels in ascending order, and stored the resu
 
 In Analyzer, We could collapse the pixels to do less comparions later?
 Very little gain
+
+=========================
+### Writing Tiffs
+
+there is a bug there. Writing the same number of objects, we do not write all the pixels.
+Or maybe it is earlier => print the shapes to find out.

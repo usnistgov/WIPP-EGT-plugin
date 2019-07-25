@@ -126,7 +126,7 @@ namespace egt {
             img5.convertTo(dst,CV_8U);
             cv::imwrite(outputPath + "mask-" + std::to_string(_view->getRow()) + "-" + std::to_string(_view->getCol())  + ".png" , dst);
 
-            printBoolArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
+//            printBoolArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
 
             img5.release();
 

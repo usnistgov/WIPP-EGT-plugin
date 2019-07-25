@@ -146,6 +146,7 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     for (auto blobCoords : _toMerge) {
       for (auto coord : blobCoords.second) {
           if(auto other = getBlobFromCoord(coord.first, coord.second)) {
+            assert(blobCoords.first != other);
             uf.unionElements(blobCoords.first, other);
           }
       }
@@ -154,8 +155,9 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     // Clear to merge data stucture
     _toMerge.clear();
 
-    //TODO WE DO FOR EVERY BLOB, WE SHOULD NOT
+
     // Associate every blob to it parent
+    //or to itself if it is alone
     for (auto blob : _blobs->_blobs) {
       parentSons[uf.find(blob)].insert(blob);
     }
@@ -164,7 +166,13 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     for (auto pS : parentSons) {
       auto parent = pS.first;
       auto sons = pS.second;
-      VLOG(5) << "nb of sons: " << sons.size();
+      VLOG(3) << "nb of sons: " << sons.size();
+
+      if(sons.size() == 1){
+        VLOG(3) << "no need to merge this blob";
+        continue;
+      }
+
       Blob
           *toMerge = *sons.begin(),
           *merged = nullptr;
@@ -175,14 +183,14 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
 
       parent->addToBitMask(bitMask, bb);
 
-      auto *f = new Feature(parent->getTag(), *bb, bitMask);
-      VLOG(0) << (*f);
+ //     auto *f = new Feature(parent->getTag(), *bb, bitMask);
+//      VLOG(0) << (*f);
 
       for (auto son = std::next(sons.begin()); son != sons.end(); ++son) {
 
 
         (*son)->addToBitMask(bitMask, bb);
-     //   delete (*son);
+        delete (*son);
         _blobs->_blobs.remove(*son);
       }
 
@@ -190,8 +198,8 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
       delete parent->getFeature();
       auto *feature = new Feature(parent->getTag(), *bb, bitMask);
 
-      VLOG(3) << "Blob merged: ";
-      VLOG(3) << (*feature);
+//      VLOG(3) << "Blob merged: ";
+//      VLOG(3) << (*feature);
 
       parent->setFeature(feature);
     }
