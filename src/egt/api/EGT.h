@@ -63,7 +63,8 @@ namespace egt {
             auto begin = std::chrono::high_resolution_clock::now();
 
             auto beginThreshold = std::chrono::high_resolution_clock::now();
-            T threshold = runThresholdFinder<T>(options);
+//            T threshold = runThresholdFinder<T>(options);
+T threshold = 123;
             auto endThreshold = std::chrono::high_resolution_clock::now();
 
 
@@ -334,8 +335,12 @@ namespace egt {
             beginFC = std::chrono::high_resolution_clock::now();
             auto fc = new FeatureCollection();
             fc->createFCFromListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
+            auto fc2 = new FeatureCollection();
+            fc2->createFCFromCompactListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
             fc->createBlackWhiteMask("output.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+            fc2->createBlackWhiteMask2("output2.tiff", (uint32_t)tileWidthAtSegmentationLevel);
             delete fc;
+            delete fc2;
             endFC = std::chrono::high_resolution_clock::now();
         }
 

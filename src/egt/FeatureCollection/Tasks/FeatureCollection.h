@@ -832,7 +832,198 @@ class FeatureCollection {
     }
   }
 
+
+    /// \brief Create a tiled tiff mask, where the pixels are 1.
+    /// \param pathLabeledMask Path to save the mask.
+    /// \param tileSize Size of tile in the tiff image
+    void createBlackWhiteMask2(const std::string &pathLabeledMask,
+                              const uint32_t tileSize = 1024) {
+      if ((tileSize & (tileSize - 1)) != 0) {
+        std::stringstream message;
+        message
+                << "Feature Collection ERROR: The tiling asked is not a power of 2.";
+        std::string m = message.str();
+        throw (fi::FastImageException(m));
+      }
+      // Get image size
+      auto
+              imageWidth = this->getImageWidth(),
+              imageHeight = this->getImageHeight();
+
+      // Create two tiles pointer: one empty, one to be filled
+      std::vector<uint8_t>
+              *emptyTile = new std::vector<uint8_t>(tileSize * tileSize, 0),
+              *currentTile = nullptr;
+
+      // Create a pair to create a coordinate (row/col)
+      std::pair<uint32_t, uint32_t>
+              currentCoordinates;
+
+      // Create the tiff file
+      TIFF
+              *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+
+      uint32_t
+              upperLeftRowFeature = 0,
+              upperLeftColFeature = 0,
+              bottomRightRowFeature = 0,
+              bottomRightColFeature = 0,
+              minRowTile = 0,
+              minColTile = 0,
+              upperLeftRow = 0,
+              upperLeftCol = 0,
+              bottomRightRow = 0,
+              bottomRightCol = 0,
+              indexMinTileRow = 0,
+              indexMaxTileRow = 0,
+              indexMinTileCol = 0,
+              indexMaxTileCol = 0;
+
+      // Create a map of coordinate -> Tile
+      std::map<std::pair<uint32_t, uint32_t>, std::vector<uint8_t> *>
+              loadedTiles;
+
+      if (tif != nullptr) {
+        TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
+        TIFFSetField(tif, TIFFTAG_IMAGELENGTH, imageHeight);
+        TIFFSetField(tif, TIFFTAG_TILELENGTH, tileSize);
+        TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileSize);
+        TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8 * sizeof(uint8_t));
+        TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
+        TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+        TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+        TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+        TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+        TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+
+        // For every feature in the feature collection
+        for (const auto &feature : this->_features) {
+
+          // Get the bounding box
+          upperLeftRowFeature = feature->getBoundingBox().getUpperLeftRow();
+          upperLeftColFeature = feature->getBoundingBox().getUpperLeftCol();
+          bottomRightRowFeature = feature->getBoundingBox().getBottomRightRow();
+          bottomRightColFeature = feature->getBoundingBox().getBottomRightCol();
+
+          indexMinTileRow = upperLeftRowFeature / tileSize;
+          indexMinTileCol = upperLeftColFeature / tileSize;
+
+          indexMaxTileRow = (bottomRightRowFeature - 1) / tileSize;
+          indexMaxTileCol = (bottomRightColFeature - 1) / tileSize;
+
+          // For every view in the bounding box
+          for (uint32_t indexRow = indexMinTileRow; indexRow <= indexMaxTileRow;
+               ++indexRow) {
+            for (uint32_t indexCol = indexMinTileCol; indexCol <= indexMaxTileCol;
+                 ++indexCol) {
+
+              // Get the tile, from the map or create one
+              currentCoordinates =
+                      std::pair<uint32_t, uint32_t>(indexRow, indexCol);
+              if (loadedTiles.find(currentCoordinates) == loadedTiles.end()) {
+                loadedTiles[currentCoordinates] =
+                        new std::vector<uint8_t>(tileSize * tileSize, 0);
+              }
+              currentTile = loadedTiles[currentCoordinates];
+
+              // Get the indexes used for the computation
+              minRowTile = indexRow * tileSize;
+              minColTile = indexCol * tileSize;
+
+              upperLeftRow = std::max(minRowTile, upperLeftRowFeature);
+              upperLeftCol = std::max(minColTile, upperLeftColFeature);
+
+              bottomRightRow =
+                      std::min(bottomRightRowFeature, (indexRow + 1) * tileSize);
+              bottomRightCol =
+                      std::min(bottomRightColFeature, (indexCol + 1) * tileSize);
+
+              // For every pixel in the tile
+              for (uint32_t rowTileFeature = upperLeftRow;
+                   rowTileFeature < bottomRightRow; ++rowTileFeature) {
+                for (uint32_t colTileFeature = upperLeftCol;
+                     colTileFeature < bottomRightCol; ++colTileFeature) {
+
+                  // If the pixel is in the feature
+                  if (feature->isInBitMask(rowTileFeature, colTileFeature)) {
+                    currentTile->at((rowTileFeature - minRowTile) * tileSize
+                                    + (colTileFeature - minColTile)) = 255;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        indexMaxTileRow = (this->getImageHeight() - 1) / tileSize;
+        indexMaxTileCol = (this->getImageWidth() - 1) / tileSize;
+
+        // For every tile in the image
+        for (uint32_t indexRow = 0; indexRow <= indexMaxTileRow; indexRow++) {
+          for (uint32_t indexCol = 0; indexCol <= indexMaxTileCol; indexCol++) {
+
+            // Get the tile from it coordinates in the map
+            currentCoordinates =
+                    std::pair<uint32_t, uint32_t>(indexRow, indexCol);
+            // If it doesn't exist write the blank tile
+            if (loadedTiles.find(currentCoordinates) == loadedTiles.end()) {
+
+              TIFFWriteTile(tif,
+                            emptyTile->data(),
+                            indexCol * tileSize,
+                            indexRow * tileSize,
+                            0,
+                            0);
+            } else {
+              // Write the filled tile
+              TIFFWriteTile(tif,
+                            (loadedTiles[currentCoordinates])->data(),
+                            indexCol * tileSize,
+                            indexRow * tileSize,
+                            0,
+                            0);
+            }
+
+          }
+        }
+        // Close the tif
+        TIFFClose(tif);
+      } else {
+        std::cerr << "The File " << pathLabeledMask << " can't be opened."
+                  << std::endl;
+        exit(1);
+      }
+
+      delete emptyTile;
+      for (auto &tile : loadedTiles) {
+        delete tile.second;
+      }
+    }
+
  public:
+
+    void createFCFromCompactListBlobs(const ListBlobs *listBlobs,
+                               uint32_t imageHeight,
+                               uint32_t imageWidth) {
+
+      this->setImageHeight(imageHeight);
+      this->setImageWidth(imageWidth);
+      uint32_t
+              idFeature = 0;
+
+      for (auto blob : listBlobs->_blobs) {
+
+      auto feature = blob->getFeature();
+      _features.push_back(feature);
+      ++idFeature;
+      // Preprocess the FC
+      this->preProcessing();
+      }
+    }
+
+
+
   void createFCFromListBlobs(const ListBlobs *listBlobs,
                              uint32_t imageHeight,
                              uint32_t imageWidth) {
@@ -898,6 +1089,10 @@ class FeatureCollection {
 
   std::vector<Feature>
       _vectorFeatures{};    ///< Vector of features
+
+
+    std::vector<Feature*>
+            _features{};    ///< Vector of features
 
   uint32_t
       _imageWidth,        ///< Image width

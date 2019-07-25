@@ -19,10 +19,10 @@ int main() {
 
 
 //    std::string path = "/Users/gerardin/Documents/images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif";
-    std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif";
+//    std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif";
 //  std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256.tif";
 //     std::string path = "/home/gerardin/Documents/images/egt-test-images/datasetSegmentationTest2/test2_160px_tiled64_8bit.tif";
-//    std::string path = "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif";
+    std::string path = "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif";
 //    std::string path = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif";
 
 
@@ -40,8 +40,8 @@ int main() {
     options->inputPath = path;
     options->outputPath = outputPath;
     options->imageDepth = depth;
-    options->nbLoaderThreads = 2;
-    options->concurrentTiles = 10;
+    options->nbLoaderThreads = 1;
+    options->concurrentTiles = 1;
     options->pyramidLevel = 0;
 
 
@@ -49,14 +49,16 @@ int main() {
 //    uint32_t MAX_HOLE_SIZE = 3000;
 //    uint32_t MIN_OBJECT_SIZE = 20;
 //    uint32_t MIN_HOLE_SIZE = 10;
-//        uint32_t MIN_OBJECT_SIZE = 2;
-//        uint32_t MIN_HOLE_SIZE = 1;
 
     auto segmentationOptions = new SegmentationOptions();
-    segmentationOptions->MIN_HOLE_SIZE = 1000;
-    segmentationOptions->MIN_OBJECT_SIZE = 3000;
+//    segmentationOptions->MIN_HOLE_SIZE = 1000;
+//    segmentationOptions->MIN_OBJECT_SIZE = 3000;
+//    segmentationOptions->MAX_HOLE_SIZE = 10000;
+//    segmentationOptions->MASK_ONLY = true;
+    segmentationOptions->MIN_HOLE_SIZE = 1;
+    segmentationOptions->MIN_OBJECT_SIZE = 2;
     segmentationOptions->MAX_HOLE_SIZE = 10000;
-    segmentationOptions->MASK_ONLY = true;
+    segmentationOptions->MASK_ONLY = false;
 
 
 

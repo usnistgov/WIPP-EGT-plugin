@@ -291,6 +291,10 @@ namespace egt {
             return answer;
         }
 
+        ~Feature(){
+//            delete _bitMask;
+        }
+
         /// \brief Inequality operator
         /// \param rhs Feature to test
         /// \return True if not equal, False Else

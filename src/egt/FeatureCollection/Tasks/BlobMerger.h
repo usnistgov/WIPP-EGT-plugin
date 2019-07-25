@@ -122,9 +122,13 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     // Iterate over the blobs
     for (auto blob : _blobs->_blobs) {
       // Test if the pixel is in the blob
-      if (blob->isPixelinFeature(row, col)) {
+      if(blob->getFeature()->isInBitMask(row,col)) {
         return blob;
       }
+//
+//      if (blob->isPixelinFeature(row, col)) {
+//        return blob;
+//      }
     }
     return nullptr;
   }
@@ -149,6 +153,7 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     // Clear to merge data stucture
     _toMerge.clear();
 
+    //TODO WE DO FOR EVERY BLOB, WE SHOULD NOT
     // Associate every blob to it parent
     for (auto blob : _blobs->_blobs) {
       parentSons[uf.find(blob)].insert(blob);
@@ -156,21 +161,69 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
 
     // For every Parent - son blob, merge every parent to it son
     for (auto pS : parentSons) {
+      auto parent = pS.first;
       auto sons = pS.second;
       VLOG(5) << "nb of sons: " << sons.size();
       Blob
           *toMerge = *sons.begin(),
           *merged = nullptr;
+
+      auto bb = calculateBoundingBox(sons);
+      uint32_t height =  (uint32_t)ceil(bb->getHeight() / 32.);
+      uint32_t width = (uint32_t)ceil(bb->getWidth() / 32.);
+      double size = ceil((bb->getHeight() * bb->getWidth()) / 32.);
+      uint32_t* bitMask = new uint32_t[(uint32_t) size]();
+
+      parent->addToBitMask(bitMask);
+
       for (auto son = std::next(sons.begin()); son != sons.end(); ++son) {
-        merged = toMerge->mergeAndDelete(*son);
-        if (merged == *son) {
-          _blobs->_blobs.remove(toMerge);
-        } else {
-          _blobs->_blobs.remove(*son);
-        }
-        toMerge = merged;
+
+
+        (*son)->addToBitMask(bitMask);
+     //   delete (*son);
+        _blobs->_blobs.remove(*son);
+
+//        std::ostringstream oss2;
+//        VLOG(3) << "print bitmask after merge";
+//
+//        for (size_t i = 0; i < height; ++i) {
+//          for (size_t j = 0; j < width; ++j) {
+//            oss2 << std::setw(6) << (bitMask[i * width + j]) << " ";
+//          }
+//          oss2 << std::endl;
+//        }
+//        oss2 << std::endl;
+//
+//        VLOG(3) << oss2.str();
       }
+
+
+      delete parent->getFeature();
+      auto *feature = new Feature(parent->getTag(), *bb, bitMask);
+
+      VLOG(3) << "Blob merged: ";
+      VLOG(3) << (*feature);
+
+      parent->setFeature(feature);
     }
+  }
+
+  BoundingBox* calculateBoundingBox(std::set<Blob *> sons) {
+
+    uint32_t  upperLeftRow = std::numeric_limits<int32_t>::max(),
+              upperLeftCol = std::numeric_limits<int32_t>::max(),
+              bottomRightRow = 0,
+              bottomRightCol = 0;
+
+    for (auto son = sons.begin(); son != sons.end(); ++son) {
+      auto bb = (*son)->getFeature()->getBoundingBox();
+      upperLeftRow = (bb.getUpperLeftRow() < upperLeftRow) ? bb.getUpperLeftRow() : upperLeftRow;
+      upperLeftCol = (bb.getUpperLeftCol() < upperLeftCol) ? bb.getUpperLeftCol() : upperLeftCol;
+      bottomRightRow = (bb.getBottomRightRow() > bottomRightRow) ? bb.getBottomRightRow() : bottomRightRow;
+      bottomRightCol = bb.getBottomRightCol() > bottomRightCol ? bb.getBottomRightCol() : bottomRightCol;
+    }
+
+    return new BoundingBox(upperLeftRow, upperLeftCol, bottomRightRow, bottomRightCol);
   }
 
   uint32_t

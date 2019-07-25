@@ -286,10 +286,8 @@ namespace egt {
                     else{
                         //WE ADD IT
                         if(!_options->MASK_ONLY) {
+                            _currentBlob->compactBlobDataIntoFeature();
                             _vAnalyse->insertBlob(_currentBlob);
-                            auto compactBlob = new CompactBlob(_currentBlob);
-                            _vAnalyse->insertCompactBlob(compactBlob);
-                            //TODO delete blob and remove insert
                         }
                     }
                 }

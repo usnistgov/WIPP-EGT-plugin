@@ -1,0 +1,3 @@
+-i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "10" --maxhole "3000" --minobject "20" -x "0"
+
+-i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "8U" --level "0" --minhole "1" --maxhole "200" --minobject "2" -x "0"

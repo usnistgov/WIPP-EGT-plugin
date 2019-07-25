@@ -80,10 +80,6 @@ class ViewAnalyse : public htgs::IData {
       _toMerge[b].push_back(c);
   }
 
-    void addToMergeCompact(CompactBlob *b, Coordinate c) {
-        _toMergeCompact[b].push_back(c);
-    }
-
   void deleteBlob(Blob *b) {
       _toMerge.erase(b);
       _blobs.remove(b);
@@ -93,20 +89,16 @@ class ViewAnalyse : public htgs::IData {
   /// \param b blob to add
   void insertBlob(Blob *b) { _blobs.push_back(b); }
 
-/// \brief Insert a blob to the list of blobs
-/// \param b blob to add
-void insertCompactBlob(CompactBlob *b) { _compactBlobs.push_back(b); }
 
- private:
+    virtual ~ViewAnalyse() {
+        _toMerge.clear();
+        _blobs.clear();
+    }
+
+private:
   std::unordered_map<egt::Blob *, std::list<Coordinate>>
       _toMerge;   ///< Map of blob which will need to be merged to a list of
                   ///< coordinates
-
-  std::unordered_map<egt::CompactBlob *, std::list<Coordinate>>
-            _toMergeCompact;   ///< Map of blob which will need to be merged to a list of
-    ///< coordinates
-
-  std::list<CompactBlob *>  _compactBlobs{};
 
   std::list<Blob *>
       _blobs{};   ///< List of blobs created

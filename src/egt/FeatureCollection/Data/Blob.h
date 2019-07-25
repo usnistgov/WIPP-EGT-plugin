@@ -44,6 +44,7 @@
 #include <iostream>
 #include <FastImage/api/FastImage.h>
 #include <unordered_set>
+#include "Feature.h"
 
 /// \namespace fc FeatureCollection namespace
 namespace egt {
@@ -139,6 +140,8 @@ class Blob {
   /// \brief Get blob rank, used by Union find
   /// \return Blob rank
   uint32_t getRank() const { return _rank; }
+
+  Feature *getFeature() { return _feature; }
 
   /// \brief Test if a pixel is in a blob
   /// \param row Row asked
@@ -242,15 +245,117 @@ class Blob {
       }
     }
 
+
     // update pixel count
     destination->setCount(toDelete->getCount() + destination->getCount());
-
-
 
     // Delete unused Blob
     delete (toDelete);
     // Return merged blob
     return destination;
+  }
+
+  void compactBlobDataIntoFeature(){
+
+    uint32_t
+            idFeature = 0,
+            rowMin = (uint32_t) this->getRowMin(),
+            colMin = (uint32_t)this->getColMin(),
+            rowMax = (uint32_t)this->getRowMax(),
+            colMax = (uint32_t)this->getColMax(),
+            ulRowL = 0,
+            ulColL = 0,
+            wordPosition = 0,
+            bitPositionInDecimal = 0,
+            absolutePosition = 0;
+
+    //TODO change coords to uint32_t?
+    BoundingBox boundingBox(
+            rowMin,
+            colMin,
+            rowMax,
+            colMax);
+
+    uint32_t* bitMask = new uint32_t[(uint32_t) ceil((boundingBox.getHeight() * boundingBox.getWidth()) / 32.)]();
+
+    // For every pixel in the bit mask
+    for (auto row = (uint32_t) rowMin; row < rowMax; ++row) {
+      for (auto col = (uint32_t) colMin; col < colMax; ++col) {
+        // Test if the pixel is in the current feature (using global coordinates)
+        if (this->isPixelinFeature(row, col)) {
+          // Add it to the bit mask
+          ulRowL = row - boundingBox.getUpperLeftRow(); //convert to local coordinates
+          ulColL = col - boundingBox.getUpperLeftCol();
+          absolutePosition = ulRowL * boundingBox.getWidth() + ulColL; //to 1D array coordinates
+          //optimization : right-shifting binary representation by 5 is equivalent to dividing by 32
+          wordPosition = absolutePosition >> (uint32_t) 5;
+          //left-shifting back previous result gives the 1D array coordinates of the word beginning
+          auto beginningOfWord = ((int32_t) (wordPosition << (uint32_t) 5));
+          //subtracting original value gives the remainder of the division by 32.
+          auto remainder = ((int32_t) absolutePosition - beginningOfWord);
+          //at which position in a binary representation the bit needs to be set?
+          bitPositionInDecimal = (uint32_t) abs(32 - remainder);
+          //create a 32bit word with this bit set to 1.
+          auto bitPositionInBinary = ((uint32_t) 1 << (bitPositionInDecimal - (uint32_t) 1));
+          //adding the bitPosition to the word
+          bitMask[wordPosition] = bitMask[wordPosition] | bitPositionInBinary;
+        }
+      }
+    }
+
+    _feature = new Feature(this->getTag(), boundingBox, bitMask);
+
+//    VLOG(3) << "Blob created: ";
+//    VLOG(3) << (*_feature);
+
+  }
+
+  void addToBitMask(uint32_t* bitMask) {
+
+
+
+//    VLOG(3) << (*_feature);
+
+
+    uint32_t
+      rowMin = (uint32_t) this->getRowMin(),
+      colMin = (uint32_t)this->getColMin(),
+      rowMax = (uint32_t)this->getRowMax(),
+      colMax = (uint32_t)this->getColMax(),
+      ulRowL = 0,
+      ulColL = 0,
+      wordPosition = 0,
+      bitPositionInDecimal = 0,
+      absolutePosition = 0;
+
+    // For every pixel in the bit mask
+    for (auto row = (uint32_t) rowMin; row < rowMax; ++row) {
+      for (auto col = (uint32_t) colMin; col < colMax; ++col) {
+        // Test if the pixel is in the current feature (using global coordinates)
+        if (this->isPixelinFeature(row, col)) {
+          // Add it to the bit mask
+          ulRowL = row - rowMin; //convert to local coordinates
+          ulColL = col - colMin;
+          absolutePosition = ulRowL * (colMax - colMin) + ulColL; //to 1D array coordinates
+          //optimization : right-shifting binary representation by 5 is equivalent to dividing by 32
+          wordPosition = absolutePosition >> (uint32_t) 5;
+          //left-shifting back previous result gives the 1D array coordinates of the word beginning
+          auto beginningOfWord = ((int32_t) (wordPosition << (uint32_t) 5));
+          //subtracting original value gives the remainder of the division by 32.
+          auto remainder = ((int32_t) absolutePosition - beginningOfWord);
+          //at which position in a binary representation the bit needs to be set?
+          bitPositionInDecimal = (uint32_t) abs(32 - remainder);
+          //create a 32bit word with this bit set to 1.
+          auto bitPositionInBinary = ((uint32_t) 1 << (bitPositionInDecimal - (uint32_t) 1));
+          //adding the bitPosition to the word
+          bitMask[wordPosition] = bitMask[wordPosition] | bitPositionInBinary;
+        }
+      }
+    }
+  }
+
+  void setFeature(Feature *f){
+    this->_feature = f;
   }
 
   /// \brief Print blob state
@@ -296,6 +401,8 @@ class Blob {
 
   uint32_t _startRow = 0;
   uint32_t _startCol = 0;
+
+  Feature *_feature = nullptr;
 };
 
 }
