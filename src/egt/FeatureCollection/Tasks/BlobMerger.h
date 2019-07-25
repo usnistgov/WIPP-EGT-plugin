@@ -186,8 +186,11 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
  //     auto *f = new Feature(parent->getTag(), *bb, bitMask);
 //      VLOG(0) << (*f);
 
-      for (auto son = std::next(sons.begin()); son != sons.end(); ++son) {
+      for (auto son = sons.begin(); son != sons.end(); ++son) {
 
+        if(*son == parent){
+          continue;
+        }
 
         (*son)->addToBitMask(bitMask, bb);
         delete (*son);
