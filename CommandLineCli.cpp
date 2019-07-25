@@ -59,7 +59,7 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::uint32_t> MaxHoleSizeArg("M", "maxhole", "Maximum Hole Size", false, 3000, "uint32_t");
         cmd.add(MaxHoleSizeArg);
 
-        TCLAP::ValueArg<std::uint32_t> MinObjectSizeArg("s", "minobject", "Maximum Object Size", false, 3000, "uint32_t");
+        TCLAP::ValueArg<std::uint32_t> MinObjectSizeArg("s", "minobject", "Minimum Object Size", false, 3000, "uint32_t");
         cmd.add(MinObjectSizeArg);
 
         TCLAP::ValueArg<bool> MaskOnlyArg("x", "maskonly", "Mask only", false, false, "bool");

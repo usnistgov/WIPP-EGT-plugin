@@ -33,6 +33,23 @@ namespace egt {
 
         VLOG(3) << oss.str();
     }
+
+
+    template<class T>
+    void printBoolArray(std::string title, T *data, uint32_t w, uint32_t h) {
+        std::ostringstream oss;
+
+        oss << title << std::endl;
+        for (size_t i = 0; i < h; ++i) {
+            for (size_t j = 0; j < w; ++j) {
+                oss << std::setw(1) << ((data[i * w + j] > 0) ? 1 : 0) << " ";
+            }
+            oss << std::endl;
+        }
+        oss << std::endl;
+
+        VLOG(0) << oss.str();
+    }
 }
 
 #endif //PYRAMIDBUILDING_UTILS_H

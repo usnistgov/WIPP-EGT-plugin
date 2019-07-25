@@ -126,7 +126,7 @@ namespace egt {
             img5.convertTo(dst,CV_8U);
             cv::imwrite(outputPath + "mask-" + std::to_string(_view->getRow()) + "-" + std::to_string(_view->getCol())  + ".png" , dst);
 
-//            printArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
+            printBoolArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
 
             img5.release();
 
@@ -222,7 +222,7 @@ namespace egt {
             }
         }
 
-        void bloblCompleted(Color blobColor){
+        void bloblCompleted(Color blobColor) {
                 VLOG(5) << "blob size: " << _currentBlob->getCount();
 
                 //background and foreground blobs are not handled the same way

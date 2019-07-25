@@ -64,7 +64,7 @@ namespace egt {
 
             auto beginThreshold = std::chrono::high_resolution_clock::now();
 //            T threshold = runThresholdFinder<T>(options);
-T threshold = 123;
+            T threshold = 108;
             auto endThreshold = std::chrono::high_resolution_clock::now();
 
 

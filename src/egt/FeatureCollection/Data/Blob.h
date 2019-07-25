@@ -310,7 +310,7 @@ class Blob {
 
   }
 
-  void addToBitMask(uint32_t* bitMask) {
+  void addToBitMask(uint32_t* bitMask, BoundingBox *bb) {
 
 
 
@@ -334,9 +334,9 @@ class Blob {
         // Test if the pixel is in the current feature (using global coordinates)
         if (this->isPixelinFeature(row, col)) {
           // Add it to the bit mask
-          ulRowL = row - rowMin; //convert to local coordinates
-          ulColL = col - colMin;
-          absolutePosition = ulRowL * (colMax - colMin) + ulColL; //to 1D array coordinates
+          ulRowL = row - bb->getUpperLeftRow(); //convert to local coordinates
+          ulColL = col - bb->getUpperLeftCol();
+          absolutePosition = ulRowL * bb->getWidth() + ulColL; //to 1D array coordinates
           //optimization : right-shifting binary representation by 5 is equivalent to dividing by 32
           wordPosition = absolutePosition >> (uint32_t) 5;
           //left-shifting back previous result gives the 1D array coordinates of the word beginning

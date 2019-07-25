@@ -260,13 +260,14 @@ namespace egt {
             os << std::endl;
             for (uint32_t row = bB.getUpperLeftRow(); row < bB.getBottomRightRow();
                  ++row) {
-                std::cout << std::endl << "        ";
+//                std::cout << std::endl << "        ";
+                std::cout << std::endl;
                 for (uint32_t col = bB.getUpperLeftCol(); col < bB.getBottomRightCol();
                      ++col) {
                     if (region.isInBitMask(row, col)) {
-                        std::cout << 1;
+                        std::cout << std::setw(1) << 1 << " ";
                     } else {
-                        std::cout << 0;
+                        std::cout << std::setw(1) << 0 << " ";
                     }
                 }
             }

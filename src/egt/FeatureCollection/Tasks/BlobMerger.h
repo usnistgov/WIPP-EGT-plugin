@@ -72,6 +72,7 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
   /// \param data View analyse
   void executeTask(std::shared_ptr<ViewAnalyse> data) override {
     // Merge the analyse
+    //TODO CANT WE JUST COPY BACK?. MERGE SEEMS TO HAVE A NOTION OF ORDERING? http://www.cplusplus.com/reference/list/list/merge/
     for (auto blobListCoordToMerge : data->getToMerge()) {
       this->_toMerge[blobListCoordToMerge.first]
           .merge(blobListCoordToMerge.second);
@@ -169,32 +170,20 @@ class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
           *merged = nullptr;
 
       auto bb = calculateBoundingBox(sons);
-      uint32_t height =  (uint32_t)ceil(bb->getHeight() / 32.);
-      uint32_t width = (uint32_t)ceil(bb->getWidth() / 32.);
       double size = ceil((bb->getHeight() * bb->getWidth()) / 32.);
       uint32_t* bitMask = new uint32_t[(uint32_t) size]();
 
-      parent->addToBitMask(bitMask);
+      parent->addToBitMask(bitMask, bb);
+
+      auto *f = new Feature(parent->getTag(), *bb, bitMask);
+      VLOG(0) << (*f);
 
       for (auto son = std::next(sons.begin()); son != sons.end(); ++son) {
 
 
-        (*son)->addToBitMask(bitMask);
+        (*son)->addToBitMask(bitMask, bb);
      //   delete (*son);
         _blobs->_blobs.remove(*son);
-
-//        std::ostringstream oss2;
-//        VLOG(3) << "print bitmask after merge";
-//
-//        for (size_t i = 0; i < height; ++i) {
-//          for (size_t j = 0; j < width; ++j) {
-//            oss2 << std::setw(6) << (bitMask[i * width + j]) << " ";
-//          }
-//          oss2 << std::endl;
-//        }
-//        oss2 << std::endl;
-//
-//        VLOG(3) << oss2.str();
       }
 
 
