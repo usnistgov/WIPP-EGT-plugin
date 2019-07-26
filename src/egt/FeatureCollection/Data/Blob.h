@@ -305,6 +305,7 @@ class Blob {
     }
 
     _feature = new Feature(this->getTag(), boundingBox, bitMask);
+  //TODO still in bug here
     _rowCols.clear();
   }
 

@@ -37,7 +37,6 @@
 
 #include <unordered_map>
 #include <htgs/api/IData.hpp>
-#include <egt/FeatureCollection/Data/CompactBlob.h>
 #include <egt/FeatureCollection/Data/Blob.h>
 
 namespace egt {

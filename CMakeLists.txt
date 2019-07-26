@@ -82,4 +82,4 @@ set(SRC_FILES src src/egt/tasks/ViewToConvOutDataConverter.h src/egt/FeatureColl
 
 
 add_executable(main main.cpp ${SRC_FILES})
-add_executable(commandLineCli CommandLineCli.cpp ${SRC_FILES} src/egt/FeatureCollection/Data/CompactBlob.h src/egt/FeatureCollection/Data/Feature.h src/egt/FeatureCollection/Data/BoundingBox.h)
+add_executable(commandLineCli CommandLineCli.cpp ${SRC_FILES} src/egt/FeatureCollection/Data/Feature.h src/egt/FeatureCollection/Data/BoundingBox.h)

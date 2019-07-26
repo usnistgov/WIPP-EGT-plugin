@@ -433,7 +433,6 @@ namespace egt {
             return Color::BACKGROUND;
         }
 
-        ///attributes
 
         fi::View<UserType>* _view;
 

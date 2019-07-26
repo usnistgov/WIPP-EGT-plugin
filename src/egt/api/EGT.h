@@ -41,8 +41,13 @@ namespace egt {
             ImageDepth imageDepth = ImageDepth::_8U;
             uint32_t pyramidLevel = 0;
 
-            size_t nbLoaderThreads = 2;
-            uint32_t concurrentTiles = 10;
+            size_t nbLoaderThreads{};
+            uint32_t concurrentTiles{};
+
+            uint32_t nbSamples{};
+            uint32_t nbExperiments{};
+
+            int32_t threshold{};
 
         };
 
@@ -62,16 +67,28 @@ namespace egt {
 
             options->nbLoaderThreads = (expertModeOptions.find("loader") != expertModeOptions.end()) ? expertModeOptions.at("loader") : 1;
             options->concurrentTiles = (expertModeOptions.find("tile") != expertModeOptions.end()) ? expertModeOptions.at("tile") : 1;
+            options->nbSamples = (expertModeOptions.find("sample") != expertModeOptions.end()) ? expertModeOptions.at("sample") : 10;
+            options->nbExperiments = (expertModeOptions.find("exp") != expertModeOptions.end()) ? expertModeOptions.at("exp") : 5;
+            options->threshold = (expertModeOptions.find("threshold") != expertModeOptions.end()) ? expertModeOptions.at("threshold") : -1;
 
-            VLOG(1) << "Execution model : " << std::endl;
-            VLOG(1) << "loader threads : " << options->nbLoaderThreads  << std::endl;
-            VLOG(1) << "concurrent tiles : " << options->concurrentTiles  << std::endl;
+            VLOG(1) << "Execution model : ";
+            VLOG(1) << "loader threads : " << options->nbLoaderThreads;
+            VLOG(1) << "concurrent tiles : " << options->concurrentTiles;
+            VLOG(1) << "fixed threshold : " << std::boolalpha << (options->threshold != -1);
+            if(options->threshold != -1){
+                VLOG(1) << "fixed threshold value : "  << options->threshold  << std::endl;
+            }
 
             auto begin = std::chrono::high_resolution_clock::now();
 
             auto beginThreshold = std::chrono::high_resolution_clock::now();
-            T threshold = runThresholdFinder<T>(options);
-//            T threshold = 108;
+            T threshold{};
+            if(options->threshold == -1) {
+                threshold = runThresholdFinder<T>(options);
+            }
+            else {
+                threshold = options->threshold;
+            }
             auto endThreshold = std::chrono::high_resolution_clock::now();
 
 
@@ -188,7 +205,7 @@ namespace egt {
             graph->writeDotToFile("thresholdGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
             delete fi;
-            delete runtime; //this will also delete fastImage and the TileLoader
+            delete runtime;
 
             return threshold;
         }
@@ -264,15 +281,15 @@ namespace egt {
             uint32_t segmentationRadius = 2;
 
             auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
-            auto *fi2 = new fi::FastImage<T>(tileLoader2, segmentationRadius);
-            fi2->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
-            auto fastImage2 = fi2->configureAndMoveToTaskGraphTask("Fast Image 2");
-            uint32_t imageHeightAtSegmentationLevel = fi2->getImageHeight(pyramidLevelToRequestForSegmentation);
-            uint32_t imageWidthAtSegmentationLevel = fi2->getImageWidth(pyramidLevelToRequestForSegmentation);
-            int32_t tileHeigthAtSegmentationLevel = fi2->getTileHeight(pyramidLevelToRequestForSegmentation);
-            int32_t tileWidthAtSegmentationLevel = fi2->getTileWidth(pyramidLevelToRequestForSegmentation);
-            uint32_t nbTiles = fi2->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
-                               fi2->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
+            auto *fi = new fi::FastImage<T>(tileLoader2, segmentationRadius);
+            fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
+            auto fastImage2 = fi->configureAndMoveToTaskGraphTask("Fast Image 2");
+            uint32_t imageHeightAtSegmentationLevel = fi->getImageHeight(pyramidLevelToRequestForSegmentation);
+            uint32_t imageWidthAtSegmentationLevel = fi->getImageWidth(pyramidLevelToRequestForSegmentation);
+            int32_t tileHeigthAtSegmentationLevel = fi->getTileHeight(pyramidLevelToRequestForSegmentation);
+            int32_t tileWidthAtSegmentationLevel = fi->getTileWidth(pyramidLevelToRequestForSegmentation);
+            uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
+                               fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
             auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(options->concurrentTiles,options->imageDepth,1,1);
 
             auto viewSegmentation = new egt::EGTViewAnalyzer<T>(options->concurrentTiles,
@@ -299,7 +316,7 @@ namespace egt {
 
             segmentationRuntime = new htgs::TaskGraphRuntime(segmentationGraph);
             segmentationRuntime->executeRuntime();
-            fi2->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
+            fi->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
             segmentationGraph->finishedProducingData();
 
             //we only generate one output, the list of all objects
@@ -335,7 +352,7 @@ namespace egt {
             //FOR DEBUGGING
             segmentationGraph->writeDotToFile("SegmentationGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
-            delete (fi2);
+            delete (fi);
             delete (segmentationRuntime);
 
             VLOG(1) << "generating a segmentation mask";
