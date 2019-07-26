@@ -41,8 +41,8 @@ namespace egt {
             ImageDepth imageDepth = ImageDepth::_8U;
             uint32_t pyramidLevel = 0;
 
-            size_t nbLoaderThreads = 1;
-            uint32_t concurrentTiles = 1;
+            size_t nbLoaderThreads = 2;
+            uint32_t concurrentTiles = 10;
 
         };
 
@@ -58,13 +58,20 @@ namespace egt {
         /// with a single radius. It would be possible to rewrite the algo by taking the widest radius and calculate
         /// smaller radius from there, but marginal gains would not worth the complexity introduced.
         template<class T>
-        void run(EGTOptions *options, SegmentationOptions *segmentationOptions) {
+        void run(EGTOptions *options, SegmentationOptions *segmentationOptions, std::map<std::string,uint32_t> &expertModeOptions) {
+
+            options->nbLoaderThreads = (expertModeOptions.find("loader") != expertModeOptions.end()) ? expertModeOptions.at("loader") : 1;
+            options->concurrentTiles = (expertModeOptions.find("tile") != expertModeOptions.end()) ? expertModeOptions.at("tile") : 1;
+
+            VLOG(1) << "Execution model : " << std::endl;
+            VLOG(1) << "loader threads : " << options->nbLoaderThreads  << std::endl;
+            VLOG(1) << "concurrent tiles : " << options->concurrentTiles  << std::endl;
 
             auto begin = std::chrono::high_resolution_clock::now();
 
             auto beginThreshold = std::chrono::high_resolution_clock::now();
-//            T threshold = runThresholdFinder<T>(options);
-            T threshold = 108;
+            T threshold = runThresholdFinder<T>(options);
+//            T threshold = 108;
             auto endThreshold = std::chrono::high_resolution_clock::now();
 
 
@@ -76,8 +83,6 @@ namespace egt {
                 runSegmentation(threshold, options, segmentationOptions);
             }
             auto endSegmentation = std::chrono::high_resolution_clock::now();
-
-
 
             delete segmentationOptions;
 
@@ -182,6 +187,7 @@ namespace egt {
 //FOR DEBUGGING
             graph->writeDotToFile("thresholdGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
+            delete fi;
             delete runtime; //this will also delete fastImage and the TileLoader
 
             return threshold;
@@ -329,6 +335,7 @@ namespace egt {
             //FOR DEBUGGING
             segmentationGraph->writeDotToFile("SegmentationGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
+            delete (fi2);
             delete (segmentationRuntime);
 
             VLOG(1) << "generating a segmentation mask";
@@ -343,9 +350,6 @@ namespace egt {
             delete fc2;
             endFC = std::chrono::high_resolution_clock::now();
         }
-
-
-
 
         std::chrono::system_clock::time_point beginFC;
         std::chrono::system_clock::time_point endFC;

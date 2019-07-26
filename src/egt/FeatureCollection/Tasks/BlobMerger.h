@@ -56,188 +56,184 @@ namespace egt {
   *  https://en.wikipedia.org/wiki/Disjoint-set_data_structure
 
   **/
-class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
- public:
-  /// \brief BlobMerger constructor
-  /// \param imageHeight Image Height
-  /// \param imageWidth ImageWidth
-  /// \param nbTiles Number of tiles in the image
-  BlobMerger(uint32_t imageHeight, uint32_t imageWidth, uint32_t nbTiles)
-      : ITask(1), _nbTiles(nbTiles) {
-    _blobs = new ListBlobs();
-  }
+    class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
+    public:
+        /// \brief BlobMerger constructor
+        /// \param imageHeight Image Height
+        /// \param imageWidth ImageWidth
+        /// \param nbTiles Number of tiles in the image5
+        BlobMerger(uint32_t imageHeight, uint32_t imageWidth, uint32_t nbTiles)
+                : ITask(1), _nbTiles(nbTiles) {
+            _blobs = new ListBlobs();
+        }
 
-  /// \brief Get the view analyse, merge them into one analyse and merge all 
-  /// blob to build the feature collection
-  /// \param data View analyse
-  void executeTask(std::shared_ptr<ViewAnalyse> data) override {
-    // Merge the analyse
-    //TODO CANT WE JUST COPY BACK?. MERGE SEEMS TO HAVE A NOTION OF ORDERING? http://www.cplusplus.com/reference/list/list/merge/
-    for (auto blobListCoordToMerge : data->getToMerge()) {
-      this->_toMerge[blobListCoordToMerge.first]
-          .merge(blobListCoordToMerge.second);
-    }
-    auto viewBlob = data->getBlobs();
-    this->_blobs->_blobs.merge(viewBlob);
+        /// \brief Get the view analyse, merge them into one analyse and merge all
+        /// blob to build the feature collection
+        /// \param data View analyse
+        void executeTask(std::shared_ptr<ViewAnalyse> data) override {
+            // Merge the analyse
+            //TODO CANT WE JUST COPY BACK?. MERGE SEEMS TO HAVE A NOTION OF ORDERING? http://www.cplusplus.com/reference/list/list/merge/
+            for (auto blobListCoordToMerge : data->getToMerge()) {
+                this->_toMerge[blobListCoordToMerge.first]
+                        .merge(blobListCoordToMerge.second);
+            }
+            auto viewBlob = data->getBlobs();
+            this->_blobs->_blobs.merge(viewBlob);
 
-    _count++;
+            _count++;
 
-    // If all the analyse has been collected, merge the blobs
-    if (_count == _nbTiles) {
+            // If all the analyse has been collected, merge the blobs
+            if (_count == _nbTiles) {
 
-      auto startMerge = std::chrono::high_resolution_clock::now();
+                auto startMerge = std::chrono::high_resolution_clock::now();
 
 
-        VLOG(1) << "merging " << this->_blobs->_blobs.size() << " blobs...";
+                VLOG(1) << "merging " << this->_blobs->_blobs.size() << " blobs...";
 
 //        for(auto blob: this->_blobs->_blobs){
 //            VLOG(5) << *blob;
 //        }
-      _count = 0;
-      merge();
+                _count = 0;
+                merge();
 
-      VLOG(1) << "after last merge, we have : " << _blobs->_blobs.size() << " blobs left";
+                VLOG(1) << "after last merge, we have : " << _blobs->_blobs.size() << " blobs left";
 
-      auto endMerge = std::chrono::high_resolution_clock::now();
-      VLOG(1) << "    Merge blobs: " << std::chrono::duration_cast<std::chrono::milliseconds>(endMerge - startMerge).count() << " mS";
+                auto endMerge = std::chrono::high_resolution_clock::now();
+                VLOG(1) << "    Merge blobs: "
+                        << std::chrono::duration_cast<std::chrono::milliseconds>(endMerge - startMerge).count()
+                        << " mS";
 
-      this->addResult(_blobs);
-    }
-  }
-
-  /// \brief Get the name of the task
-  /// \return Task name
-  std::string getName() override { return "Merge & File creation"; }
-
-  /// \brief Task copy, should be a singleton, to send bask itself
-  /// \return itself
-  BlobMerger *copy() override { return this; }
-
- private:
-  /// \brief Retrieve a blob from a coordinate, nullptr is to blob is
-  /// corresponding
-  /// \param row Row
-  /// \param col Column
-  /// \return True if a blob has been found, else False
-  Blob *getBlobFromCoord(const int32_t &row, const int32_t &col) const {
-    // Iterate over the blobs
-    for (auto blob : _blobs->_blobs) {
-      // Test if the pixel is in the blob
-      if(blob->getFeature()->isInBitMask(row,col)) {
-        return blob;
-      }
-//
-//      if (blob->isPixelinFeature(row, col)) {
-//        return blob;
-//      }
-    }
-    return nullptr;
-  }
-
-  /// \brief Merge all the blobs from all the view analyser
-  void merge() {
-    fc::UnionFind<Blob>
-        uf{};
-
-    std::map<Blob *, std::set<Blob *>>
-        parentSons{};
-
-    // Apply the UF algorithm to every linked blob
-    for (auto blobCoords : _toMerge) {
-      for (auto coord : blobCoords.second) {
-          if(auto other = getBlobFromCoord(coord.first, coord.second)) {
-            assert(blobCoords.first != other);
-            uf.unionElements(blobCoords.first, other);
-          }
-      }
-    }
-
-    // Clear to merge data stucture
-    _toMerge.clear();
-
-
-    // Associate every blob to it parent
-    //or to itself if it is alone
-    for (auto blob : _blobs->_blobs) {
-      parentSons[uf.find(blob)].insert(blob);
-    }
-
-    // For every Parent - son blob, merge every parent to it son
-    for (auto pS : parentSons) {
-      auto parent = pS.first;
-      auto sons = pS.second;
-      VLOG(3) << "nb of sons: " << sons.size();
-
-      if(sons.size() == 1){
-        VLOG(3) << "no need to merge this blob";
-        continue;
-      }
-
-      Blob
-          *toMerge = *sons.begin(),
-          *merged = nullptr;
-
-      auto bb = calculateBoundingBox(sons);
-      double size = ceil((bb->getHeight() * bb->getWidth()) / 32.);
-      uint32_t* bitMask = new uint32_t[(uint32_t) size]();
-
-      parent->addToBitMask(bitMask, bb);
-
- //     auto *f = new Feature(parent->getTag(), *bb, bitMask);
-//      VLOG(0) << (*f);
-
-      for (auto son = sons.begin(); son != sons.end(); ++son) {
-
-        if(*son == parent){
-          continue;
+                this->addResult(_blobs);
+            }
         }
 
-        (*son)->addToBitMask(bitMask, bb);
-        delete (*son);
-        _blobs->_blobs.remove(*son);
-      }
+        /// \brief Get the name of the task
+        /// \return Task name
+        std::string getName() override { return "Merge & File creation"; }
+
+        /// \brief Task copy, should be a singleton, to send bask itself
+        /// \return itself
+        BlobMerger *copy() override { return this; }
+
+    private:
+        /// \brief Retrieve a blob from a coordinate, nullptr is to blob is
+        /// corresponding
+        /// \param row Row
+        /// \param col Column
+        /// \return True if a blob has been found, else False
+        Blob *getBlobFromCoord(const int32_t &row, const int32_t &col) const {
+            // Iterate over the blobs
+            for (auto blob : _blobs->_blobs) {
+                // Test if the pixel is in the blob
+                if (blob->getFeature()->isInBitMask(row, col)) {
+                    return blob;
+                }
+            }
+            return nullptr;
+        }
+
+        /// \brief Merge all the blobs from all the view analyser
+        void merge() {
+            fc::UnionFind<Blob>
+                    uf{};
+
+            std::map<Blob *, std::set<Blob *>>
+                    parentSons{};
+
+            // Apply the UF algorithm to every linked blob
+            for (auto blobCoords : _toMerge) {
+                for (auto coord : blobCoords.second) {
+                    if (auto other = getBlobFromCoord(coord.first, coord.second)) {
+                        assert(blobCoords.first != other);
+                        uf.unionElements(blobCoords.first, other);
+                    }
+                }
+            }
+
+            // Clear to merge data stucture
+            _toMerge.clear();
 
 
-      delete parent->getFeature();
-      auto *feature = new Feature(parent->getTag(), *bb, bitMask);
+            // Associate every blob to it parent
+            //or to itself if it is alone
+            for (auto blob : _blobs->_blobs) {
+                parentSons[uf.find(blob)].insert(blob);
+            }
 
-//      VLOG(3) << "Blob merged: ";
-//      VLOG(3) << (*feature);
+            // For every Parent - son blob, merge every parent to it son
+            for (auto pS : parentSons) {
+                auto parent = pS.first;
+                auto sons = pS.second;
+                VLOG(3) << "nb of sons: " << sons.size();
 
-      parent->setFeature(feature);
-    }
-  }
+                if (sons.size() == 1) {
+                    VLOG(3) << "no need to merge this blob";
+                    continue;
+                }
 
-  BoundingBox* calculateBoundingBox(std::set<Blob *> sons) {
+                Blob
+                        *toMerge = *sons.begin(),
+                        *merged = nullptr;
 
-    uint32_t  upperLeftRow = std::numeric_limits<int32_t>::max(),
-              upperLeftCol = std::numeric_limits<int32_t>::max(),
-              bottomRightRow = 0,
-              bottomRightCol = 0;
+                auto bb = calculateBoundingBox(sons);
+                double size = ceil((bb->getHeight() * bb->getWidth()) / 32.);
+                uint32_t *bitMask = new uint32_t[(uint32_t) size]();
 
-    for (auto son = sons.begin(); son != sons.end(); ++son) {
-      auto bb = (*son)->getFeature()->getBoundingBox();
-      upperLeftRow = (bb.getUpperLeftRow() < upperLeftRow) ? bb.getUpperLeftRow() : upperLeftRow;
-      upperLeftCol = (bb.getUpperLeftCol() < upperLeftCol) ? bb.getUpperLeftCol() : upperLeftCol;
-      bottomRightRow = (bb.getBottomRightRow() > bottomRightRow) ? bb.getBottomRightRow() : bottomRightRow;
-      bottomRightCol = bb.getBottomRightCol() > bottomRightCol ? bb.getBottomRightCol() : bottomRightCol;
-    }
+                //TODO Pass a feature we have initialized instead
+                parent->addToBitMask(bitMask, bb);
 
-    return new BoundingBox(upperLeftRow, upperLeftCol, bottomRightRow, bottomRightCol);
-  }
+                //     auto *f = new Feature(parent->getTag(), *bb, bitMask);
+//      VLOG(0) << (*f);
 
-  uint32_t
-      _nbTiles = 0;                 ///< Images number of tiles
+                for (auto son = sons.begin(); son != sons.end(); ++son) {
 
-  std::map<Blob *, std::list<Coordinate >>
-      _toMerge{};                   ///< Merge structure
+                    if (*son == parent) {
+                        continue;
+                    }
 
-  ListBlobs *
-      _blobs;                       ///< Blobs list
+                    (*son)->addToBitMask(bitMask, bb);
+                    delete (*son);
+                    _blobs->_blobs.remove(*son);
+                }
 
-  uint32_t
-      _count = 0;                   ///< Number of views analysed
-};
+
+                delete parent->getFeature();
+                auto *feature = new Feature(parent->getTag(), *bb, bitMask);
+
+                parent->setFeature(feature);
+            }
+        }
+
+        BoundingBox *calculateBoundingBox(std::set<Blob *> sons) {
+
+            uint32_t upperLeftRow = std::numeric_limits<int32_t>::max(),
+                    upperLeftCol = std::numeric_limits<int32_t>::max(),
+                    bottomRightRow = 0,
+                    bottomRightCol = 0;
+
+            for (auto son = sons.begin(); son != sons.end(); ++son) {
+                auto bb = (*son)->getFeature()->getBoundingBox();
+                upperLeftRow = (bb.getUpperLeftRow() < upperLeftRow) ? bb.getUpperLeftRow() : upperLeftRow;
+                upperLeftCol = (bb.getUpperLeftCol() < upperLeftCol) ? bb.getUpperLeftCol() : upperLeftCol;
+                bottomRightRow = (bb.getBottomRightRow() > bottomRightRow) ? bb.getBottomRightRow() : bottomRightRow;
+                bottomRightCol = bb.getBottomRightCol() > bottomRightCol ? bb.getBottomRightCol() : bottomRightCol;
+            }
+
+            return new BoundingBox(upperLeftRow, upperLeftCol, bottomRightRow, bottomRightCol);
+        }
+
+        uint32_t
+                _nbTiles = 0;                 ///< Images number of tiles
+
+        std::map<Blob *, std::list<Coordinate >>
+                _toMerge{};                   ///< Merge structure
+
+        ListBlobs *
+                _blobs;                       ///< Blobs list
+
+        uint32_t
+                _count = 0;                   ///< Number of views analysed
+    };
 }
 
 #endif //FEATURECOLLECTION_BLOBMERGER_H

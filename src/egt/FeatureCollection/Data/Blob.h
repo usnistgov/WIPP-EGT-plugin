@@ -305,6 +305,7 @@ class Blob {
     }
 
     _feature = new Feature(this->getTag(), boundingBox, bitMask);
+    _rowCols.clear();
   }
 
   void addToBitMask(uint32_t* bitMask, BoundingBox *bb) {

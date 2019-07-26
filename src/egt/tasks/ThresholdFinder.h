@@ -29,12 +29,13 @@ namespace egt {
         ThresholdFinder(size_t numThreads, uint32_t sampleSize, uint32_t numberOfSamples, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(numThreads),
                                                                                            sampleSize(sampleSize),
                                                                                            nbOfSamples(numberOfSamples),
-                                                                                           imageDepth(imageDepth)
-                                                                                           {
-            gradient.reserve(nbOfSamples * sampleSize);
-            hist.reserve(NUM_HISTOGRAM_BINS + 1);
-                                                                                           }
+                                                                                           imageDepth(imageDepth) {
+//        gradient = std::vector<T>(nbOfSamples * sampleSize, 0);
+  //          gradient.reserve(nbOfSamples * sampleSize);
+            hist= std::vector<double>(NUM_HISTOGRAM_BINS + 1, 0);
 
+            hist.reserve(NUM_HISTOGRAM_BINS + 1);
+        }
 
         void executeTask(std::shared_ptr<ConvOutMemoryData<T>> data) override {
 

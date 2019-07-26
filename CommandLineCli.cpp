@@ -35,6 +35,30 @@ ImageDepth parseImageDepth(const std::string &depth) {
     }
 }
 
+std::map<std::string,uint32_t> parseExpertMode(std::string &expertMode) {
+
+    std::map<std::string,uint32_t> flags = {};
+
+    std::string flagDelimiter = ";";
+    std::string valueDelimiter = "=";
+
+    size_t pos = 0;
+    std::string flag;
+    do {
+        pos = expertMode.find(flagDelimiter);
+        flag = expertMode.substr(0, pos);
+        size_t pos2 = flag.find(valueDelimiter);
+        if(pos2 != std::string::npos){
+            auto key = flag.substr(0,pos2);
+            auto value = flag.substr(pos2 + valueDelimiter.size(),std::string::npos);
+            flags[key] = static_cast<uint32_t>(std::stoul(value,nullptr,10));
+        }
+        expertMode.erase(0, pos + flagDelimiter.length());
+    }
+    while(pos != std::string::npos);
+    return flags;
+}
+
 int main(int argc, const char **argv) {
 
     try {
@@ -65,6 +89,9 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<bool> MaskOnlyArg("x", "maskonly", "Mask only", false, false, "bool");
         cmd.add(MaskOnlyArg);
 
+        TCLAP::ValueArg<std::string> expertModeArg("e", "expertmode", "Expert mode", false, "", "string");
+        cmd.add(expertModeArg);
+
         cmd.parse(argc, argv);
 
         std::string inputFile = inputFileArg.getValue();
@@ -75,6 +102,7 @@ int main(int argc, const char **argv) {
         uint32_t maxHoleSize = MaxHoleSizeArg.getValue();
         uint32_t minObjectSize = MinObjectSizeArg.getValue();
         bool maskOnly = MaskOnlyArg.getValue();
+        std::string expertMode = expertModeArg.getValue();
 
         if (!hasEnding(outputDir, "/")) {
             outputDir += "/";
@@ -87,6 +115,7 @@ int main(int argc, const char **argv) {
         VLOG(1) << MaxHoleSizeArg.getDescription() << ": " << maxHoleSize << std::endl;
         VLOG(1) << MinObjectSizeArg.getDescription() << ": " << minObjectSize << std::endl;
         VLOG(1) << MaskOnlyArg.getDescription() << ": " << std::noboolalpha  << maskOnly << ":" << std::boolalpha << maskOnly << std::endl;
+        VLOG(1) << expertModeArg.getDescription() << ": " << expertMode << std::endl;
 
         ImageDepth imageDepth = parseImageDepth(depth);
 
@@ -103,17 +132,20 @@ int main(int argc, const char **argv) {
         segmentationOptions->MAX_HOLE_SIZE = maxHoleSize;
         segmentationOptions->MASK_ONLY = maskOnly;
 
+
+        auto expertModeOptions = parseExpertMode(expertMode);
+
         auto egt = new egt::EGT();
 
         switch (imageDepth) {
             case ImageDepth::_32F:
-                egt->run<float>(options, segmentationOptions);
+                egt->run<float>(options, segmentationOptions, expertModeOptions);
                 break;
             case ImageDepth::_16U:
-                egt->run<uint16_t>(options, segmentationOptions);
+                egt->run<uint16_t>(options, segmentationOptions, expertModeOptions);
                 break;
             case ImageDepth::_8U:
-                egt->run<uint8_t >(options, segmentationOptions);
+                egt->run<uint8_t >(options, segmentationOptions, expertModeOptions);
                 break;
         }
 

@@ -93,9 +93,12 @@ namespace egt {
 
             //set cutoff values in maximum acceptable range if not set
             if(options->MAX_HOLE_SIZE <= 0 || options->MAX_HOLE_SIZE > _tileWidth * _tileHeight){
-                options->MAX_HOLE_SIZE = (uint32_t) _tileWidth * _tileHeight;
+                auto tileSize = (uint32_t) _tileWidth * _tileHeight;
+                VLOG(2) << "option MAX_HOLE_SIZE is out of range (" <<  options->MAX_HOLE_SIZE << "). Defaulting to " << tileSize;
+                options->MAX_HOLE_SIZE = tileSize;
             }
             if(options->MIN_HOLE_SIZE >= (uint32_t) _tileWidth * _tileHeight){
+                VLOG(2) << "option MAX_HOLE_SIZE is out of range (" <<  options->MIN_HOLE_SIZE << "). Defaulting to " << 0;
                 options->MIN_HOLE_SIZE = 0;
             }
 
@@ -112,23 +115,23 @@ namespace egt {
             //TILE DIMENSION MIGHT CHANGE AND BE SMALLER, LET'S DO LESS WORK IF POSSIBLE
             _tileHeight = _view->getTileHeight();
             _tileWidth = _view->getTileWidth();
-            _vAnalyse = new ViewAnalyse(); //OUTPUT SO WE DO NOT NEED TO MANAGE ITS DESTRUCTION
+            _vAnalyse = new ViewAnalyse(); //OUTPUT
             _toVisit.clear(); //clear queue that keeps track of neighbors to visit when flooding
-            _visited.assign(_visited.size(), false); //clear container that keeps track of all nodes to be visited in a pass through the image.
+            _visited.assign(_visited.size(), false); //clear container that keeps track of all visited pixels in a pass through the image.
             _currentBlob = nullptr;
 
-            run(BACKGROUND);
-            run(FOREGROUND);
+            run(BACKGROUND); //find holes.
+            run(FOREGROUND); //find objects
 
-            std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
-            auto img5 = cv::Mat(_view->getViewHeight(),_view->getViewWidth(), convertToOpencvType(ImageDepth::_16U), _view->getData());
-            cv::Mat dst;
-            img5.convertTo(dst,CV_8U);
-            cv::imwrite(outputPath + "mask-" + std::to_string(_view->getRow()) + "-" + std::to_string(_view->getCol())  + ".png" , dst);
+//            std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+//            auto img5 = cv::Mat(_view->getViewHeight(),_view->getViewWidth(), convertToOpencvType(ImageDepth::_16U), _view->getData());
+//            cv::Mat dst;
+//            img5.convertTo(dst,CV_8U);
+//            cv::imwrite(outputPath + "mask-" + std::to_string(_view->getRow()) + "-" + std::to_string(_view->getCol())  + ".png" , dst);
 
 //            printBoolArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
 
-            img5.release();
+//            img5.release();
 
             if(_options->MASK_ONLY) {
                 VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
@@ -242,7 +245,7 @@ namespace egt {
                                 markAsUnvisited(pRow - yOffset, pCol - xOffset);
 
                                 if(_options->MASK_ONLY){
-                                    _view->setPixel(pRow - yOffset, pCol - xOffset,255);
+                                    _view->setPixel(pRow - yOffset, pCol - xOffset, 255);
                                 }
                                 else {
                                     _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
