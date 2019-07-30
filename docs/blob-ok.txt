@@ -7272,7 +7272,7 @@ I0726 17:12:50.120918  2923 BlobMerger.h:167] nb of sons: 2
 I0726 17:12:50.120942  2923 BlobMerger.h:167] nb of sons: 2
 I0726 17:12:50.120965  2923 BlobMerger.h:167] nb of sons: 2
 I0726 17:12:50.120988  2923 BlobMerger.h:167] nb of sons: 2
-I0726 17:12:50.121012  2923 BlobMerger.h:167] nb of sons: 3
+I0726 17:12:50.121012  2923 BlobMerger.h:167] nb of sons: 3g
 I0726 17:12:50.121054  2923 BlobMerger.h:167] nb of sons: 2
 I0726 17:12:50.121078  2923 BlobMerger.h:167] nb of sons: 2
 I0726 17:12:50.121100  2923 BlobMerger.h:167] nb of sons: 2

@@ -62,17 +62,17 @@ namespace egt {
         /// \param imageHeight Image Height
         /// \param imageWidth ImageWidth
         /// \param nbTiles Number of tiles in the image5
-        BlobMerger(uint32_t imageHeight, uint32_t imageWidth, uint32_t nbTiles)
-                : ITask(1), _nbTiles(nbTiles) {
+        BlobMerger(uint32_t imageHeight, uint32_t imageWidth, uint32_t nbTiles, SegmentationOptions* segmentationOptions)
+                : ITask(1), imageHeight(imageHeight), imageWidth(imageWidth), _nbTiles(nbTiles), segmentationOptions(segmentationOptions) {
             _blobs = new ListBlobs();
+            _holes = new ListBlobs();
         }
 
         /// \brief Get the view analyse, merge them into one analyse and merge all
         /// blob to build the feature collection
         /// \param data View analyse
         void executeTask(std::shared_ptr<ViewAnalyse> data) override {
-            // Merge the analyse
-            //TODO CANT WE JUST COPY BACK?. MERGE SEEMS TO HAVE A NOTION OF ORDERING? http://www.cplusplus.com/reference/list/list/merge/
+            // collect blobs
             for (auto blobListCoordToMerge : data->getToMerge()) {
                 this->_toMerge[blobListCoordToMerge.first]
                         .merge(blobListCoordToMerge.second);
@@ -80,21 +80,30 @@ namespace egt {
             auto viewBlob = data->getBlobs();
             this->_blobs->_blobs.merge(viewBlob);
 
+            //collect holes
+            for (auto blobListCoordToMerge : data->getHolesToMerge()) {
+                this->_holesToMerge[blobListCoordToMerge.first]
+                        .merge(blobListCoordToMerge.second);
+            }
+            auto holes = data->getHoles();
+            this->_holes->_blobs.merge(holes);
+
             _count++;
 
-            // If all the analyse has been collected, merge the blobs
+            //merge the blobs when all tiles have been received
             if (_count == _nbTiles) {
 
                 auto startMerge = std::chrono::high_resolution_clock::now();
 
-
+                VLOG(1) << "merging " << this->_holes->_blobs.size() << " holes...";
                 VLOG(1) << "merging " << this->_blobs->_blobs.size() << " blobs...";
 
-//        for(auto blob: this->_blobs->_blobs){
-//            VLOG(5) << *blob;
-//        }
                 _count = 0;
-                merge();
+                merge(_holesToMerge,_holes);
+                filterHoles();
+                merge(_toMerge,_blobs);
+                filterObjects();
+
 
                 VLOG(1) << "after last merge, we have : " << _blobs->_blobs.size() << " blobs left";
 
@@ -120,20 +129,85 @@ namespace egt {
         /// corresponding
         /// \param row Row
         /// \param col Column
-        /// \return True if a blob has been found, else False
-        Blob *getBlobFromCoord(const int32_t &row, const int32_t &col) const {
+        Blob *getBlobFromCoord(ListBlobs *blobs, const int32_t &row, const int32_t &col) const {
             // Iterate over the blobs
-            for (auto blob : _blobs->_blobs) {
+            for (auto blob : blobs->_blobs) {
                 // Test if the pixel is in the blob
-                if (blob->getFeature()->isInBitMask(row, col)) {
+                if (blob->isPixelinFeature(row,col)) {
                     return blob;
                 }
             }
             return nullptr;
         }
 
+        void filterHoles() {
+            uint32_t nbHolesTooSmall = 0;
+            auto originalNbOfHoles = _holes->_blobs.size();
+
+            auto i = _holes->_blobs.begin();
+            while (i != _holes->_blobs.end()) {
+                auto blob = (*i);
+                //transform small holes into blobs
+                if(blob->getCount() < segmentationOptions->MIN_HOLE_SIZE) {
+                    this->_blobs->_blobs.push_back(blob);
+                    auto row = blob->getStartRow();
+                    auto col = blob->getStartCol();
+                    std::list<Coordinate> coords{};
+                    if(row - 1 >= 0 && !blob->isPixelinFeature(row -1, col)) {
+                        coords.push_back(std::pair<int32_t, int32_t>(row - 1, col));
+                    }
+                    if(row < imageHeight && !blob->isPixelinFeature(row + 1, col)) {
+                        coords.push_back(std::pair<int32_t, int32_t>(row + 1, col));
+                    }
+                    if(col - 1 >= 0 && !blob->isPixelinFeature(row, col - 1)) {
+                        coords.push_back(std::pair<int32_t, int32_t>(row, col - 1));
+                    }
+                    if(col + 1 < imageWidth && !blob->isPixelinFeature(row, col + 1)) {
+                        coords.push_back(std::pair<int32_t, int32_t>(row, col + 1));
+                    }
+                    assert(coords.size() != 0);
+                    this->_toMerge[blob].merge(coords);
+                    nbHolesTooSmall++;
+                    i++;
+                    VLOG(3) << "Transform hole at (" << row << "," << col << ") into object blob.";
+                }
+                else {
+                    delete (*i);
+                    i = _holes->_blobs.erase(i);
+                }
+            }
+
+            VLOG(3) << "nb of holes after merged : " << originalNbOfHoles;
+            VLOG(3) << "nb of small holes that have been removed : " << nbHolesTooSmall;
+
+        }
+
+        void filterObjects() {
+
+            uint32_t nbBlobsTooSmall = 0;
+
+            auto originalNbOfBlobs = _blobs->_blobs.size();
+
+            auto i = _blobs->_blobs.begin();
+            while (i != _blobs->_blobs.end()) {
+                //We removed objects that are still too small after the merge occured.
+                if((*i)->getCount() < segmentationOptions->MIN_OBJECT_SIZE) {
+                    nbBlobsTooSmall++;
+                    i = _blobs->_blobs.erase(i);
+                }
+                else {
+                    i++;
+                }
+            }
+
+            auto nbBlobs = _blobs->_blobs.size();
+            VLOG(3) << "original nb of blobs : " << originalNbOfBlobs;
+            VLOG(3) << "nb of small objects that have been removed after merge : " << nbBlobsTooSmall;
+            VLOG(1) << "total nb of objects: " <<nbBlobs;
+        }
+
         /// \brief Merge all the blobs from all the view analyser
-        void merge() {
+        void merge(std::map<Blob *, std::list<Coordinate >> &toMerge, ListBlobs *blobs) {
             fc::UnionFind<Blob>
                     uf{};
 
@@ -141,22 +215,23 @@ namespace egt {
                     parentSons{};
 
             // Apply the UF algorithm to every linked blob
-            for (auto blobCoords : _toMerge) {
+            for (auto blobCoords : toMerge) {
                 for (auto coord : blobCoords.second) {
-                    if (auto other = getBlobFromCoord(coord.first, coord.second)) {
+                    if (auto other = getBlobFromCoord(blobs, coord.first, coord.second)) {
                         assert(blobCoords.first != other);
+                        assert(other != nullptr);
                         uf.unionElements(blobCoords.first, other);
                     }
                 }
             }
 
             // Clear to merge data stucture
-            _toMerge.clear();
+            toMerge.clear();
 
 
             // Associate every blob to it parent
             //or to itself if it is alone
-            for (auto blob : _blobs->_blobs) {
+            for (auto blob : blobs->_blobs) {
                 parentSons[uf.find(blob)].insert(blob);
             }
 
@@ -192,13 +267,21 @@ namespace egt {
                     }
 
                     (*son)->addToBitMask(bitMask, bb);
+                    // update pixel count
+                    parent->setCount(parent->getCount() + (*son)->getCount());
                     delete (*son);
-                    _blobs->_blobs.remove(*son);
+                    blobs->_blobs.remove(*son);
                 }
 
 
                 delete parent->getFeature();
                 auto *feature = new Feature(parent->getTag(), *bb, bitMask);
+
+                //TODO oups
+                parent->setRowMin(bb->getUpperLeftRow());
+                parent->setRowMax(bb->getBottomRightRow());
+                parent->setColMin(bb->getUpperLeftCol());
+                parent->setColMax(bb->getBottomRightCol());
 
                 parent->setFeature(feature);
             }
@@ -229,10 +312,21 @@ namespace egt {
                 _toMerge{};                   ///< Merge structure
 
         ListBlobs *
-                _blobs;                       ///< Blobs list
+                _blobs{};                       ///< Blobs list
+
+
+        uint32_t imageWidth{}, imageHeight{};
+
+        std::map<Blob *, std::list<Coordinate >>
+                _holesToMerge{};                   ///< Merge structure
+
+        ListBlobs *
+                _holes{};                       ///< Holes list
 
         uint32_t
                 _count = 0;                   ///< Number of views analysed
+
+        SegmentationOptions* segmentationOptions{};
     };
 }
 

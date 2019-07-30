@@ -92,15 +92,15 @@ namespace egt {
                   _vAnalyse(nullptr) {
 
             //set cutoff values in maximum acceptable range if not set
-            if(options->MAX_HOLE_SIZE <= 0 || options->MAX_HOLE_SIZE > _tileWidth * _tileHeight){
-                auto tileSize = (uint32_t) _tileWidth * _tileHeight;
-                VLOG(2) << "option MAX_HOLE_SIZE is out of range (" <<  options->MAX_HOLE_SIZE << "). Defaulting to " << tileSize;
-                options->MAX_HOLE_SIZE = tileSize;
-            }
-            if(options->MIN_HOLE_SIZE >= (uint32_t) _tileWidth * _tileHeight){
-                VLOG(2) << "option MAX_HOLE_SIZE is out of range (" <<  options->MIN_HOLE_SIZE << "). Defaulting to " << 0;
-                options->MIN_HOLE_SIZE = 0;
-            }
+//            if(options->MAX_HOLE_SIZE <= 0 || options->MAX_HOLE_SIZE > _tileWidth * _tileHeight){
+//                auto tileSize = (uint32_t) _tileWidth * _tileHeight;
+//                VLOG(2) << "option MAX_HOLE_SIZE is out of range (" <<  options->MAX_HOLE_SIZE << "). Defaulting to " << tileSize;
+//                options->MAX_HOLE_SIZE = tileSize;
+//            }
+//            if(options->MIN_HOLE_SIZE >= (uint32_t) _tileWidth * _tileHeight){
+//                VLOG(2) << "option MAX_HOLE_SIZE is out of range (" <<  options->MIN_HOLE_SIZE << "). Defaulting to " << 0;
+//                options->MIN_HOLE_SIZE = 0;
+//            }
 
             _visited = std::vector<bool>((unsigned long)(_tileWidth * _tileHeight), false);
         }
@@ -128,9 +128,9 @@ namespace egt {
 //            cv::Mat dst;
 //            img5.convertTo(dst,CV_8U);
 //            cv::imwrite(outputPath + "mask-" + std::to_string(_view->getRow()) + "-" + std::to_string(_view->getCol())  + ".png" , dst);
-
+//
 //            printBoolArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
-
+//
 //            img5.release();
 
             if(_options->MASK_ONLY) {
@@ -187,7 +187,7 @@ namespace egt {
 
                     //WE ENTER HERE WHEN WE ARE DONE EXPANDING THE CURRENT BLOB
                     if (_currentBlob != nullptr) {
-                        bloblCompleted(blobColor);
+                        blobCompleted(blobColor);
                     }
 
                     //UNLESS WE ARE DONE EXPLORING WE CREATE A ONE PIXEL BLOB AND EXPLORE ITS NEIGHBORS
@@ -199,7 +199,7 @@ namespace egt {
 
             //If the last pixel was a blob by itself, it has not been saved yet.
             if (_currentBlob != nullptr) {
-                bloblCompleted(blobColor);
+                blobCompleted(blobColor);
             }
        }
 
@@ -225,7 +225,7 @@ namespace egt {
             }
         }
 
-        void bloblCompleted(Color blobColor) {
+        void blobCompleted(Color blobColor) {
                 VLOG(5) << "blob size: " << _currentBlob->getCount();
 
                 //background and foreground blobs are not handled the same way
@@ -256,14 +256,20 @@ namespace egt {
                         holeRemovedCount++;
                     }
                     else if(_currentBlob->getCount() > _options->MAX_HOLE_SIZE) {
-                        //TODO remove from the merge list since we know it is background
+                        if(_currentBlob->isToMerge()){
+//                            auto blobIt = _vAnalyse->getHolesToMerge().find(_currentBlob);
+                            _vAnalyse->getHolesToMerge().erase(_currentBlob);
+                        }
                         delete _currentBlob;
                         backgroundCount++;
                     }
                         //we do not know enough, so we need to merge the background blob
                     else {
-                        //TODO implement
-                        //insert blob to list of holes in vAnalyse
+                        //WE ADD IT
+                        if(!_options->MASK_ONLY) {
+                            _currentBlob->compactBlobDataIntoFeature();
+                            _vAnalyse->insertHole(_currentBlob);
+                        }
                     }
 
                 }
@@ -365,11 +371,6 @@ namespace egt {
                 return;
             }
 
-            //TODO WE WILL CHANGE THAT IF WE DECIDE TO MERGE HOLES
-            //ignore background merges
-            if(color == BACKGROUND){
-                return;
-            }
 
             //Check if the blob in this tile belongs to a bigger blob extending several tiles.
             //We only to look at EAST and SOUTH so we can later merge only once, TOP to BOTTOM and LEFT to RIGHT.
@@ -379,10 +380,16 @@ namespace egt {
             // test that we are also not at the edge of the full image.
             if (row + 1 == _tileHeight && row + _view->getGlobalYOffset() + 1 != _imageHeight) {
                 if (getColor(row + 1, col) == color) {
-                    _vAnalyse->addToMerge(_currentBlob,
-                                          std::pair<int32_t, int32_t>(
-                                                  row + 1 + _view->getGlobalYOffset(),
-                                                  col + _view->getGlobalXOffset()));
+                    auto coords = std::pair<int32_t, int32_t>(
+                            row + 1 + _view->getGlobalYOffset(),
+                            col + _view->getGlobalXOffset());
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(_currentBlob, coords);
+                    }
                     _currentBlob->setToMerge(true);
                 }
             }
@@ -390,10 +397,17 @@ namespace egt {
             // test that we are also not at the edge of the full image.
             if (col + 1 == _tileWidth && col + _view->getGlobalXOffset() + 1 != _imageWidth) {
                 if (getColor(row, col + 1) == color) {
-                    _vAnalyse->addToMerge(_currentBlob,
-                                          std::pair<int32_t, int32_t>(
-                                                  row + _view->getGlobalYOffset(),
-                                                  col + 1 + _view->getGlobalXOffset()));
+
+                    auto coords =std::pair<int32_t, int32_t>(
+                            row + _view->getGlobalYOffset(),
+                            col + 1 + _view->getGlobalXOffset());
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(_currentBlob, coords);
+                    }
                     _currentBlob->setToMerge(true);
                 }
             }
@@ -446,9 +460,6 @@ namespace egt {
 
         Blob
                 *_currentBlob = nullptr;      ///< Current blob
-
-        Color
-                _currentColor = BACKGROUND;
 
         int32_t
                 _tileHeight{},                ///< Tile actual height

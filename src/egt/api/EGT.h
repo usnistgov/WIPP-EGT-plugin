@@ -243,7 +243,8 @@ namespace egt {
             auto maskFilter = new ViewFilter<T>(options->concurrentTiles);
             auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
-                                        nbTiles);
+                                        nbTiles,
+                                        segmentationOptions);
             auto writeMask = new TiffTileWriter<T>(
                     1,
                     imageHeightAtSegmentationLevel,
@@ -303,7 +304,7 @@ namespace egt {
             auto labelingFilter = new ViewAnalyseFilter<T>(options->concurrentTiles);
             auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
-                                        nbTiles);
+                                        nbTiles, segmentationOptions);
             segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
             segmentationGraph->addEdge(fastImage2,sobelFilter2);
             segmentationGraph->addEdge(sobelFilter2,viewSegmentation);
@@ -321,39 +322,6 @@ namespace egt {
 
             //we only generate one output, the list of all objects
             auto blob = segmentationGraph->consumeData();
-            if (blob != nullptr) {
-                    auto listblob = blob->_blobs;
-
-                    uint32_t nbBlobsTooSmall = 0;
-
-                    auto originalNbOfBlobs = blob->_blobs.size();
-
-                    auto i = blob->_blobs.begin();
-                    while (i != blob->_blobs.end()) {
-                            //We removed objects that are still too small after the merge occured.
-                            if((*i)->getCount() < segmentationOptions->MIN_OBJECT_SIZE) {
-                                    nbBlobsTooSmall++;
-                                    i = blob->_blobs.erase(i);
-                            }
-                            else {
-                                    i++;
-                            }
-                    }
-
-                    auto nbBlobs = blob->_blobs.size();
-                    VLOG(3) << "original nb of blobs : " << originalNbOfBlobs;
-                    VLOG(3) << "nb of small objects that have been removed after merge : " << nbBlobsTooSmall;
-                    VLOG(1) << "total nb of objects: " <<nbBlobs;
-            }
-            // Wait for the analyse graph to finish processing tiles to make the FC
-            // available
-            segmentationRuntime->waitForRuntime();
-
-            //FOR DEBUGGING
-            segmentationGraph->writeDotToFile("SegmentationGraph.xdot", DOTGEN_COLOR_COMP_TIME);
-
-            delete (fi);
-            delete (segmentationRuntime);
 
             VLOG(1) << "generating a segmentation mask";
             beginFC = std::chrono::high_resolution_clock::now();

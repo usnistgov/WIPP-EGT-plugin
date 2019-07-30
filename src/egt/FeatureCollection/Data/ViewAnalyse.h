@@ -68,9 +68,16 @@ class ViewAnalyse : public htgs::IData {
   const std::unordered_map<Blob *, std::list<Coordinate>> &getToMerge() const {
     return _toMerge;
   }
+
+  std::unordered_map<Blob *, std::list<Coordinate>> &getHolesToMerge() {
+        return _holesToMerge;
+  }
+
   /// \brief Getter to the blobs list
   /// \return The blobs list
   const std::list<Blob *> &getBlobs() const { return _blobs; }
+
+  const std::list<Blob *> &getHoles() const { return _holes; }
 
   /// \brief Add an entry to the to merge structure
   /// \param b Blob to add
@@ -79,28 +86,37 @@ class ViewAnalyse : public htgs::IData {
       _toMerge[b].push_back(c);
   }
 
-  void deleteBlob(Blob *b) {
-      _toMerge.erase(b);
-      _blobs.remove(b);
-  }
+    void addHolesToMerge(Blob *b, Coordinate c) {
+        _holesToMerge[b].push_back(c);
+    }
 
   /// \brief Insert a blob to the list of blobs
   /// \param b blob to add
   void insertBlob(Blob *b) { _blobs.push_back(b); }
 
+  void insertHole(Blob *b) { _holes.push_back(b); }
 
-    virtual ~ViewAnalyse() {
+  virtual ~ViewAnalyse() {
         _toMerge.clear();
         _blobs.clear();
-    }
+        _holesToMerge.clear();
+        _holes.clear();
+  }
 
 private:
   std::unordered_map<egt::Blob *, std::list<Coordinate>>
-      _toMerge;   ///< Map of blob which will need to be merged to a list of
+      _toMerge{};   ///< Map of blob which will need to be merged to a list of
                   ///< coordinates
+
+    std::unordered_map<egt::Blob *, std::list<Coordinate>>
+            _holesToMerge{};   ///< Map of holes which will need to be merged to a list of
+    ///< coordinates
 
   std::list<Blob *>
       _blobs{};   ///< List of blobs created
+
+  std::list<Blob *>
+      _holes{};   ///< List of holes created
 };
 }
 #endif //EGT_REGIONLABELING_VIEWANALYSE_H

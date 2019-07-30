@@ -148,12 +148,11 @@ class Blob {
   /// \param col Col asked
   /// \return True is the pixel(row, col) is in the blob, else False
   bool isPixelinFeature(int32_t row, int32_t col) {
-    if (row >= _rowMin && row < _rowMax && col >= _colMin && col < _colMax) {
-      if (_rowCols.count(row) != 0) {
-        if (_rowCols[row].count(col) != 0) {
-          return true;
+    if (isPixelinBoundingBox(row,col)) {
+        if(_feature != nullptr) {
+            return _feature->isInBitMask(row,col);
         }
-      }
+        return (_rowCols.count(row) != 0) && (_rowCols[row].count(col) != 0);
     }
     return false;
   }
@@ -305,7 +304,6 @@ class Blob {
     }
 
     _feature = new Feature(this->getTag(), boundingBox, bitMask);
-  //TODO still in bug here
     _rowCols.clear();
   }
 
