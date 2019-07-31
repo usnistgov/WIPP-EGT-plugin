@@ -255,14 +255,14 @@ namespace egt {
                         delete _currentBlob;
                         holeRemovedCount++;
                     }
-                    else if(_currentBlob->getCount() > _options->MAX_HOLE_SIZE) {
-                        if(_currentBlob->isToMerge()){
-//                            auto blobIt = _vAnalyse->getHolesToMerge().find(_currentBlob);
-                            _vAnalyse->getHolesToMerge().erase(_currentBlob);
-                        }
-                        delete _currentBlob;
-                        backgroundCount++;
-                    }
+                    //TODO CHECK this optimization would introduce a bug
+//                    else if(_currentBlob->getCount() > _options->MAX_HOLE_SIZE) {
+//                        if(_currentBlob->isToMerge()){
+//                            _vAnalyse->getHolesToMerge().erase(_currentBlob);
+//                        }
+//                        delete _currentBlob;
+//                        backgroundCount++;
+//                    }
                         //we do not know enough, so we need to merge the background blob
                     else {
                         //WE ADD IT

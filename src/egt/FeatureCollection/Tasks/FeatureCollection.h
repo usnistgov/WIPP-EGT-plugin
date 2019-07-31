@@ -537,16 +537,16 @@ class FeatureCollection {
       //transform each bitMask into a array of uint8 so we can use opencv
       auto data = bitMaskToArray(feature.getBitMask(), width, height, foregroundValue);
 
-      //TODO remove
-      std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+//      //TODO remove
+//      std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
 
       //erosion from opencv
       auto mat = cv::Mat(height, width, CV_8U,  data);
-      cv::imwrite(outputPath + "feature-" + std::to_string(feature.getId())  + ".tif" , mat);
+//      cv::imwrite(outputPath + "feature-" + std::to_string(feature.getId())  + ".tif" , mat);
       auto kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE,cv::Size(3,3));
       cv::Mat eroded;
       cv::erode(mat,eroded,kernel);
-      cv::imwrite(outputPath + "erodedFeature-" + std::to_string(feature.getId())  + ".tif" , eroded);
+//      cv::imwrite(outputPath + "erodedFeature-" + std::to_string(feature.getId())  + ".tif" , eroded);
       mat.release();
       delete data;
 
@@ -561,7 +561,7 @@ class FeatureCollection {
       }
       eroded.release();
       //TODO remove
-      printBoolArray<uint8_t >("eroded", array.data(),width,height);
+      //printBoolArray<uint8_t>("eroded", array.data(),width,height);
 
       //transform back the array to a bitmask
       auto bitmask = arrayToBitMask(array.data(), width, height, foregroundValue);

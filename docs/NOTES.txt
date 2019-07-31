@@ -49,12 +49,21 @@ TODO
 Improvement : accelerate.
  In merge, we should look at each pixel in the list of coordinates and if it is in the blob we just merged, we should delete them.
 
+----------
+After erosion, size must be recalculated to remove objects that became too small.
+This means refactoring feature so the number of pixels is readily available.
+
+----------
+
 Connectivity 8 for analyser
+
+----------
+
 
 
 
 =====================
-Problems
+How this work transform the original workflow?
 
 We have to review the workflow if we want to be efficient.
 Example : in the original code we do an erosion step before generating the mask.
@@ -65,3 +74,12 @@ If we do erosion, we need to:
  - 3/write the mask
  - 4/regenerate the feature collection if we need them (so the values can be updated).
 
+
+Optimization problem
+We could discard the holes beyond a certain size, deeming there are background for sure.
+This could prevent keeping around a lot background pixels.
+However, on the flip side, note that this implies that later in the merge stage
+we will potentially try to merge contiguous "holes" to this missing background.
+Then those holes could be seen as too small and removed, creating bridges between two blobs when it should not.
+And since we do not expect this bad result, we could generate a labeled mask
+with what seem one object but labeled as several objects.
