@@ -46,13 +46,22 @@ Once parameters are found, segmentation can be run at level 0 again -> (27s / 60
 ===================
 TODO
 
-Fix Bug : blobs are randomly swallowed.
-
 Improvement : accelerate.
  In merge, we should look at each pixel in the list of coordinates and if it is in the blob we just merged, we should delete them.
 
-
 Connectivity 8 for analyser
 
-Merging holes
+
+
+=====================
+Problems
+
+We have to review the workflow if we want to be efficient.
+Example : in the original code we do an erosion step before generating the mask.
+We cannot do that anymore : we generate feature early on that we merge. They describe the number of pixels for each feature.
+If we do erosion, we need to:
+ - 1/ generate the mask data from the feature
+ - 2/generate apply erosion
+ - 3/write the mask
+ - 4/regenerate the feature collection if we need them (so the values can be updated).
 

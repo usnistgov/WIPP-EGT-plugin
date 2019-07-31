@@ -207,6 +207,7 @@ namespace egt {
             return answer;
         }
 
+
         /// \brief Serialize a Feature into an output stream
         /// \param outFile Output stream
         void serializeFeature(std::ofstream &outFile) {
@@ -302,6 +303,8 @@ namespace egt {
         bool operator!=(const Feature &rhs) const {
             return !(rhs == *this);
         }
+
+
 
 
 

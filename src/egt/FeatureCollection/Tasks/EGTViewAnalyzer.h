@@ -326,7 +326,8 @@ namespace egt {
         /// \param col Pixel's col
         void analyseNeighbour4(int32_t row, int32_t col, Color color,bool erode) {
 
-            auto neighborOfDifferentColorCount = 0;
+            auto globalRow = row + _view->getGlobalYOffset();
+            auto globalCol = col + _view->getGlobalXOffset();
 
             //Explore neighbors in all directions to see if they need to be added to the blob.
             //Top Pixel
@@ -334,17 +335,11 @@ namespace egt {
                 if (!visited(row - 1, col) && getColor(row - 1, col) == color) {
                     _toVisit.emplace(row - 1, col);
                 }
-                else {
-                    neighborOfDifferentColorCount++;
-                }
             }
             // Bottom pixel
             if (row + 1 < _tileHeight) {
                 if (!visited(row + 1, col) && getColor(row + 1, col) == color) {
                     _toVisit.emplace(row + 1, col);
-                }
-                else {
-                    neighborOfDifferentColorCount++;
                 }
             }
             // Left pixel
@@ -352,17 +347,11 @@ namespace egt {
                 if (!visited(row, col - 1) && getColor(row, col - 1) == color) {
                     _toVisit.emplace(row, col - 1);
                 }
-                else {
-                    neighborOfDifferentColorCount++;
-                }
             }
             // Right pixel
             if ( (col + 1) < _tileWidth) {
                 if (!visited(row, col + 1) && getColor(row, col + 1) == color) {
                     _toVisit.emplace(row, col + 1);
-                }
-                else {
-                    neighborOfDifferentColorCount++;
                 }
             }
 
@@ -371,18 +360,14 @@ namespace egt {
                 return;
             }
 
-
             //Check if the blob in this tile belongs to a bigger blob extending several tiles.
             //We only to look at EAST and SOUTH so we can later merge only once, TOP to BOTTOM and LEFT to RIGHT.
 
-
             // Add blob to merge list if tile bottom pixel has the same value than the view pixel below (continuity)
             // test that we are also not at the edge of the full image.
-            if (row + 1 == _tileHeight && row + _view->getGlobalYOffset() + 1 != _imageHeight) {
+            if (row + 1 == _tileHeight && globalRow + 1 != _imageHeight) {
                 if (getColor(row + 1, col) == color) {
-                    auto coords = std::pair<int32_t, int32_t>(
-                            row + 1 + _view->getGlobalYOffset(),
-                            col + _view->getGlobalXOffset());
+                    auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol);
 
                     if(color == BACKGROUND){
                         _vAnalyse->addHolesToMerge(_currentBlob, coords);
@@ -398,9 +383,7 @@ namespace egt {
             if (col + 1 == _tileWidth && col + _view->getGlobalXOffset() + 1 != _imageWidth) {
                 if (getColor(row, col + 1) == color) {
 
-                    auto coords =std::pair<int32_t, int32_t>(
-                            row + _view->getGlobalYOffset(),
-                            col + 1 + _view->getGlobalXOffset());
+                    auto coords =std::pair<int32_t, int32_t>(globalRow,globalCol + 1);
 
                     if(color == BACKGROUND){
                         _vAnalyse->addHolesToMerge(_currentBlob, coords);

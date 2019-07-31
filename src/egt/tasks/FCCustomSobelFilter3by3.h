@@ -95,7 +95,6 @@ namespace egt {
 
             std::copy_n(tileOut, viewHeight * viewWidth, view->getData());
 
-//// FOR DEBUGGING
 //            auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
 //            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img5);
 //            img5.release();

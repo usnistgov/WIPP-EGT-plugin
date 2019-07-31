@@ -325,14 +325,14 @@ namespace egt {
 
             VLOG(1) << "generating a segmentation mask";
             beginFC = std::chrono::high_resolution_clock::now();
-//            auto fc = new FeatureCollection();
-//            fc->createFCFromListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
-            auto fc2 = new FeatureCollection();
-            fc2->createFCFromCompactListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
-//            fc->createBlackWhiteMask("output.tiff", (uint32_t)tileWidthAtSegmentationLevel);
-            fc2->createBlackWhiteMask2("output2.tiff", (uint32_t)tileWidthAtSegmentationLevel);
-//            delete fc;
-            delete fc2;
+            auto fc = new FeatureCollection();
+            fc->createFCFromCompactListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
+            auto fc2 = fc->erode();
+            fc->createLabeledMask("output.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+            fc2->createLabeledMask("output2.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+
+
+            delete fc;
             endFC = std::chrono::high_resolution_clock::now();
         }
 

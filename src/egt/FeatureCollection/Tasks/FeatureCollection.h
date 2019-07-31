@@ -84,226 +84,6 @@ class FeatureCollection {
     this->deserialize(pathFeatureCollection);
   }
 
-  /// \brief Create a feature collection from a mask
-  /// \tparam T File type
-  /// \param tileLoader Tile loader to access to the file
-  /// \param rank Connectivity rank [default 8]
-  /// \param background Background value [default 0]
-  /// \param numberOfThreadsParallel Number of thread use
-  /// [default std::thread::hardware_concurrency()]
-  /// \param numberOfViewParallel Number of views used in parallel
-  /// [default 4 * std::thread::hardware_concurrency()]
-  /// \note The Tile Loader that is sent into the FeatureCollection
-  /// will be deleted.
-  template<class UserType>
-  explicit FeatureCollection(fi::ATileLoader<UserType> *tileLoader,
-                             uint8_t rank = 4,
-                             UserType background = 0,
-                             uint32_t numberOfThreadsParallel =
-                             std::thread::hardware_concurrency(),
-                             uint32_t numberOfViewParallel = 4
-                                 * std::thread::hardware_concurrency())
-      : _imageWidth(0), _imageHeight(0) {
-    fi::FastImage<UserType> *
-        fi;              //< Fast Image object going through the mask
-
-    uint32_t
-        imageHeight,     //< Image Height
-        imageWidth;      //< Image Width
-
-    htgs::TaskGraphConf<htgs::MemoryData<fi::View<UserType>>, ListBlobs>
-        *analyseGraph;  //< Analyse graph
-
-    htgs::TaskGraphRuntime
-        *analyseRuntime; //< Analyse runtime
-
-    assert(rank == 8 || rank == 4);
-    try {
-      //Create the Fast image and get the info from it
-      fi = new fi::FastImage<UserType>(tileLoader, 2);
-      fi->getFastImageOptions()->setNumberOfViewParallel(numberOfViewParallel);
-      fi->configureAndRun();
-      imageHeight = fi->getImageHeight();
-      imageWidth = fi->getImageWidth();
-
-      //Set the number of threads if incorrect
-      if (numberOfThreadsParallel == 0) { numberOfThreadsParallel = 8; }
-
-    } catch (const fi::FastImageException &e) {
-      std::cerr << e.what() << std::endl;
-      exit(EXIT_FAILURE);
-    } catch (const std::exception &e) {
-      std::cerr << e.what() << std::endl;
-      exit(EXIT_FAILURE);
-    }
-
-    // Create the analyse graph
-    analyseGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<UserType>>, ListBlobs>;
-
-    //get view of radius 2 so it can compute the gradient and send view of radius 1
-    //This is needed by the feature collection algorithm.
-//    auto sobelFilter = new FCSobelFilterOpenCV<UserType>(1, ImageDepth::_8U);
-
-
-    auto viewAnalyseTask = new fc::ViewAnalyser<UserType>(numberOfThreadsParallel,
-                                                      fi,
-                                                      rank,
-                                                      background);
-    auto fileCreation = new BlobMerger(imageHeight,
-                                       imageWidth,
-                                       fi->getNumberTilesHeight()
-                                           * fi->getNumberTilesWidth());
-
-        analyseGraph->setGraphConsumerTask(viewAnalyseTask);
-
-//        analyseGraph->setGraphConsumerTask(sobelFilter);
-//        analyseGraph->addEdge(sobelFilter, viewAnalyseTask);
-
-    analyseGraph->addEdge(viewAnalyseTask, fileCreation);
-    analyseGraph->addGraphProducerTask(fileCreation);
-    analyseRuntime = new htgs::TaskGraphRuntime(analyseGraph);
-    // Launch the analyse graph
-    analyseRuntime->executeRuntime();
-
-    try {
-      //Request all tiles from the FC
-      fi->requestAllTiles(true);
-      while (fi->isGraphProcessingTiles()) {
-        auto pView = fi->getAvailableViewBlocking();
-        if (pView != nullptr) {
-          //Feed the graph with the views
-          analyseGraph->produceData(pView);
-        }
-      }
-    } catch (const fi::FastImageException &e) {
-      std::cerr << e.what() << std::endl;
-      exit(EXIT_FAILURE);
-    } catch (const std::exception &e) {
-      std::cerr << e.what() << std::endl;
-      exit(EXIT_FAILURE);
-    }
-
-    analyseGraph->finishedProducingData();
-
-
-
-    auto blob = analyseGraph->consumeData();
-
-
-    //remove small blobs
-    auto listblob = blob.get();
-
-
-
-
-    auto nbBlobsTooSmall = 0;
-    auto nbBlobsLeft = 0;
-    auto holesMerged = 0;
-    auto backgroundBlobs = 0;
-
-    auto originalNbOfBlobs = listblob->_blobs.size();
-
-    auto i = listblob->_blobs.begin();
-    while (i != listblob->_blobs.end())
-    {
-
-        if((*i)->isBackground()){
-            i = listblob->_blobs.erase(i);
-            backgroundBlobs++;
-        }
-
-//        if((*i)->isBackground() && (*i)->getCount() > this->_minHoleSize){
-//            i = listblob->_blobs.erase(i);
-//            backgroundBlobs++;
-//        }
-////
-////        //TODO temporary fix until we solve merging problem
-//        else if((*i)->isBackground() && (*i)->getCount() < this->_minHoleSize){
-//            bool done = false;
-//            for(auto coords : (*i)->getRowCols()){
-//                auto row = coords.first;
-//                for(auto col : coords.second){
-//                    for(auto object : listblob->_blobs){
-//                        if(object->isForeground()){
-//                            if(object->isPixelinFeature(row, col-1) || object->isPixelinFeature(row, col + 1) ||
-//                            object->isPixelinFeature(row - 1, col) || object->isPixelinFeature(row + 1, col)){
-//                                object->mergeAndDelete((*i));
-//                                done = true;
-//                                break;
-//                            }
-//                        }
-//                        if(done){
-//                            break;
-//                        }
-//                    }
-//                    if(done){
-//                        break;
-//                    }
-//                }
-//                if(done){
-//                    break;
-//                }
-//            }
-//            done = false;
-//            i = listblob->_blobs.erase(i);
-//            holesMerged++;
-//        }
-//
-////        else if((*i)->isBackground() && (*i)->getCount() < this->_minHoleSize){
-////            //TODO need to add to previous blob for proper segmentation
-////            VLOG(1) << "hole is too small and need to be merged to surrounding blob";
-////            bool found = false;
-////            auto startRow = (*i)->getStartRow();
-////            auto startCol = (*i)->getStartCol();
-////            auto j = listblob->_blobs.begin();
-////            while (j != listblob->_blobs.end()){
-////NEED TO LOOK ALL NEIGHBORS NOT JUST ON THE LEFT
-////                if((*j)->isPixelinFeature(startRow, startCol - 1)){
-////                    VLOG(1) << "found merging blob";
-////                    found = true;
-////                    (*j)->mergeAndDelete(*i);
-////                    break;
-////                }
-////            }
-////        }
-//
-//        else if((*i)->isForeground() && (*i)->getCount() < this->_minObjectSize){
-//                  VLOG(1) << "too small...";
-//          nbBlobsTooSmall++;
-//          i = listblob->_blobs.erase(i);
-//
-//        }
-        else {
-          nbBlobsLeft++;
-          ++i;
-        }
-    }
-
-      auto nbBlobs = listblob->_blobs.size();
-      VLOG(1) << "original nb of blobs : " << originalNbOfBlobs;
-      VLOG(1) << "background blobs merged with objects because too small : " << holesMerged;
-      VLOG(1) << "background blobs removed : " << backgroundBlobs;
-      VLOG(1) << "blobs object removed because too small : " << nbBlobsTooSmall;
-      VLOG(1) << "blobs left : " <<nbBlobs;
-
-
-    this->createFCFromListBlobs(listblob,
-                                fi->getImageHeight(0),
-                                fi->getImageWidth(0));
-
-    // Wait for the analyse graph to finish processing tiles to make the FC
-    // available
-    analyseRuntime->waitForRuntime();
-    fi->waitForGraphComplete();
-
-    analyseGraph->writeDotToFile("FeatureCollectionGraph.xdot", DOTGEN_COLOR_COMP_TIME);
-
-    // Delete HTGS graphs
-    delete (fi);
-    delete (analyseRuntime);
-
-  }
-
   /// \brief Default FeatureCollection destructor
   virtual ~FeatureCollection() {
     for (const auto &feature : _vectorFeatures) {
@@ -381,6 +161,7 @@ class FeatureCollection {
                   uint32_t *bitMask) {
     this->_vectorFeatures.emplace_back(id, boundingBox, bitMask);
   }
+
 
   /// \brief Get the vector of features from the Feature collection
   /// \return The vector of features from the Feature collection
@@ -633,7 +414,7 @@ class FeatureCollection {
           // If it doesn't exist write the blank tile
           if (loadedTiles.find(currentCoordinates) == loadedTiles.end()) {
             TIFFWriteTile(tif,
-                          emptyTile,
+                          emptyTile->data(),
                           indexCol * tileSize,
                           indexRow * tileSize,
                           0,
@@ -662,6 +443,136 @@ class FeatureCollection {
     for (auto &tile : loadedTiles) {
       delete tile.second;
     }
+  }
+
+
+
+
+    uint32_t* arrayToBitMask(const uint8_t* src, uint32_t width, uint32_t height, uint8_t foreground) {
+
+        auto bitMask = new uint32_t[(uint32_t) ceil((width * height) / 32.)]{0};
+
+        // For every pixel in the bit mask
+        for (auto pos = 0; pos < width * height; pos++) {
+            // Test if the pixel is in the current feature (using global coordinates)
+            if (src[pos] == foreground) {
+                // Add it to the bit mask
+                //optimization : right-shifting binary representation by 5 is equivalent to dividing by 32
+                auto wordPosition = pos >> (uint32_t) 5;
+                //left-shifting back previous result gives the 1D array coordinates of the word beginning
+                auto beginningOfWord = ((int32_t) (wordPosition << (uint32_t) 5));
+                //subtracting original value gives the remainder of the division by 32.
+                auto remainder = ((int32_t) pos - beginningOfWord);
+                //at which position in a binary representation the bit needs to be set?
+                auto bitPositionInDecimal = (uint32_t) abs(32 - remainder);
+                //create a 32bit word with this bit set to 1.
+                auto bitPositionInBinary = ((uint32_t) 1 << (bitPositionInDecimal - (uint32_t) 1));
+                //adding the bitPosition to the word
+                bitMask[wordPosition] = bitMask[wordPosition] | bitPositionInBinary;
+            }
+        }
+
+      return bitMask;
+    }
+
+    uint8_t* bitMaskToArray(uint32_t* bitMask, uint32_t width, uint32_t height, uint8_t foregroundValue) {
+
+      auto array = new uint8_t[width * height]{0};
+
+      for (uint32_t pos = 0; pos < width * height; pos++) {
+          if (testBitMaskValue(bitMask, pos)) {
+            array[pos] = foregroundValue;
+          }
+        }
+
+      return array;
+    }
+
+    bool testBitMaskValue(const uint32_t* bitMask, uint32_t pos) {
+      // Find the good "word" (uint32_t)
+      auto wordPosition = pos >> (uint32_t) 5;
+      // Find the good bit in the word
+      auto bitPosition = (uint32_t) abs((int32_t) 32 - ((int32_t) pos
+                                                     - (int32_t) (wordPosition << (uint32_t) 5)));
+      // Test if the bit is one
+      auto answer = (((((uint32_t) 1 << (bitPosition - (uint32_t) 1))
+                  & bitMask[wordPosition])
+              >> (bitPosition - (uint32_t) 1)) & (uint32_t) 1) == (uint32_t) 1;
+      return answer;
+  }
+
+
+    //TODO need to implement Feature getCount()0
+    FeatureCollection* filter(SegmentationOptions* options) {
+
+      VLOG(1) << "erode feature collection";
+
+      auto nbBlobsTooSmall = 0;
+      auto i = _vectorFeatures.begin();
+      while (i != _vectorFeatures.end()) {
+//        //We removed objects that are still too small after the merge occured.
+//        if((*i)->getCount() < options->MIN_OBJECT_SIZE) {
+//          nbBlobsTooSmall++;
+//          i = _vectorFeatures.erase(i);
+//        }
+//        else {
+//          i++;
+//        }
+      }
+    }
+
+
+  FeatureCollection* erode() {
+
+    VLOG(1) << "erode feature collection";
+
+    auto erodedFeatures = std::vector<Feature*>();
+    auto foregroundValue = 255;
+
+    for(const auto &feature : this->getVectorFeatures()) {
+
+      auto width = feature.getBoundingBox().getWidth();
+      auto height = feature.getBoundingBox().getHeight();
+
+      //transform each bitMask into a array of uint8 so we can use opencv
+      auto data = bitMaskToArray(feature.getBitMask(), width, height, foregroundValue);
+
+      //TODO remove
+      std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+
+      //erosion from opencv
+      auto mat = cv::Mat(height, width, CV_8U,  data);
+      cv::imwrite(outputPath + "feature-" + std::to_string(feature.getId())  + ".tif" , mat);
+      auto kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE,cv::Size(3,3));
+      cv::Mat eroded;
+      cv::erode(mat,eroded,kernel);
+      cv::imwrite(outputPath + "erodedFeature-" + std::to_string(feature.getId())  + ".tif" , eroded);
+      mat.release();
+      delete data;
+
+      //transform back the matrix to an array
+      std::vector<uchar> array;
+      if (eroded.isContinuous()) {
+        array.assign((uchar*)eroded.datastart, (uchar*)eroded.dataend);
+      } else {
+        for (int i = 0; i < eroded.rows; ++i) {
+          array.insert(array.end(), eroded.ptr<uchar>(i), eroded.ptr<uchar>(i)+eroded.cols);
+        }
+      }
+      eroded.release();
+      //TODO remove
+      printBoolArray<uint8_t >("eroded", array.data(),width,height);
+
+      //transform back the array to a bitmask
+      auto bitmask = arrayToBitMask(array.data(), width, height, foregroundValue);
+
+      //create feature
+      auto erodedFeature = new Feature(feature.getId(),BoundingBox(feature.getBoundingBox()),bitmask);
+
+      erodedFeatures.push_back(erodedFeature);
+    }
+
+    return new FeatureCollection(erodedFeatures, this->_imageHeight, this->_imageWidth);
   }
 
   /// \brief Create a tiled tiff mask, where the pixels are 1.
@@ -1015,11 +926,35 @@ class FeatureCollection {
       for (auto blob : listBlobs->_blobs) {
 
       auto feature = blob->getFeature();
-      _features.push_back(feature);
+      this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
       ++idFeature;
+      //because addFeature duplicates the object.
+      delete feature;
+      }
+
       // Preprocess the FC
       this->preProcessing();
+    }
+
+
+
+    FeatureCollection(std::vector<Feature*> &features,
+                                      uint32_t imageHeight,
+                                      uint32_t imageWidth) : _imageWidth(imageWidth), _imageHeight(imageHeight) {
+
+      uint32_t
+              idFeature = 0;
+
+      for (auto feature : features) {
+        this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
+        ++idFeature;
+   //     delete feature;
       }
+
+     // features.clear();
+
+      // Preprocess the FC
+      this->preProcessing();
     }
 
 
