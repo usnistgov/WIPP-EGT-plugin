@@ -59,6 +59,7 @@ Connectivity 8 for analyser
 
 ----------
 
+Parameterize erosion
 
 
 
@@ -83,3 +84,9 @@ we will potentially try to merge contiguous "holes" to this missing background.
 Then those holes could be seen as too small and removed, creating bridges between two blobs when it should not.
 And since we do not expect this bad result, we could generate a labeled mask
 with what seem one object but labeled as several objects.
+
+
+==================
+Things to look at
+
+For dataset test2, two background blobs are found not be linked even though it look like they are connected in the final mask

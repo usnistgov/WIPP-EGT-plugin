@@ -99,9 +99,10 @@ namespace egt {
                 VLOG(1) << "merging " << this->_blobs->_blobs.size() << " blobs...";
 
                 _count = 0;
-                merge(_holesToMerge,_holes);
+                //flag set to true because we should remove holes not linked to anything because we have already removed background info
+                merge(_holesToMerge,_holes, true);
                 filterHoles();
-                merge(_toMerge,_blobs);
+                merge(_toMerge,_blobs, false);
                 filterObjects();
 
 
@@ -152,6 +153,9 @@ namespace egt {
                     this->_blobs->_blobs.push_back(blob);
                     auto row = blob->getStartRow();
                     auto col = blob->getStartCol();
+
+                    //we need to merge this hole into its containing blob
+                    //looking around its start point, we should find a valid blob to merge with
                     std::list<Coordinate> coords{};
                     if(row - 1 >= 0 && !blob->isPixelinFeature(row -1, col)) {
                         coords.push_back(std::pair<int32_t, int32_t>(row - 1, col));
@@ -169,7 +173,7 @@ namespace egt {
                     this->_toMerge[blob].merge(coords);
                     nbHolesTooSmall++;
                     i++;
-                    VLOG(3) << "Transform hole at (" << row << "," << col << ") into object blob.";
+                    VLOG(4) << "Transform hole at (" << row << "," << col << ") into object blob.";
                 }
                 else {
                     delete (*i);
@@ -177,8 +181,8 @@ namespace egt {
                 }
             }
 
-            VLOG(3) << "nb of holes after merged : " << originalNbOfHoles;
-            VLOG(3) << "nb of small holes that have been removed : " << nbHolesTooSmall;
+            VLOG(3) << "nb of holes after merging : " << originalNbOfHoles;
+            VLOG(3) << "nb of holes that have been removed because they were too small : " << nbHolesTooSmall;
 
         }
 
@@ -207,7 +211,7 @@ namespace egt {
         }
 
         /// \brief Merge all the blobs from all the view analyser
-        void merge(std::map<Blob *, std::list<Coordinate >> &toMerge, ListBlobs *blobs) {
+        void merge(std::map<Blob *, std::list<Coordinate >> &toMerge, ListBlobs *blobs, bool deleteLonelyBlobs) {
             fc::UnionFind<Blob>
                     uf{};
 
@@ -218,9 +222,7 @@ namespace egt {
             for (auto blobCoords : toMerge) {
                 for (auto coord : blobCoords.second) {
                     if (auto other = getBlobFromCoord(blobs, coord.first, coord.second)) {
-                        assert(blobCoords.first != other);
-                        assert(other != nullptr);
-                        uf.unionElements(blobCoords.first, other);
+                            uf.unionElements(blobCoords.first, other);
                     }
                 }
             }
@@ -243,6 +245,14 @@ namespace egt {
 
                 if (sons.size() == 1) {
                     VLOG(3) << "no need to merge this blob";
+                    if(deleteLonelyBlobs){
+                        for(auto s : sons){
+                            delete s;
+                            blobs->_blobs.remove(s);
+                        }
+                        sons.clear();
+                    }
+
                     continue;
                 }
 
@@ -285,6 +295,8 @@ namespace egt {
 
                 parent->setFeature(feature);
             }
+
+            parentSons.clear();
         }
 
         BoundingBox *calculateBoundingBox(std::set<Blob *> sons) {

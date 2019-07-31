@@ -321,18 +321,19 @@ namespace egt {
             segmentationGraph->finishedProducingData();
 
             //we only generate one output, the list of all objects
-            auto blob = segmentationGraph->consumeData();
+            std::shared_ptr<ListBlobs> blob = segmentationGraph->consumeData();
 
             VLOG(1) << "generating a segmentation mask";
             beginFC = std::chrono::high_resolution_clock::now();
             auto fc = new FeatureCollection();
             fc->createFCFromCompactListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
             auto fc2 = fc->erode();
-            fc->createLabeledMask("output.tiff", (uint32_t)tileWidthAtSegmentationLevel);
-            fc2->createLabeledMask("output2.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+            fc->createBlackWhiteMask("output.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+            fc2->createBlackWhiteMask("output2.tiff", (uint32_t)tileWidthAtSegmentationLevel);
 
 
             delete fc;
+            delete fc2;
             endFC = std::chrono::high_resolution_clock::now();
         }
 

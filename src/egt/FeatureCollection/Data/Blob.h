@@ -388,7 +388,7 @@ class Blob {
       _colMax{};          ///< Maximum bounding box col (in the global coordinates of the image)
 
   uint64_t
-      _count{};           ///< Number of pixel to fastened the blob merge
+      _count = 0;           ///< Number of pixel to fastened the blob merge
 
   std::unordered_map<int32_t, std::unordered_set<int32_t>>
       _rowCols

@@ -255,14 +255,16 @@ namespace egt {
                         delete _currentBlob;
                         holeRemovedCount++;
                     }
-                    //TODO CHECK this optimization would introduce a bug
-//                    else if(_currentBlob->getCount() > _options->MAX_HOLE_SIZE) {
-//                        if(_currentBlob->isToMerge()){
-//                            _vAnalyse->getHolesToMerge().erase(_currentBlob);
-//                        }
-//                        delete _currentBlob;
-//                        backgroundCount++;
-//                    }
+                    //OPTIMIZATION, we do not keep around large holes because we consider them background.
+                    //this can lead to significant savings in memory footprint
+                    //however this force us to treat lonely holes differently in the merger.
+                    else if(_currentBlob->getCount() > _options->MAX_HOLE_SIZE) {
+                        if(_currentBlob->isToMerge()){
+                            _vAnalyse->getHolesToMerge().erase(_currentBlob);
+                        }
+                        delete _currentBlob;
+                        backgroundCount++;
+                    }
                         //we do not know enough, so we need to merge the background blob
                     else {
                         //WE ADD IT
