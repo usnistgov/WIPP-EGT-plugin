@@ -41,6 +41,7 @@
 #include <utility>
 #include <FastImage/FeatureCollection/tools/UnionFind.h>
 #include <egt/FeatureCollection/Data/ListBlobs.h>
+#include <egt/FeatureCollection/Data/ListFeatures.h>
 
 
 namespace egt {
@@ -56,7 +57,7 @@ namespace egt {
   *  https://en.wikipedia.org/wiki/Disjoint-set_data_structure
 
   **/
-    class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
+    class BlobMerger : public htgs::ITask<ViewAnalyse, ListFeatures> {
     public:
         /// \brief BlobMerger constructor
         /// \param imageHeight Image Height
@@ -66,12 +67,14 @@ namespace egt {
                 : ITask(1), imageHeight(imageHeight), imageWidth(imageWidth), _nbTiles(nbTiles), segmentationOptions(segmentationOptions) {
             _blobs = new ListBlobs();
             _holes = new ListBlobs();
+            _results = std::make_shared<ListFeatures>();
         }
 
         //TODO _blobs is returned as result, _holes is not => make _blobs shared_ptr and _holes a unique_ptr
         //and remove destructor
         virtual ~BlobMerger() {
             delete _holes;
+            delete _blobs;
         }
 
         /// \brief Get the view analyse, merge them into one analyse and merge all
@@ -105,13 +108,10 @@ namespace egt {
                 VLOG(1) << "merging " << this->_holes->_blobs.size() << " holes...";
                 VLOG(1) << "merging " << this->_blobs->_blobs.size() << " blobs...";
 
-                _count = 0;
-                //flag set to true because we should remove holes not linked to anything because we have already removed background info
-                merge(_holesToMerge,_holes, true);
+                mergeHoles();
                 filterHoles();
-                merge(_toMerge,_blobs, false);
+                mergeObjects();
                 filterObjects();
-
 
                 VLOG(1) << "after last merge, we have : " << _blobs->_blobs.size() << " blobs left";
 
@@ -120,7 +120,7 @@ namespace egt {
                         << std::chrono::duration_cast<std::chrono::milliseconds>(endMerge - startMerge).count()
                         << " mS";
 
-                this->addResult(_blobs);
+                this->addResult(_results);
             }
         }
 
@@ -204,28 +204,29 @@ namespace egt {
 
             uint32_t nbBlobsTooSmall = 0;
 
-            auto originalNbOfBlobs = _blobs->_blobs.size();
+            auto originalNbOfBlobs = _results->_features.size();
 
-            auto i = _blobs->_blobs.begin();
-            while (i != _blobs->_blobs.end()) {
+            auto i = _results->_features.begin();
+            while (i != _results->_features.end()) {
                 //We removed objects that are still too small after the merge occured.
                 if((*i)->getCount() < segmentationOptions->MIN_OBJECT_SIZE) {
                     nbBlobsTooSmall++;
-                    i = _blobs->_blobs.erase(i);
+                    delete (*i);
+                    i = _results->_features.erase(i);
                 }
                 else {
                     i++;
                 }
             }
 
-            auto nbBlobs = _blobs->_blobs.size();
+            auto nbBlobs = _results->_features.size();
             VLOG(3) << "original nb of objects : " << originalNbOfBlobs;
             VLOG(3) << "nb of small objects that have been removed : " << nbBlobsTooSmall;
             VLOG(3) << "total nb of objects after filtering: " <<nbBlobs;
         }
 
-        /// \brief Merge all the blobs from all the view analyser
-        void merge(std::map<Blob *, std::list<Coordinate >> &toMerge, ListBlobs *blobs, bool deleteLonelyBlobs) {
+
+        void mergeHoles() {
             fc::UnionFind<Blob>
                     uf{};
 
@@ -233,98 +234,137 @@ namespace egt {
                     parentSons{};
 
             // Apply the UF algorithm to every linked blob
-            for (const auto &blobCoords : toMerge) {
+            for (const auto &blobCoords : _holesToMerge) {
                 for (auto coord : blobCoords.second) {
-                    if (auto other = getBlobFromCoord(blobs, coord.first, coord.second)) {
-                            uf.unionElements(blobCoords.first, other);
+                    if (auto other = getBlobFromCoord(_holes, coord.first, coord.second)) {
+                        uf.unionElements(blobCoords.first, other);
                     }
                 }
             }
             // Clear merge data structure. We won't use it anymore.
-            toMerge.clear();
-
+            _holesToMerge.clear();
 
             // Building a map from the union find result.
             // Associate every blob to it parent
             //or to itself if it is alone
-            for (auto blob : blobs->_blobs) {
+            for (auto blob : _holes->_blobs) {
                 parentSons[uf.find(blob)].insert(blob);
             }
 
             //Merge connected blobs
             //One blob is considered the parent of all the others.
-            for (auto pS : parentSons) {
+            for (const auto &pS : parentSons) {
+                auto parent = pS.first;
+                auto sons = pS.second;
+                VLOG(4) << "nb of sons: " << sons.size(); //for debug
+
+                //if a blob is alone, decide what to do.
+                // due to optimization, holes parentSons might be of size 1.
+                // (we do not add large background blobs to the merge list - so contiguous holes are also background).
+                if (sons.size() == 1) {
+                        for(auto s : sons){
+                            delete s;
+                            _holes->_blobs.remove(s);
+                        }
+                    continue;
+                }
+
+                //To merge several blobs, we calculate the resulting bounding box and fill a bitmask of the same dimensions.
+                auto bb = calculateBoundingBox(sons);
+                double size = ceil((bb.getHeight() * bb.getWidth()) / 32.);
+                auto *bitMask = new uint32_t[(uint32_t) size]();
+                uint64_t count = 0;
+
+                for (auto son : sons) {
+                    (*son).addToBitMask(bitMask, bb);
+                    count += (*son).getCount();
+
+                    //we only keep the parent. This allows us to free up memory asap
+                    if(son != parent) {
+                        _holes->_blobs.remove(son);
+                        delete son;
+                    }
+                }
+
+                parent->setCount(count);
+                parent->updateFeature(new Feature(parent->getTag(), bb, bitMask, count));
+            }
+        }
+
+        void mergeObjects() {
+            fc::UnionFind<Blob>
+                    uf{};
+
+            std::map<Blob *, std::set<Blob *>>
+                    parentSons{};
+
+            // Apply the UF algorithm to every linked blob
+            for (const auto &blobCoords : _toMerge) {
+                for (auto coord : blobCoords.second) {
+                    if (auto other = getBlobFromCoord(_blobs, coord.first, coord.second)) {
+                            uf.unionElements(blobCoords.first, other);
+                    }
+                }
+            }
+            // Clear merge data structure. We won't use it anymore.
+            _toMerge.clear();
+
+
+            // Building a map from the union find result.
+            // Associate every blob to it parent
+            //or to itself if it is alone
+            for (auto blob : _blobs->_blobs) {
+                parentSons[uf.find(blob)].insert(blob);
+            }
+
+            //Merge connected blobs
+            //One blob is considered the parent of all the others.
+            for (const auto &pS : parentSons) {
                 auto parent = pS.first;
                 auto sons = pS.second;
                 VLOG(4) << "nb of sons: " << sons.size(); //for debug
 
                 //if a blob is alone, decide what to do
                 //every blob parentSons should have at least 2 members
-                //holes parentSons might be of size 1.
-                // (for optimization purpose we do not add large background blobs to the merge list - and connected holes
-                // are then also background).
                 if (sons.size() == 1) {
-                    if(deleteLonelyBlobs){
-                        for(auto s : sons){
-                            delete s;
-                            blobs->_blobs.remove(s);
-                        }
-                        sons.clear();
-                    }
-
-                    continue;
+                    //TODO CHECK
+                    VLOG(4) << "this should not happen! ";
                 }
 
-                //TODO this could be done in feature
                 //To merge several blobs, we calculate the resulting bounding box and fill a bitmask of the same dimensions.
+                auto id = parent->getTag();
                 auto bb = calculateBoundingBox(sons);
-                double size = ceil((bb->getHeight() * bb->getWidth()) / 32.);
+                double size = ceil((bb.getHeight() * bb.getWidth()) / 32.);
                 auto *bitMask = new uint32_t[(uint32_t) size]();
+                uint64_t count = 0;
 
-                //TODO accumulate features rather than blobs - this will do away with the parent - son discrimination as well
-
-                //the parent will contain the merged feature
-                parent->addToBitMask(bitMask, bb);
-
-                for (auto son = sons.begin(); son != sons.end(); ++son) {
-                    if (*son == parent) {
-                        continue;
-                    }
-                    (*son)->addToBitMask(bitMask, bb);
-                    parent->setCount(parent->getCount() + (*son)->getCount());
-                    delete (*son); //we keep only the parent, we can delete the sons
-                    blobs->_blobs.remove(*son);
+                for (auto son : sons) {
+                    (*son).addToBitMask(bitMask, bb);
+                    count += (*son).getCount();
+                    _blobs->_blobs.remove(son);
+                    delete son; //this allows us to free up memory asap
                 }
 
-                delete parent->getFeature();
-                auto *feature = new Feature(parent->getTag(), (*bb), bitMask);
-
-                //In order to maintain consistency - this will be unecessary if we send back feature instead
-                parent->setRowMin(bb->getUpperLeftRow());
-                parent->setRowMax(bb->getBottomRightRow());
-                parent->setColMin(bb->getUpperLeftCol());
-                parent->setColMax(bb->getBottomRightCol());
-
-                parent->setFeature(feature);
+                _results->_features.emplace_back(new Feature(id, bb, bitMask, count));
             }
         }
 
-        BoundingBox *calculateBoundingBox(std::set<Blob *> sons) {
+        const BoundingBox calculateBoundingBox(const std::set<Blob *> &sons) const {
 
             uint32_t upperLeftRow = std::numeric_limits<int32_t>::max(),
                     upperLeftCol = std::numeric_limits<int32_t>::max(),
                     bottomRightRow = 0,
                     bottomRightCol = 0;
 
-            for (auto son = sons.begin(); son != sons.end(); ++son) {
-                auto bb = (*son)->getFeature()->getBoundingBox();
+            for (auto son : sons) {
+                auto bb = son->getFeature()->getBoundingBox();
                 upperLeftRow = (bb.getUpperLeftRow() < upperLeftRow) ? bb.getUpperLeftRow() : upperLeftRow;
                 upperLeftCol = (bb.getUpperLeftCol() < upperLeftCol) ? bb.getUpperLeftCol() : upperLeftCol;
                 bottomRightRow = (bb.getBottomRightRow() > bottomRightRow) ? bb.getBottomRightRow() : bottomRightRow;
                 bottomRightCol = bb.getBottomRightCol() > bottomRightCol ? bb.getBottomRightCol() : bottomRightCol;
             }
 
-            return new BoundingBox(upperLeftRow, upperLeftCol, bottomRightRow, bottomRightCol);
+            return BoundingBox(upperLeftRow, upperLeftCol, bottomRightRow, bottomRightCol);
         }
 
         uint32_t
@@ -349,6 +389,8 @@ namespace egt {
                 _count = 0;                   ///< Number of views analysed
 
         SegmentationOptions* segmentationOptions{};
+
+        std::shared_ptr<ListFeatures> _results{};
     };
 }
 

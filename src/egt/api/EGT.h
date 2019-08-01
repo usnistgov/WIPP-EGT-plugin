@@ -93,21 +93,21 @@ namespace egt {
             auto endThreshold = std::chrono::high_resolution_clock::now();
 
             //segment
-            std::shared_ptr<ListBlobs> blobs = nullptr;
+            std::shared_ptr<ListFeatures> features = nullptr;
             auto beginSegmentation = std::chrono::high_resolution_clock::now();
             if(segmentationOptions->MASK_ONLY) {
                 runLocalMaskGenerator<T>(threshold, options, segmentationOptions);
             }
             else {
-                blobs = runSegmentation(threshold, options, segmentationOptions);
+                runSegmentation(threshold, options, segmentationOptions);
             }
             auto endSegmentation = std::chrono::high_resolution_clock::now();
 
             //postprocessing of features
             auto beginFC = std::chrono::high_resolution_clock::now();
-            if(!segmentationOptions->MASK_ONLY) {
-                runBinaryMaskGeneration(blobs);
-            }
+//            if(!segmentationOptions->MASK_ONLY) {
+//                runBinaryMaskGeneration(blobs);
+//            }
             auto endFC = std::chrono::high_resolution_clock::now();
 
             delete segmentationOptions;
@@ -295,8 +295,8 @@ namespace egt {
          * @param segmentationOptions - Parameters used for the segmentation.
          */
         template <class T>
-        std::shared_ptr<ListBlobs> runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions){
-            htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
+        std::shared_ptr<ListFeatures> runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions){
+            htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListFeatures> *segmentationGraph;
             htgs::TaskGraphRuntime *segmentationRuntime;
 
             uint32_t pyramidLevelToRequestForSegmentation =  options->pyramidLevel;
@@ -307,7 +307,7 @@ namespace egt {
             auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
             auto *fi = new fi::FastImage<T>(tileLoader2, segmentationRadius);
             fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
-            auto fastImage2 = fi->configureAndMoveToTaskGraphTask("Fast Image 2");
+            auto fastImage = fi->configureAndMoveToTaskGraphTask("Fast Image");
             imageHeightAtSegmentationLevel = fi->getImageHeight(pyramidLevelToRequestForSegmentation);
             imageWidthAtSegmentationLevel = fi->getImageWidth(pyramidLevelToRequestForSegmentation);
             tileHeightAtSegmentationLevel = fi->getTileHeight(pyramidLevelToRequestForSegmentation);
@@ -328,8 +328,8 @@ namespace egt {
             auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
                                         nbTiles, segmentationOptions);
-            segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
-            segmentationGraph->addEdge(fastImage2,sobelFilter2);
+            segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListFeatures>;
+            segmentationGraph->addEdge(fastImage,sobelFilter2);
             segmentationGraph->addEdge(sobelFilter2,viewSegmentation);
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
             segmentationGraph->addEdge(labelingFilter, merge);
@@ -344,10 +344,11 @@ namespace egt {
             segmentationGraph->finishedProducingData();
 
             //we only generate one output, the list of all objects
-            std::shared_ptr<ListBlobs> blobs = segmentationGraph->consumeData();
+            std::shared_ptr<ListFeatures> features = segmentationGraph->consumeData();
             segmentationRuntime->waitForRuntime();
+            delete fi;
             delete segmentationRuntime;
-            return blobs;
+            return features;
         }
 
         void runBinaryMaskGeneration(std::shared_ptr<ListBlobs> blob) {

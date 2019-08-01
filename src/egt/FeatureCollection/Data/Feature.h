@@ -69,14 +69,22 @@ namespace egt {
         /// \param boundingBox Feature bounding box
         /// \param bitMask Feature bit mask to copy
         Feature(uint32_t id, const BoundingBox &boundingBox, uint32_t *bitMask)
-                : _id(id), _boundingBox(boundingBox) {
-            _nbElementsBitMask = (uint32_t) (ceil(
-                    boundingBox.getHeight() * boundingBox.getWidth() / 32.));
-            _bitMask = new uint32_t[_nbElementsBitMask];
-            memcpy(this->_bitMask, bitMask, _nbElementsBitMask * sizeof(uint32_t));
+                : _id(id), _boundingBox(boundingBox), _bitMask(bitMask) {
+            _nbElementsBitMask = (uint32_t) (ceil(boundingBox.getHeight() * boundingBox.getWidth() / 32.));
+        }
+
+
+        Feature(uint32_t id, const BoundingBox &boundingBox, uint32_t *bitMask, uint64_t count)
+                : _id(id), _boundingBox(boundingBox), _count(count), _bitMask(bitMask) {
+            _nbElementsBitMask = (uint32_t) (ceil( boundingBox.getHeight() * boundingBox.getWidth() / 32.));
+        }
+
+        ~Feature() {
+            delete[] _bitMask;
         }
 
     public:
+        /// Use by the deserialization mechanism.
         /// \param id Feature id
         /// \param boundingBox Feature bounding box
         /// \param nbElementsBitMask Bit Mask size
@@ -101,6 +109,10 @@ namespace egt {
         /// \brief Bit Mask getter
         /// \return Bit Mask
         uint32_t *getBitMask() const { return _bitMask; }
+
+        uint64_t getCount() const {
+            return _count;
+        }
 
         /// \brief Get maximum coordinate in a specific dimension, used by the AABB
         /// tree
@@ -293,10 +305,6 @@ namespace egt {
             return answer;
         }
 
-        ~Feature(){
-//            delete _bitMask;
-        }
-
         /// \brief Inequality operator
         /// \param rhs Feature to test
         /// \return True if not equal, False Else
@@ -312,8 +320,11 @@ namespace egt {
                 _id;                     ///< Feature Id
 
         uint32_t
-                *_bitMask,                ///< BitMask, each bit represent a pixel
+                *_bitMask = nullptr,                ///< BitMask, each bit represent a pixel
                 _nbElementsBitMask;      ///< BitMask size
+
+        uint64_t
+                _count = 0;           ///< Number of foreground pixel
 
         BoundingBox
                 _boundingBox;            ///< Bounding box
