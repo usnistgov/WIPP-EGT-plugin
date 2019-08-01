@@ -85,7 +85,11 @@ class Blob {
     _count = 0;
   }
 
-  /// \brief Get Blob tag
+    virtual ~Blob() {
+      //destroyed Feature
+    }
+
+    /// \brief Get Blob tag
   /// \return Blob tag
   uint32_t getTag() const { return _tag; }
 
@@ -141,14 +145,14 @@ class Blob {
   /// \return Blob rank
   uint32_t getRank() const { return _rank; }
 
-  Feature *getFeature() { return _feature; }
+  const Feature *getFeature() const { return _feature; }
 
   /// \brief Test if a pixel is in a blob
   /// \param row Row asked
   /// \param col Col asked
   /// \return True is the pixel(row, col) is in the blob, else False
   bool isPixelinFeature(int32_t row, int32_t col) {
-    if (isPixelinBoundingBox(row,col)) {
+    if (isPixelInBoundingBox(row, col)) {
         if(_feature != nullptr) {
             return _feature->isInBitMask(row,col);
         }
@@ -157,7 +161,7 @@ class Blob {
     return false;
   }
 
-  bool isPixelinBoundingBox(int32_t row, int32_t col){
+  bool isPixelInBoundingBox(int32_t row, int32_t col){
       return (row >= _rowMin && row < _rowMax && col >= _colMin && col < _colMax);
   }
 
@@ -351,6 +355,7 @@ class Blob {
     }
   }
 
+  //TODO remove, we will only  create Feature directly not modifying blobs
   void setFeature(Feature *f){
     this->_feature = f;
   }

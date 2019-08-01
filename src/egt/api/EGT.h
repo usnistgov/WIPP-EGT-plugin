@@ -81,6 +81,7 @@ namespace egt {
 
             auto begin = std::chrono::high_resolution_clock::now();
 
+            //determining threshold
             auto beginThreshold = std::chrono::high_resolution_clock::now();
             T threshold{};
             if(options->threshold == -1) {
@@ -91,20 +92,26 @@ namespace egt {
             }
             auto endThreshold = std::chrono::high_resolution_clock::now();
 
-
+            //segment
+            std::shared_ptr<ListBlobs> blobs = nullptr;
             auto beginSegmentation = std::chrono::high_resolution_clock::now();
             if(segmentationOptions->MASK_ONLY) {
                 runLocalMaskGenerator<T>(threshold, options, segmentationOptions);
             }
             else {
-                runSegmentation(threshold, options, segmentationOptions);
+                blobs = runSegmentation(threshold, options, segmentationOptions);
             }
             auto endSegmentation = std::chrono::high_resolution_clock::now();
 
+            //postprocessing of features
+            auto beginFC = std::chrono::high_resolution_clock::now();
+            if(!segmentationOptions->MASK_ONLY) {
+                runBinaryMaskGeneration(blobs);
+            }
+            auto endFC = std::chrono::high_resolution_clock::now();
+
             delete segmentationOptions;
-
             auto end = std::chrono::high_resolution_clock::now();
-
 
             VLOG(1) << "Execution time: ";
             VLOG(1) << "    Threshold Detection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endThreshold - beginThreshold).count() << " mS";
@@ -210,6 +217,15 @@ namespace egt {
             return threshold;
         }
 
+        /**
+         * Generate a binary mask encoded in uint8 from a threshold.
+         * The thresholding is performed for each image tile without global processing.
+         * This is very fast but cannot be 100% correct as features spanning several tiles will not be filtered.
+         * @tparam T
+         * @param threshold - Threshold value for the foreground.
+         * @param options - Options for configuring EGT execution.
+         * @param segmentationOptions - Parameters used for the segmentation.
+         */
         template <class T>
         void runLocalMaskGenerator(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions){
             htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, VoidData> *localMaskGenerationGraph;
@@ -221,15 +237,15 @@ namespace egt {
             uint32_t segmentationRadius = 2;
 
             auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
-            auto *fi2 = new fi::FastImage<T>(tileLoader2, segmentationRadius);
-            fi2->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
-            auto fastImage2 = fi2->configureAndMoveToTaskGraphTask("Fast Image 2");
-            uint32_t imageHeightAtSegmentationLevel = fi2->getImageHeight(pyramidLevelToRequestForSegmentation);
-            uint32_t imageWidthAtSegmentationLevel = fi2->getImageWidth(pyramidLevelToRequestForSegmentation);
-            int32_t tileHeigthAtSegmentationLevel = fi2->getTileHeight(pyramidLevelToRequestForSegmentation);
-            int32_t tileWidthAtSegmentationLevel = fi2->getTileWidth(pyramidLevelToRequestForSegmentation);
-            uint32_t nbTiles = fi2->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
-                               fi2->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
+            auto *fi = new fi::FastImage<T>(tileLoader2, segmentationRadius);
+            fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
+            auto fastImageTask = fi->configureAndMoveToTaskGraphTask("Fast Image");
+            uint32_t imageHeightAtSegmentationLevel = fi->getImageHeight(pyramidLevelToRequestForSegmentation);
+            uint32_t imageWidthAtSegmentationLevel = fi->getImageWidth(pyramidLevelToRequestForSegmentation);
+            int32_t tileHeigthAtSegmentationLevel = fi->getTileHeight(pyramidLevelToRequestForSegmentation);
+            int32_t tileWidthAtSegmentationLevel = fi->getTileWidth(pyramidLevelToRequestForSegmentation);
+            uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
+                               fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
 
             auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
             auto viewSegmentation = new egt::EGTViewAnalyzer<T>(options->concurrentTiles,
@@ -255,24 +271,31 @@ namespace egt {
             );
 
             localMaskGenerationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, VoidData>;
-            localMaskGenerationGraph->addEdge(fastImage2, sobelFilter2);
+            localMaskGenerationGraph->addEdge(fastImageTask, sobelFilter2);
             localMaskGenerationGraph->addEdge(sobelFilter2, viewSegmentation);
             localMaskGenerationGraph->addEdge(viewSegmentation, maskFilter);
             localMaskGenerationGraph->addEdge(maskFilter, writeMask);
             localMaskGenerationGraphRuntime = new htgs::TaskGraphRuntime(localMaskGenerationGraph);
             localMaskGenerationGraphRuntime->executeRuntime();
-            fi2->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
+            fi->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
             localMaskGenerationGraph->finishedProducingData();
             localMaskGenerationGraphRuntime->waitForRuntime();
             //FOR DEBUGGING
             localMaskGenerationGraph->writeDotToFile("SegmentationGraph.xdot", DOTGEN_COLOR_COMP_TIME);
-            delete (localMaskGenerationGraphRuntime);
+            delete fi;
+            delete localMaskGenerationGraphRuntime;
             auto endSegmentation = std::chrono::high_resolution_clock::now();
         }
 
-
+        /**
+         * Generate a list of features.
+         * @tparam T
+         * @param threshold - Threshold value for the foreground.
+         * @param options - Options for configuring EGT execution.
+         * @param segmentationOptions - Parameters used for the segmentation.
+         */
         template <class T>
-        void runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions){
+        std::shared_ptr<ListBlobs> runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions){
             htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
             htgs::TaskGraphRuntime *segmentationRuntime;
 
@@ -285,10 +308,10 @@ namespace egt {
             auto *fi = new fi::FastImage<T>(tileLoader2, segmentationRadius);
             fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
             auto fastImage2 = fi->configureAndMoveToTaskGraphTask("Fast Image 2");
-            uint32_t imageHeightAtSegmentationLevel = fi->getImageHeight(pyramidLevelToRequestForSegmentation);
-            uint32_t imageWidthAtSegmentationLevel = fi->getImageWidth(pyramidLevelToRequestForSegmentation);
-            int32_t tileHeigthAtSegmentationLevel = fi->getTileHeight(pyramidLevelToRequestForSegmentation);
-            int32_t tileWidthAtSegmentationLevel = fi->getTileWidth(pyramidLevelToRequestForSegmentation);
+            imageHeightAtSegmentationLevel = fi->getImageHeight(pyramidLevelToRequestForSegmentation);
+            imageWidthAtSegmentationLevel = fi->getImageWidth(pyramidLevelToRequestForSegmentation);
+            tileHeightAtSegmentationLevel = fi->getTileHeight(pyramidLevelToRequestForSegmentation);
+            tileWidthAtSegmentationLevel = fi->getTileWidth(pyramidLevelToRequestForSegmentation);
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
             auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(options->concurrentTiles,options->imageDepth,1,1);
@@ -296,7 +319,7 @@ namespace egt {
             auto viewSegmentation = new egt::EGTViewAnalyzer<T>(options->concurrentTiles,
                                                                 imageHeightAtSegmentationLevel,
                                                                 imageWidthAtSegmentationLevel,
-                                                                tileHeigthAtSegmentationLevel,
+                                                                tileHeightAtSegmentationLevel,
                                                                 tileWidthAtSegmentationLevel,
                                                                 4,
                                                                 threshold,
@@ -321,26 +344,34 @@ namespace egt {
             segmentationGraph->finishedProducingData();
 
             //we only generate one output, the list of all objects
-            std::shared_ptr<ListBlobs> blob = segmentationGraph->consumeData();
+            std::shared_ptr<ListBlobs> blobs = segmentationGraph->consumeData();
+            segmentationRuntime->waitForRuntime();
+            delete segmentationRuntime;
+            return blobs;
+        }
 
+        void runBinaryMaskGeneration(std::shared_ptr<ListBlobs> blob) {
             VLOG(1) << "generating a segmentation mask";
-            beginFC = std::chrono::high_resolution_clock::now();
             auto fc = new FeatureCollection();
             fc->createFCFromCompactListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
             auto fc2 = fc->erode();
             fc->createBlackWhiteMask("output.tiff", (uint32_t)tileWidthAtSegmentationLevel);
             fc2->createBlackWhiteMask("output2.tiff", (uint32_t)tileWidthAtSegmentationLevel);
-
-
             delete fc;
             delete fc2;
-            endFC = std::chrono::high_resolution_clock::now();
         }
 
-        std::chrono::system_clock::time_point beginFC;
-        std::chrono::system_clock::time_point endFC;
+
+    private:
+        uint32_t imageHeightAtSegmentationLevel{},
+                imageWidthAtSegmentationLevel{},
+                tileWidthAtSegmentationLevel{},
+                tileHeightAtSegmentationLevel{};
 
     };
+
+
+
 
 }
 

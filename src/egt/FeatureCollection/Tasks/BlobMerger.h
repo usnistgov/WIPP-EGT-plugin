@@ -68,11 +68,18 @@ namespace egt {
             _holes = new ListBlobs();
         }
 
+        //TODO _blobs is returned as result, _holes is not => make _blobs shared_ptr and _holes a unique_ptr
+        //and remove destructor
+        virtual ~BlobMerger() {
+            delete _holes;
+        }
+
         /// \brief Get the view analyse, merge them into one analyse and merge all
         /// blob to build the feature collection
         /// \param data View analyse
         void executeTask(std::shared_ptr<ViewAnalyse> data) override {
-            // collect blobs
+
+            // for each new tile, collect blobs
             for (auto blobListCoordToMerge : data->getToMerge()) {
                 this->_toMerge[blobListCoordToMerge.first]
                         .merge(blobListCoordToMerge.second);
@@ -119,7 +126,7 @@ namespace egt {
 
         /// \brief Get the name of the task
         /// \return Task name
-        std::string getName() override { return "Merge & File creation"; }
+        std::string getName() override { return "Blob Merge"; }
 
         /// \brief Task copy, should be a singleton, to send bask itself
         /// \return itself
@@ -141,6 +148,9 @@ namespace egt {
             return nullptr;
         }
 
+        /**
+         * Filter holes : Small holes are filled. Bigger holes are considered background.
+         */
         void filterHoles() {
             uint32_t nbHolesTooSmall = 0;
             auto originalNbOfHoles = _holes->_blobs.size();
@@ -158,34 +168,38 @@ namespace egt {
                     //looking around its start point, we should find a valid blob to merge with
                     std::list<Coordinate> coords{};
                     if(row - 1 >= 0 && !blob->isPixelinFeature(row -1, col)) {
-                        coords.push_back(std::pair<int32_t, int32_t>(row - 1, col));
+                        coords.emplace_back(row - 1, col);
                     }
                     if(row < imageHeight && !blob->isPixelinFeature(row + 1, col)) {
-                        coords.push_back(std::pair<int32_t, int32_t>(row + 1, col));
+                        coords.emplace_back(row + 1, col);
                     }
                     if(col - 1 >= 0 && !blob->isPixelinFeature(row, col - 1)) {
-                        coords.push_back(std::pair<int32_t, int32_t>(row, col - 1));
+                        coords.emplace_back(row, col - 1);
                     }
                     if(col + 1 < imageWidth && !blob->isPixelinFeature(row, col + 1)) {
-                        coords.push_back(std::pair<int32_t, int32_t>(row, col + 1));
+                        coords.emplace_back(row, col + 1);
                     }
-                    assert(coords.size() != 0);
+                    assert(coords.size() != 0); //otherwise we won't be able to merge with another blob!
                     this->_toMerge[blob].merge(coords);
                     nbHolesTooSmall++;
                     i++;
                     VLOG(4) << "Transform hole at (" << row << "," << col << ") into object blob.";
                 }
+                //turn holes into background
                 else {
                     delete (*i);
                     i = _holes->_blobs.erase(i);
                 }
             }
 
-            VLOG(3) << "nb of holes after merging : " << originalNbOfHoles;
-            VLOG(3) << "nb of holes that have been removed because they were too small : " << nbHolesTooSmall;
+            VLOG(3) << "original number of holes : " << originalNbOfHoles;
+            VLOG(3) << "nb of holes filled : " << nbHolesTooSmall;
 
         }
 
+        /**
+         * Filter objects : Remove small objects.
+         */
         void filterObjects() {
 
             uint32_t nbBlobsTooSmall = 0;
@@ -205,9 +219,9 @@ namespace egt {
             }
 
             auto nbBlobs = _blobs->_blobs.size();
-            VLOG(3) << "original nb of blobs : " << originalNbOfBlobs;
-            VLOG(3) << "nb of small objects that have been removed after merge : " << nbBlobsTooSmall;
-            VLOG(1) << "total nb of objects: " <<nbBlobs;
+            VLOG(3) << "original nb of objects : " << originalNbOfBlobs;
+            VLOG(3) << "nb of small objects that have been removed : " << nbBlobsTooSmall;
+            VLOG(3) << "total nb of objects after filtering: " <<nbBlobs;
         }
 
         /// \brief Merge all the blobs from all the view analyser
@@ -219,32 +233,37 @@ namespace egt {
                     parentSons{};
 
             // Apply the UF algorithm to every linked blob
-            for (auto blobCoords : toMerge) {
+            for (const auto &blobCoords : toMerge) {
                 for (auto coord : blobCoords.second) {
                     if (auto other = getBlobFromCoord(blobs, coord.first, coord.second)) {
                             uf.unionElements(blobCoords.first, other);
                     }
                 }
             }
-
-            // Clear to merge data stucture
+            // Clear merge data structure. We won't use it anymore.
             toMerge.clear();
 
 
+            // Building a map from the union find result.
             // Associate every blob to it parent
             //or to itself if it is alone
             for (auto blob : blobs->_blobs) {
                 parentSons[uf.find(blob)].insert(blob);
             }
 
-            // For every Parent - son blob, merge every parent to it son
+            //Merge connected blobs
+            //One blob is considered the parent of all the others.
             for (auto pS : parentSons) {
                 auto parent = pS.first;
                 auto sons = pS.second;
-                VLOG(3) << "nb of sons: " << sons.size();
+                VLOG(4) << "nb of sons: " << sons.size(); //for debug
 
+                //if a blob is alone, decide what to do
+                //every blob parentSons should have at least 2 members
+                //holes parentSons might be of size 1.
+                // (for optimization purpose we do not add large background blobs to the merge list - and connected holes
+                // are then also background).
                 if (sons.size() == 1) {
-                    VLOG(3) << "no need to merge this blob";
                     if(deleteLonelyBlobs){
                         for(auto s : sons){
                             delete s;
@@ -256,38 +275,31 @@ namespace egt {
                     continue;
                 }
 
-                Blob
-                        *toMerge = *sons.begin(),
-                        *merged = nullptr;
-
+                //TODO this could be done in feature
+                //To merge several blobs, we calculate the resulting bounding box and fill a bitmask of the same dimensions.
                 auto bb = calculateBoundingBox(sons);
                 double size = ceil((bb->getHeight() * bb->getWidth()) / 32.);
-                uint32_t *bitMask = new uint32_t[(uint32_t) size]();
+                auto *bitMask = new uint32_t[(uint32_t) size]();
 
-                //TODO Pass a feature we have initialized instead
+                //TODO accumulate features rather than blobs - this will do away with the parent - son discrimination as well
+
+                //the parent will contain the merged feature
                 parent->addToBitMask(bitMask, bb);
 
-                //     auto *f = new Feature(parent->getTag(), *bb, bitMask);
-//      VLOG(0) << (*f);
-
                 for (auto son = sons.begin(); son != sons.end(); ++son) {
-
                     if (*son == parent) {
                         continue;
                     }
-
                     (*son)->addToBitMask(bitMask, bb);
-                    // update pixel count
                     parent->setCount(parent->getCount() + (*son)->getCount());
-                    delete (*son);
+                    delete (*son); //we keep only the parent, we can delete the sons
                     blobs->_blobs.remove(*son);
                 }
 
-
                 delete parent->getFeature();
-                auto *feature = new Feature(parent->getTag(), *bb, bitMask);
+                auto *feature = new Feature(parent->getTag(), (*bb), bitMask);
 
-                //TODO oups
+                //In order to maintain consistency - this will be unecessary if we send back feature instead
                 parent->setRowMin(bb->getUpperLeftRow());
                 parent->setRowMax(bb->getBottomRightRow());
                 parent->setColMin(bb->getUpperLeftCol());
@@ -295,8 +307,6 @@ namespace egt {
 
                 parent->setFeature(feature);
             }
-
-            parentSons.clear();
         }
 
         BoundingBox *calculateBoundingBox(std::set<Blob *> sons) {

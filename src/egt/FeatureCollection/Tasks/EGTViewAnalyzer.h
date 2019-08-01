@@ -90,18 +90,6 @@ namespace egt {
                   _background(background),
                   _options(options),
                   _vAnalyse(nullptr) {
-
-            //set cutoff values in maximum acceptable range if not set
-//            if(options->MAX_HOLE_SIZE <= 0 || options->MAX_HOLE_SIZE > _tileWidth * _tileHeight){
-//                auto tileSize = (uint32_t) _tileWidth * _tileHeight;
-//                VLOG(2) << "option MAX_HOLE_SIZE is out of range (" <<  options->MAX_HOLE_SIZE << "). Defaulting to " << tileSize;
-//                options->MAX_HOLE_SIZE = tileSize;
-//            }
-//            if(options->MIN_HOLE_SIZE >= (uint32_t) _tileWidth * _tileHeight){
-//                VLOG(2) << "option MAX_HOLE_SIZE is out of range (" <<  options->MIN_HOLE_SIZE << "). Defaulting to " << 0;
-//                options->MIN_HOLE_SIZE = 0;
-//            }
-
             _visited = std::vector<bool>((unsigned long)(_tileWidth * _tileHeight), false);
         }
 
@@ -110,29 +98,21 @@ namespace egt {
         /// \param view View given by the FI
         void executeTask(std::shared_ptr<MemoryData<fi::View<UserType>>> view)
         override {
-            //FOR EACH NEW TILE WE NEED TO RESET THE TASK STATE
             _view = view->get();
-            //TILE DIMENSION MIGHT CHANGE AND BE SMALLER, LET'S DO LESS WORK IF POSSIBLE
-            _tileHeight = _view->getTileHeight();
-            _tileWidth = _view->getTileWidth();
+            //FOR EACH NEW TILE WE NEED TO RESET THE TASK STATE SINCE MANY TILES CAN BE PROCESSED BY ONE TASK
             _vAnalyse = new ViewAnalyse(); //OUTPUT
             _toVisit.clear(); //clear queue that keeps track of neighbors to visit when flooding
             _visited.assign(_visited.size(), false); //clear container that keeps track of all visited pixels in a pass through the image.
             _currentBlob = nullptr;
+            //TILE DIMENSION MIGHT CHANGE AND BE SMALLER, LET'S DO LESS WORK IF POSSIBLE
+            _tileHeight = _view->getTileHeight();
+            _tileWidth = _view->getTileWidth();
 
-            run(BACKGROUND); //find holes.
+            run(BACKGROUND); //find holes
             run(FOREGROUND); //find objects
 
-//            std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
-//            auto img5 = cv::Mat(_view->getViewHeight(),_view->getViewWidth(), convertToOpencvType(ImageDepth::_16U), _view->getData());
-//            cv::Mat dst;
-//            img5.convertTo(dst,CV_8U);
-//            cv::imwrite(outputPath + "mask-" + std::to_string(_view->getRow()) + "-" + std::to_string(_view->getCol())  + ".png" , dst);
-//
-//            printBoolArray<UserType>("mask" , _view->getData(), _view->getViewWidth(), _view->getViewHeight());
-//
-//            img5.release();
-
+            //if MASK_ONLY, we return the view with all pixel set to 0 (background) or 255 (foreground).
+            //Let's not forget to delete the viewAnalyse since we are done with it.
             if(_options->MASK_ONLY) {
                 VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
                 VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
@@ -140,7 +120,7 @@ namespace egt {
                 delete _vAnalyse;
                 this->addResult(new ViewOrViewAnalyse<UserType>(view));
             }
-
+            //we return a ViewAnalyse to be merged. Let's not forget to release the view since we are done with it.
             else {
                 VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
                 VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
@@ -203,6 +183,10 @@ namespace egt {
             }
        }
 
+       /**
+        * We have a queue of pixels to visit. Take the first one and explore its neighbors as well.
+        * @param blobColor
+        */
         void expandBlob(Color blobColor){
             auto neighbourCoord = *_toVisit.begin();
             _toVisit.erase(_toVisit.begin());
@@ -225,6 +209,10 @@ namespace egt {
             }
         }
 
+        /**
+         * Decide what to do once we have completed a blob.
+         * @param blobColor
+         */
         void blobCompleted(Color blobColor) {
                 VLOG(5) << "blob size: " << _currentBlob->getCount();
 
@@ -307,6 +295,12 @@ namespace egt {
         }
 
 
+        /**
+         * Create a new blob at this pixel and check its neighbors to kickstart its expansion.
+         * @param row
+         * @param col
+         * @param blobColor
+         */
         void createBlob(int32_t row, int32_t col, Color blobColor){
             markAsVisited(row, col);
             //add pixel to a new blob
@@ -319,9 +313,6 @@ namespace egt {
                 analyseNeighbour4(row, col, blobColor, true);
             }
         }
-
-
-        //TODO put back setToMerge (we need to make decision about removing them or not)
 
         /// \brief Analyse the neighbour of a pixel for a 4-connectivity
         /// \param row Pixel's row
@@ -357,7 +348,7 @@ namespace egt {
                 }
             }
 
-            //WE DON'T NEED MERGING IN WE GENERATE ONLY THE MASK
+            //WE DON'T NEED MERGING IF WE GENERATE ONLY THE MASK
             if(_options->MASK_ONLY){
                 return;
             }
@@ -397,14 +388,14 @@ namespace egt {
                 }
             }
 
-            //look at the pixel on the left
+            //look at the pixel on the left. We need to set a flag so we know how to filter this blob.
             if (col == 0 && col + _view->getGlobalXOffset() != 0) {
                 if (getColor(row, col - 1) == color) {
                     _currentBlob->setToMerge(true);
                 }
             }
 
-            //look at the pixel above
+            //look at the pixel above. We need to set a flag so we know how to filter this blob.
             if (row == 0 && row + _view->getGlobalYOffset() != 0) {
                 if (getColor(row - 1, col) == color) {
                     _currentBlob->setToMerge(true);
