@@ -550,7 +550,7 @@ class FeatureCollection {
       delete[] data;
 
       auto maskCount = countNonZero(eroded);
-      VLOG(3) << eroded;
+//      VLOG(3) << eroded;
 
       if(maskCount < segmentationOptions->MIN_OBJECT_SIZE){
         eroded.release();
@@ -770,7 +770,7 @@ class FeatureCollection {
 
       for (auto blob : listBlobs->_blobs) {
         auto feature = blob->getFeature();
-        feature->printBitMask();
+        //feature->printBitMask();
         this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
         ++idFeature;
       }

@@ -89,10 +89,6 @@ namespace egt {
             if (this != &that)
             {
                 delete[] _bitMask;
-                // This is a dangerous point in the flow of execution!
-                // We have temporarily invalidated the class invariants,
-                // and the next statement might throw an exception,
-                // leaving the object in an invalid state :(
                 _id = that.getId();
                 _boundingBox = that.getBoundingBox();
                 _nbElementsBitMask = (uint32_t) (ceil(
