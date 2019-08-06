@@ -115,7 +115,7 @@ class FeatureCollection {
   Feature *getFeatureFromPixel(uint32_t row, uint32_t col) {
     for (auto pFeature : _tree.objectsContain(Vector2<double>((double) col,
                                                               (double) row))) {
-      if (pFeature->isInBitMask(row, col)) {
+      if (pFeature->isImagePixelInBitMask(row, col)) {
         return pFeature;
       }
     }
@@ -390,7 +390,7 @@ class FeatureCollection {
                    colTileFeature < bottomRightCol; ++colTileFeature) {
 
                 // If the pixel is in the feature
-                if (feature.isInBitMask(rowTileFeature, colTileFeature)) {
+                if (feature.isImagePixelInBitMask(rowTileFeature, colTileFeature)) {
                   currentTile->at((rowTileFeature - minRowTile) * tileSize
                                       + (colTileFeature - minColTile))
                       = (uint32_t) (feature.getId() + 1);
@@ -522,7 +522,7 @@ class FeatureCollection {
     }
 
 
-  FeatureCollection* erode() {
+  FeatureCollection* erode(SegmentationOptions *segmentationOptions) {
 
     VLOG(1) << "erode feature collection";
 
@@ -546,9 +546,20 @@ class FeatureCollection {
       auto kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE,cv::Size(3,3));
       cv::Mat eroded;
       cv::erode(mat,eroded,kernel);
-//      cv::imwrite(outputPath + "erodedFeature-" + std::to_string(feature.getId())  + ".tif" , eroded);
       mat.release();
       delete data;
+
+      auto maskCount = countNonZero(eroded);
+      VLOG(3) << eroded;
+
+      if(maskCount < segmentationOptions->MIN_OBJECT_SIZE){
+        eroded.release();
+        VLOG(3) << "delete eroded feature";
+        continue;
+      }
+
+//      cv::imwrite(outputPath + "erodedFeature-" + std::to_string(feature.getId())  + ".tif" , eroded);
+
 
       //transform back the matrix to an array
       std::vector<uchar> array;
@@ -562,6 +573,7 @@ class FeatureCollection {
       eroded.release();
       //TODO remove
       //printBoolArray<uint8_t>("eroded", array.data(),width,height);
+
 
       //transform back the array to a bitmask
       auto bitmask = arrayToBitMask(array.data(), width, height, foregroundValue);
@@ -688,7 +700,7 @@ class FeatureCollection {
                    colTileFeature < bottomRightCol; ++colTileFeature) {
 
                 // If the pixel is in the feature
-                if (feature.isInBitMask(rowTileFeature, colTileFeature)) {
+                if (feature.isImagePixelInBitMask(rowTileFeature, colTileFeature)) {
                   currentTile->at((rowTileFeature - minRowTile) * tileSize
                                       + (colTileFeature - minColTile)) = 255;
                 }
@@ -756,12 +768,12 @@ class FeatureCollection {
               idFeature = 0;
 
       for (auto blob : listBlobs->_blobs) {
-
-      auto feature = blob->getFeature();
-      this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
-      ++idFeature;
-      //because addFeature duplicates the object.
-      delete feature;
+        auto feature = blob->getFeature();
+        feature->printBitmask();
+        this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
+        ++idFeature;
+        //because addFeature duplicates the object.
+        delete feature;
       }
 
       // Preprocess the FC
