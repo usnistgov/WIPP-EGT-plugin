@@ -86,7 +86,9 @@ class Blob {
   }
 
     virtual ~Blob() {
-      //destroyed Feature
+      if(_feature != nullptr) {
+          delete _feature;
+      }
     }
 
     /// \brief Get Blob tag
@@ -154,7 +156,7 @@ class Blob {
   bool isPixelinFeature(int32_t row, int32_t col) {
     if (isPixelInBoundingBox(row, col)) {
         if(_feature != nullptr) {
-            return _feature->isInBitMask(row,col);
+            return _feature->isImagePixelInBitMask(row, col);
         }
         return (_rowCols.count(row) != 0) && (_rowCols[row].count(col) != 0);
     }
@@ -308,15 +310,11 @@ class Blob {
     }
 
     _feature = new Feature(this->getTag(), boundingBox, bitMask);
+    delete[] bitMask;
     _rowCols.clear();
   }
 
-  void addToBitMask(uint32_t* bitMask, BoundingBox *bb) {
-
-
-
-//    VLOG(3) << (*_feature);
-
+  void addToBitMask(uint32_t* bitMask, BoundingBox &bb) {
 
     uint32_t
       rowMin = (uint32_t) this->getRowMin(),
@@ -333,11 +331,11 @@ class Blob {
     for (auto row = (uint32_t) rowMin; row < rowMax; ++row) {
       for (auto col = (uint32_t) colMin; col < colMax; ++col) {
         // Test if the pixel is in the current feature (using global coordinates)
-        if (this->getFeature()->isInBitMask(row,col)) {
+        if (this->getFeature()->isImagePixelInBitMask(row, col)) {
           // Add it to the bit mask
-          ulRowL = row - bb->getUpperLeftRow(); //convert to local coordinates
-          ulColL = col - bb->getUpperLeftCol();
-          absolutePosition = ulRowL * bb->getWidth() + ulColL; //to 1D array coordinates
+          ulRowL = row - bb.getUpperLeftRow(); //convert to local coordinates
+          ulColL = col - bb.getUpperLeftCol();
+          absolutePosition = ulRowL * bb.getWidth() + ulColL; //to 1D array coordinates
           //optimization : right-shifting binary representation by 5 is equivalent to dividing by 32
           wordPosition = absolutePosition >> (uint32_t) 5;
           //left-shifting back previous result gives the 1D array coordinates of the word beginning

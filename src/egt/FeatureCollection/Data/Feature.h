@@ -76,6 +76,29 @@ namespace egt {
             memcpy(this->_bitMask, bitMask, _nbElementsBitMask * sizeof(uint32_t));
         }
 
+
+        Feature(const Feature &f) : _id(f.getId()), _boundingBox(f.getBoundingBox()) {
+            _nbElementsBitMask = (uint32_t) (ceil(
+                    f.getBoundingBox().getHeight() * f.getBoundingBox().getWidth() / 32.));
+            _bitMask = new uint32_t[_nbElementsBitMask];
+            memcpy(this->_bitMask, f.getBitMask(), _nbElementsBitMask * sizeof(uint32_t));
+        }
+
+        Feature& operator=(const Feature& that)
+        {
+            if (this != &that)
+            {
+                delete[] _bitMask;
+                _id = that.getId();
+                _boundingBox = that.getBoundingBox();
+                _nbElementsBitMask = (uint32_t) (ceil(
+                        that.getBoundingBox().getHeight() * that.getBoundingBox().getWidth() / 32.));
+                _bitMask = new uint32_t[_nbElementsBitMask];
+                memcpy(this->_bitMask, that.getBitMask(), _nbElementsBitMask * sizeof(uint32_t));
+            }
+            return *this;
+        }
+
     public:
         /// \param id Feature id
         /// \param boundingBox Feature bounding box
@@ -151,7 +174,7 @@ namespace egt {
             return (distanceRow * distanceRow) + distanceCol * distanceCol;
         };
 
-        /// \brief Test if a point from its coordinate is in a bounding box
+        /// \brief Using global coordinates, test if a pixel is in the bounding box
         /// \param row row point to test
         /// \param col column point to test
         /// \return True if the point is in the Feature, else False
@@ -178,21 +201,30 @@ namespace egt {
                                    + this->_boundingBox.getWidth();
         };
 
-        /// \brief Test if a point from its coordinate is in a bitmask
-        /// \param row row point to test
-        /// \param col column point to test
+        /// \brief Using global coordinates, test if a pixel is in the bitmask
+        /// \param globalRow row point to test
+        /// \param globalCol column point to test
         /// \return True if the point is in the Feature, else False
-        bool isInBitMask(uint32_t row, uint32_t col) const {
+        bool isImagePixelInBitMask(uint32_t globalRow, uint32_t globalCol) const {
             bool answer = false;
-            if (contains(row, col)) {
-                uint32_t
+            if (contains(globalRow, globalCol)) {
+                auto
                 // Find the position in the bounding box
                         localRow =
-                        (uint32_t) (row - this->getBoundingBox().getUpperLeftRow()),
+                        (uint32_t) (globalRow - this->getBoundingBox().getUpperLeftRow()),
                         localCol =
-                        (uint32_t) (col - this->getBoundingBox().getUpperLeftCol()),
-                        absolutePosition =
-                        localRow * this->getBoundingBox().getWidth() + localCol,
+                        (uint32_t) (globalCol - this->getBoundingBox().getUpperLeftCol());
+                        answer= isBitSet(localRow, localCol);
+            }
+            return answer;
+        }
+
+
+        bool isBitSet(uint32_t localRow, uint32_t localCol) const {
+            bool answer = false;
+                uint32_t
+                // Find the position in the bounding box
+                        absolutePosition = localRow * this->getBoundingBox().getWidth() + localCol,
                 // Find the good "word" (uint32_t)
                         wordPosition = absolutePosition >> (uint32_t) 5,
                 // Find the good bit in the word
@@ -203,8 +235,21 @@ namespace egt {
                 answer = (((((uint32_t) 1 << (bitPosition - (uint32_t) 1))
                             & this->_bitMask[wordPosition])
                         >> (bitPosition - (uint32_t) 1)) & (uint32_t) 1) == (uint32_t) 1;
-            }
             return answer;
+        }
+
+        void printBitMask() const {
+            std::ostringstream oss;
+            oss << std::endl;
+            for (size_t i = 0; i < _boundingBox.getHeight(); ++i) {
+                for (size_t j = 0; j < _boundingBox.getWidth(); ++j) {
+                    oss << std::setw(1) << this->isBitSet(i,j) << " ";
+                }
+                oss << std::endl;
+            }
+            oss << std::endl;
+
+            VLOG(3) << oss.str();
         }
 
 
@@ -265,7 +310,7 @@ namespace egt {
                 std::cout << std::endl;
                 for (uint32_t col = bB.getUpperLeftCol(); col < bB.getBottomRightCol();
                      ++col) {
-                    if (region.isInBitMask(row, col)) {
+                    if (region.isImagePixelInBitMask(row, col)) {
                         std::cout << std::setw(1) << 1 << " ";
                     } else {
                         std::cout << std::setw(1) << 0 << " ";
@@ -293,8 +338,10 @@ namespace egt {
             return answer;
         }
 
-        ~Feature(){
-//            delete _bitMask;
+        ~Feature() {
+            if(_bitMask != nullptr) {
+                delete[] _bitMask;
+            }
         }
 
         /// \brief Inequality operator
