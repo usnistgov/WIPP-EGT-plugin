@@ -182,7 +182,7 @@ namespace egt {
                     assert(coords.size() != 0); //otherwise we won't be able to merge with another blob!
                     this->_toMerge[blob].merge(coords);
                     nbHolesTooSmall++;
-                    i++;
+                    i = _holes->_blobs.erase(i);
                     VLOG(4) << "Transform hole at (" << row << "," << col << ") into object blob.";
                 }
                 //turn holes into background
@@ -211,6 +211,7 @@ namespace egt {
                 //We removed objects that are still too small after the merge occured.
                 if((*i)->getCount() < segmentationOptions->MIN_OBJECT_SIZE) {
                     nbBlobsTooSmall++;
+                    delete (*i);
                     i = _blobs->_blobs.erase(i);
                 }
                 else {
