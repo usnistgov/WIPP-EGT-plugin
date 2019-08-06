@@ -86,10 +86,10 @@ class FeatureCollection {
 
   /// \brief Default FeatureCollection destructor
   virtual ~FeatureCollection() {
-    for (const auto &feature : _vectorFeatures) {
-      if (feature.getBitMask() != nullptr)
-        delete[] feature.getBitMask();
-    }
+//    for (const auto &feature : _vectorFeatures) {
+//      if (feature.getBitMask() != nullptr)
+//        delete[] feature.getBitMask();
+//    }
   }
 
   /// \brief Get Image Width
@@ -526,7 +526,7 @@ class FeatureCollection {
 
     VLOG(1) << "erode feature collection";
 
-    auto erodedFeatures = std::vector<Feature*>();
+    auto erodedFeatures = std::vector<Feature>();
     auto foregroundValue = 255;
 
     for(const auto &feature : this->getVectorFeatures()) {
@@ -547,7 +547,7 @@ class FeatureCollection {
       cv::Mat eroded;
       cv::erode(mat,eroded,kernel);
       mat.release();
-      delete data;
+      delete[] data;
 
       auto maskCount = countNonZero(eroded);
       VLOG(3) << eroded;
@@ -578,10 +578,11 @@ class FeatureCollection {
       //transform back the array to a bitmask
       auto bitmask = arrayToBitMask(array.data(), width, height, foregroundValue);
 
-      //create feature
-      auto erodedFeature = new Feature(feature.getId(),BoundingBox(feature.getBoundingBox()),bitmask);
 
-      erodedFeatures.push_back(erodedFeature);
+
+      erodedFeatures.emplace_back(feature.getId(),BoundingBox(feature.getBoundingBox()),bitmask);
+      //create feature
+      delete[] bitmask;
     }
 
     return new FeatureCollection(erodedFeatures, this->_imageHeight, this->_imageWidth);
@@ -772,8 +773,6 @@ class FeatureCollection {
         feature->printBitMask();
         this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
         ++idFeature;
-        //because addFeature duplicates the object.
-        delete feature;
       }
 
       // Preprocess the FC
@@ -782,18 +781,18 @@ class FeatureCollection {
 
 
 
-    FeatureCollection(std::vector<Feature*> &features,
+    FeatureCollection(std::vector<Feature> &features,
                                       uint32_t imageHeight,
-                                      uint32_t imageWidth) : _imageWidth(imageWidth), _imageHeight(imageHeight) {
+                                      uint32_t imageWidth) : _imageWidth(imageWidth), _imageHeight(imageHeight), _vectorFeatures(features) {
 
       uint32_t
               idFeature = 0;
 
-      for (auto feature : features) {
-        this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
-        ++idFeature;
-   //     delete feature;
-      }
+//      for (auto feature : features) {
+//        this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
+//        ++idFeature;
+//   //     delete feature;
+//      }
 
      // features.clear();
 

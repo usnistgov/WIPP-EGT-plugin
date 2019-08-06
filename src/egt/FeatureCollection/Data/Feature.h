@@ -76,6 +76,33 @@ namespace egt {
             memcpy(this->_bitMask, bitMask, _nbElementsBitMask * sizeof(uint32_t));
         }
 
+
+        Feature(const Feature &f) : _id(f.getId()), _boundingBox(f.getBoundingBox()) {
+            _nbElementsBitMask = (uint32_t) (ceil(
+                    f.getBoundingBox().getHeight() * f.getBoundingBox().getWidth() / 32.));
+            _bitMask = new uint32_t[_nbElementsBitMask];
+            memcpy(this->_bitMask, f.getBitMask(), _nbElementsBitMask * sizeof(uint32_t));
+        }
+
+        Feature& operator=(const Feature& that)
+        {
+            if (this != &that)
+            {
+                delete[] _bitMask;
+                // This is a dangerous point in the flow of execution!
+                // We have temporarily invalidated the class invariants,
+                // and the next statement might throw an exception,
+                // leaving the object in an invalid state :(
+                _id = that.getId();
+                _boundingBox = that.getBoundingBox();
+                _nbElementsBitMask = (uint32_t) (ceil(
+                        that.getBoundingBox().getHeight() * that.getBoundingBox().getWidth() / 32.));
+                _bitMask = new uint32_t[_nbElementsBitMask];
+                memcpy(this->_bitMask, that.getBitMask(), _nbElementsBitMask * sizeof(uint32_t));
+            }
+            return *this;
+        }
+
     public:
         /// \param id Feature id
         /// \param boundingBox Feature bounding box
@@ -316,7 +343,9 @@ namespace egt {
         }
 
         ~Feature() {
-            delete[] _bitMask;
+            if(_bitMask != nullptr) {
+                delete[] _bitMask;
+            }
         }
 
         /// \brief Inequality operator

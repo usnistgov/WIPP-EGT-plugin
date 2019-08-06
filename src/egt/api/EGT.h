@@ -106,7 +106,7 @@ namespace egt {
             //postprocessing of features
             auto beginFC = std::chrono::high_resolution_clock::now();
             if(!segmentationOptions->MASK_ONLY) {
-//                runBinaryMaskGeneration(blobs, segmentationOptions);
+                runBinaryMaskGeneration(blobs, segmentationOptions);
             }
             auto endFC = std::chrono::high_resolution_clock::now();
 
@@ -355,11 +355,11 @@ namespace egt {
             VLOG(1) << "generating a segmentation mask";
             auto fc = new FeatureCollection();
             fc->createFCFromCompactListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
-            auto fc2 = fc->erode(segmentationOptions);
+          //  auto fc2 = fc->erode(segmentationOptions);
             fc->createBlackWhiteMask("output.tiff", (uint32_t)tileWidthAtSegmentationLevel);
-            fc2->createBlackWhiteMask("output2.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+           // fc2->createBlackWhiteMask("output2.tiff", (uint32_t)tileWidthAtSegmentationLevel);
             delete fc;
-            delete fc2;
+           // delete fc2;
         }
 
 

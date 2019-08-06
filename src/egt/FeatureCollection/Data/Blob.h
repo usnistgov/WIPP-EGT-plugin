@@ -86,7 +86,7 @@ class Blob {
   }
 
     virtual ~Blob() {
-      if(_feature != nullptr){
+      if(_feature != nullptr) {
           delete _feature;
       }
     }
