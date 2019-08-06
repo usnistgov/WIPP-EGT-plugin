@@ -259,30 +259,23 @@ namespace egt {
                 auto sons = pS.second;
                 VLOG(4) << "nb of sons: " << sons.size(); //for debug
 
-                //if a blob is alone, decide what to do
-                //every blob parentSons should have at least 2 members
-                //holes parentSons might be of size 1.
-                // (for optimization purpose we do not add large background blobs to the merge list - and connected holes
-                // are then also background).
                 if (sons.size() == 1) {
-                    if(deleteLonelyBlobs){
+                    // if we have a lonely hole to merge, it is because it was connected to the background
+                    // so we remove it.
+                    if((*sons.begin())->isToMerge() && deleteLonelyBlobs){
                         for(auto s : sons){
                             delete s;
                             blobs->_blobs.remove(s);
                         }
                         sons.clear();
                     }
-
                     continue;
                 }
 
-                //TODO this could be done in feature
                 //To merge several blobs, we calculate the resulting bounding box and fill a bitmask of the same dimensions.
                 auto bb = calculateBoundingBox(sons);
                 double size = ceil((bb.getHeight() * bb.getWidth()) / 32.);
                 auto *bitMask = new uint32_t[(uint32_t) size]();
-
-                //TODO accumulate features rather than blobs - this will do away with the parent - son discrimination as well
 
                 //the parent will contain the merged feature
                 parent->addToBitMask(bitMask, bb);
