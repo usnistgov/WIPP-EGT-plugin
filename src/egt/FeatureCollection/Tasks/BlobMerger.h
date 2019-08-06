@@ -278,7 +278,7 @@ namespace egt {
                 //TODO this could be done in feature
                 //To merge several blobs, we calculate the resulting bounding box and fill a bitmask of the same dimensions.
                 auto bb = calculateBoundingBox(sons);
-                double size = ceil((bb->getHeight() * bb->getWidth()) / 32.);
+                double size = ceil((bb.getHeight() * bb.getWidth()) / 32.);
                 auto *bitMask = new uint32_t[(uint32_t) size]();
 
                 //TODO accumulate features rather than blobs - this will do away with the parent - son discrimination as well
@@ -297,19 +297,20 @@ namespace egt {
                 }
 
                 delete parent->getFeature();
-                auto *feature = new Feature(parent->getTag(), (*bb), bitMask);
+                auto *feature = new Feature(parent->getTag(), bb, bitMask);
+                delete[] bitMask;
 
                 //In order to maintain consistency - this will be unecessary if we send back feature instead
-                parent->setRowMin(bb->getUpperLeftRow());
-                parent->setRowMax(bb->getBottomRightRow());
-                parent->setColMin(bb->getUpperLeftCol());
-                parent->setColMax(bb->getBottomRightCol());
+                parent->setRowMin(bb.getUpperLeftRow());
+                parent->setRowMax(bb.getBottomRightRow());
+                parent->setColMin(bb.getUpperLeftCol());
+                parent->setColMax(bb.getBottomRightCol());
 
                 parent->setFeature(feature);
             }
         }
 
-        BoundingBox *calculateBoundingBox(std::set<Blob *> sons) {
+        BoundingBox calculateBoundingBox(std::set<Blob *> sons) {
 
             uint32_t upperLeftRow = std::numeric_limits<int32_t>::max(),
                     upperLeftCol = std::numeric_limits<int32_t>::max(),
@@ -324,7 +325,7 @@ namespace egt {
                 bottomRightCol = bb.getBottomRightCol() > bottomRightCol ? bb.getBottomRightCol() : bottomRightCol;
             }
 
-            return new BoundingBox(upperLeftRow, upperLeftCol, bottomRightRow, bottomRightCol);
+            return BoundingBox(upperLeftRow, upperLeftCol, bottomRightRow, bottomRightCol);
         }
 
         uint32_t

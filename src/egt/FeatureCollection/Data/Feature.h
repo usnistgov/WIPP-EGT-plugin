@@ -215,7 +215,7 @@ namespace egt {
             return answer;
         }
 
-        void printBitmask() const {
+        void printBitMask() const {
             std::ostringstream oss;
             oss << std::endl;
             for (size_t i = 0; i < _boundingBox.getHeight(); ++i) {
@@ -315,8 +315,8 @@ namespace egt {
             return answer;
         }
 
-        ~Feature(){
-//            delete _bitMask;
+        ~Feature() {
+            delete[] _bitMask;
         }
 
         /// \brief Inequality operator

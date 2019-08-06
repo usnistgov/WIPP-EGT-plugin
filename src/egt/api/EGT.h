@@ -106,7 +106,7 @@ namespace egt {
             //postprocessing of features
             auto beginFC = std::chrono::high_resolution_clock::now();
             if(!segmentationOptions->MASK_ONLY) {
-                runBinaryMaskGeneration(blobs, segmentationOptions);
+//                runBinaryMaskGeneration(blobs, segmentationOptions);
             }
             auto endFC = std::chrono::high_resolution_clock::now();
 
@@ -346,6 +346,7 @@ namespace egt {
             //we only generate one output, the list of all objects
             std::shared_ptr<ListBlobs> blobs = segmentationGraph->consumeData();
             segmentationRuntime->waitForRuntime();
+            delete fi;
             delete segmentationRuntime;
             return blobs;
         }

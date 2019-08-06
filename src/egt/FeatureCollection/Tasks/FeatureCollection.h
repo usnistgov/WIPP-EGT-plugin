@@ -769,7 +769,7 @@ class FeatureCollection {
 
       for (auto blob : listBlobs->_blobs) {
         auto feature = blob->getFeature();
-        feature->printBitmask();
+        feature->printBitMask();
         this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
         ++idFeature;
         //because addFeature duplicates the object.
