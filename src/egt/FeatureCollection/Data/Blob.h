@@ -27,7 +27,7 @@
 // the United States.
 
 /// @file Blob.h
-/// @author Alexandre Bardakoff - Timothy Blattner - Antoine Gerardin
+/// @author Alexandre Bardakoff - Timothy Blattner
 /// @date  4/6/18
 /// @brief Blob object representing a part of a feature
 
@@ -56,16 +56,11 @@ using Coordinate = std::pair<int32_t, int32_t>;
 /**
   * @class Blob Blob.h <FastImage/FeatureCollection/Data/Blob.h>
   *
-  * @brief A blob is a region of an image where every pixel has the same color.
+  * @brief Blob representing a part of a feature
   *
-  * @details
-  * A blob is a versatile structure that keeps relevant info at different stage of the feature cosntruction.
-  * When segmenting the view, the blob is constructed incrementally. It is then composed of a bounding box
-  * delimiting the area which the blob spans and of a sparse matrix of the pixels that are parts of this blob.
-  * The sparse matrix representation is optimized for updates. Several other attributes keep tracks of its color and it
-  * is needs to be merged. This helps us take various decisions.
-  * If the blob is saved, its sparse matrix representation is compacted into a Feature to minimize memory consumption.
-  * During the merge, other info are updated as we build trees of connected blobs and update feature information.
+  * @details It is composed by a bounding box from the point (rowMin, rowMax) to
+  * (rowMAx, ColMax).The bounding box delimit a sparse matrix representing the
+  * pixels part of this blob. A blob has a specific id, called tag.
   **/
 class Blob {
  public:
@@ -91,7 +86,7 @@ class Blob {
   }
 
     virtual ~Blob() {
-        delete _feature;
+      //destroyed Feature
     }
 
     /// \brief Get Blob tag
@@ -150,10 +145,9 @@ class Blob {
   /// \return Blob rank
   uint32_t getRank() const { return _rank; }
 
-  Feature *getFeature() { return _feature; }
+  const Feature *getFeature() const { return _feature; }
 
-  /// \brief Test if a pixel is in a blob.
-  /// \details implementation depends on info available.
+  /// \brief Test if a pixel is in a blob
   /// \param row Row asked
   /// \param col Col asked
   /// \return True is the pixel(row, col) is in the blob, else False
@@ -220,6 +214,50 @@ class Blob {
     addRowCol(row, col);
 
   }
+
+  /// \brief Merge 2 blobs, and delete the unused one
+  /// \param blob Blob to merge with the current
+  /// \return The blob merged
+  Blob *mergeAndDelete(Blob *blob) {
+    Blob
+        *toDelete = nullptr,
+        *destination = nullptr;
+
+    if (this->getCount() >= blob->getCount()) {
+      destination = this;
+      toDelete = blob;
+    } else {
+      destination = blob;
+      toDelete = this;
+    }
+
+    // Set blob metadata
+    destination->setRowMin(
+        std::min(destination->getRowMin(), toDelete->getRowMin()));
+    destination->setColMin(
+        std::min(destination->getColMin(), toDelete->getColMin()));
+    destination->setRowMax(
+        std::max(destination->getRowMax(), toDelete->getRowMax()));
+    destination->setColMax(
+        std::max(destination->getColMax(), toDelete->getColMax()));
+
+    // Merge sparse matrix
+    for (auto rowCol : toDelete->getRowCols()) {
+      for (auto col : rowCol.second) {
+        destination->addRowCol(rowCol.first, col);
+      }
+    }
+
+
+    // update pixel count
+    destination->setCount(toDelete->getCount() + destination->getCount());
+
+    // Delete unused Blob
+    delete (toDelete);
+    // Return merged blob
+    return destination;
+  }
+
   /// transform the sparse matrix representation from addrows to feature to reduce memory footprint
   void compactBlobDataIntoFeature() {
 
@@ -273,7 +311,13 @@ class Blob {
     _rowCols.clear();
   }
 
-  void addToBitMask(uint32_t* bitMask, BoundingBox &bb) {
+  void addToBitMask(uint32_t* bitMask, BoundingBox *bb) {
+
+
+
+//    VLOG(3) << (*_feature);
+
+
     uint32_t
       rowMin = (uint32_t) this->getRowMin(),
       colMin = (uint32_t)this->getColMin(),
@@ -291,9 +335,9 @@ class Blob {
         // Test if the pixel is in the current feature (using global coordinates)
         if (this->getFeature()->isInBitMask(row,col)) {
           // Add it to the bit mask
-          ulRowL = row - bb.getUpperLeftRow(); //convert to local coordinates
-          ulColL = col - bb.getUpperLeftCol();
-          absolutePosition = ulRowL * bb.getWidth() + ulColL; //to 1D array coordinates
+          ulRowL = row - bb->getUpperLeftRow(); //convert to local coordinates
+          ulColL = col - bb->getUpperLeftCol();
+          absolutePosition = ulRowL * bb->getWidth() + ulColL; //to 1D array coordinates
           //optimization : right-shifting binary representation by 5 is equivalent to dividing by 32
           wordPosition = absolutePosition >> (uint32_t) 5;
           //left-shifting back previous result gives the 1D array coordinates of the word beginning
@@ -311,8 +355,8 @@ class Blob {
     }
   }
 
-  void updateFeature(Feature *f){
-    delete this->_feature;
+  //TODO remove, we will only  create Feature directly not modifying blobs
+  void setFeature(Feature *f){
     this->_feature = f;
   }
 
