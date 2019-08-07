@@ -159,7 +159,7 @@ namespace egt {
             while (i != _holes->_blobs.end()) {
                 auto blob = (*i);
                 //transform small holes into blobs
-                if(blob->getCount() < segmentationOptions->MIN_HOLE_SIZE) {
+                if(blob->getCount() < segmentationOptions->MIN_HOLE_SIZE || blob->getCount() > segmentationOptions->MAX_HOLE_SIZE) {
                     this->_blobs->_blobs.push_back(blob);
                     auto row = blob->getStartRow();
                     auto col = blob->getStartCol();

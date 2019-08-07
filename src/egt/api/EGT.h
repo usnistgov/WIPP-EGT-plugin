@@ -353,7 +353,7 @@ namespace egt {
 
         void runBinaryMaskGeneration(std::shared_ptr<ListBlobs> blob, SegmentationOptions *segmentationOptions) {
             VLOG(1) << "generating a segmentation mask";
-            blob->erode(segmentationOptions);
+        //    blob->erode(segmentationOptions);
             auto fc = new FeatureCollection();
             fc->createFCFromCompactListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
             fc->createBlackWhiteMaskStreaming("output-stream.tiff", (uint32_t)tileWidthAtSegmentationLevel);

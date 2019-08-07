@@ -221,7 +221,7 @@ namespace egt {
 
                     //IF WE HAVE A SMALL BLOB THAT IS NOT TO BE MERGED, WE CONSIDER IT IS A HOLE THAT NEEDS TO BE FILLED
                     //we reset all pixels as UNVISITED foreground.
-                    if (_currentBlob->getCount() < _options->MIN_HOLE_SIZE && !_currentBlob->isToMerge()) {
+                    if ( (_currentBlob->getCount() < _options->MIN_HOLE_SIZE || _currentBlob->getCount() > _options->MAX_HOLE_SIZE ) && !_currentBlob->isToMerge()) {
 
                         for (auto it = _currentBlob->getRowCols().begin();
                              it != _currentBlob->getRowCols().end(); ++it) {
@@ -243,17 +243,7 @@ namespace egt {
                         delete _currentBlob;
                         holeRemovedCount++;
                     }
-                    //OPTIMIZATION, we do not keep around large holes because we consider them background.
-                    //this can lead to significant savings in memory footprint
-                    //however this force us to treat lonely holes differently in the merger.
-                    else if(_currentBlob->getCount() > _options->MAX_HOLE_SIZE) {
-                        if(_currentBlob->isToMerge()){
-                            _vAnalyse->getHolesToMerge().erase(_currentBlob);
-                        }
-                        delete _currentBlob;
-                        backgroundCount++;
-                    }
-                        //we do not know enough, so we need to merge the background blob
+                    //we do not know enough, so we need to merge the background blob
                     else {
                         //WE ADD IT
                         if(!_options->MASK_ONLY) {

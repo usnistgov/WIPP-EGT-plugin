@@ -58,7 +58,6 @@ struct ListBlobs : public IData {
 
         VLOG(1) << "erode feature collection";
 
-        auto erodedFeatures = std::vector<Feature>();
         auto foregroundValue = 255;
 
         for(auto &blob : _blobs) {

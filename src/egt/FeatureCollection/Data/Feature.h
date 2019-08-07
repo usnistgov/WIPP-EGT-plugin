@@ -74,20 +74,6 @@ namespace egt {
                     boundingBox.getHeight() * boundingBox.getWidth() / 32.));
         }
 
-    public:
-        /// \param id Feature id
-        /// \param boundingBox Feature bounding box
-        /// \param nbElementsBitMask Bit Mask size
-        /// \param bitMask Bit mask
-        Feature(uint32_t id,
-                const BoundingBox &boundingBox,
-                uint32_t nbElementsBitMask,
-                uint32_t *bitMask)
-                : _id(id),
-                  _boundingBox(boundingBox),
-                  _bitMask(bitMask),
-                  _nbElementsBitMask(nbElementsBitMask) {}
-
         /// \brief Id getter
         /// \return Id
         uint32_t getId() const { return _id; }
@@ -320,7 +306,20 @@ namespace egt {
             return !(rhs == *this);
         }
 
-
+    private:
+        /// \brief Private constructor used by the deserialization method
+        /// \param id Feature id
+        /// \param boundingBox Feature bounding box
+        /// \param nbElementsBitMask Bit Mask size
+        /// \param bitMask Bit mask
+        Feature(uint32_t id,
+                const BoundingBox &boundingBox,
+                uint32_t nbElementsBitMask,
+                uint32_t *bitMask)
+                : _id(id),
+                  _boundingBox(boundingBox),
+                  _bitMask(bitMask),
+                  _nbElementsBitMask(nbElementsBitMask) {}
 
 
 

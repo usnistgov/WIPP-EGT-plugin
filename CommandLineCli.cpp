@@ -23,6 +23,15 @@ bool hasEnding(std::string const &fullString, std::string const &ending) {
     }
 }
 
+uint32_t parseUint32String( std::string &val) {
+    if(val == "inf") {
+        return std::numeric_limits<uint32_t >::max();
+    }
+    else {
+        return (uint32_t)std::strtoul(val.c_str(), nullptr, 10);
+    }
+}
+
 ImageDepth parseImageDepth(const std::string &depth) {
     if (depth == "16U") {
         return ImageDepth::_16U;
@@ -80,7 +89,7 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::uint32_t> MinHoleSizeArg("m", "minhole", "Minimum Hole Size", false, 1000, "uint32_t");
         cmd.add(MinHoleSizeArg);
 
-        TCLAP::ValueArg<std::uint32_t> MaxHoleSizeArg("M", "maxhole", "Maximum Hole Size", false, 3000, "uint32_t");
+        TCLAP::ValueArg<std::string> MaxHoleSizeArg("M", "maxhole", "Maximum Hole Size", false, "inf", "uint32_t or inf");
         cmd.add(MaxHoleSizeArg);
 
         TCLAP::ValueArg<std::uint32_t> MinObjectSizeArg("s", "minobject", "Minimum Object Size", false, 3000, "uint32_t");
@@ -99,7 +108,7 @@ int main(int argc, const char **argv) {
         uint32_t pyramidLevel = pyramidLevelArg.getValue();
         std::string depth = imageDepthArg.getValue();
         uint32_t minHoleSize = MinHoleSizeArg.getValue();
-        uint32_t maxHoleSize = MaxHoleSizeArg.getValue();
+        std::string maxHoleSizeString = MaxHoleSizeArg.getValue();
         uint32_t minObjectSize = MinObjectSizeArg.getValue();
         bool maskOnly = MaskOnlyArg.getValue();
         std::string expertMode = expertModeArg.getValue();
@@ -112,12 +121,13 @@ int main(int argc, const char **argv) {
         VLOG(1) << outputFileArg.getDescription() << ": " << outputDir << std::endl;
         VLOG(1) << pyramidLevelArg.getDescription() << ": " << pyramidLevel << std::endl;
         VLOG(1) << MinHoleSizeArg.getDescription() << ": " << minHoleSize << std::endl;
-        VLOG(1) << MaxHoleSizeArg.getDescription() << ": " << maxHoleSize << std::endl;
+        VLOG(1) << MaxHoleSizeArg.getDescription() << ": " << maxHoleSizeString << std::endl;
         VLOG(1) << MinObjectSizeArg.getDescription() << ": " << minObjectSize << std::endl;
         VLOG(1) << MaskOnlyArg.getDescription() << ": " << std::noboolalpha  << maskOnly << ":" << std::boolalpha << maskOnly << std::endl;
         VLOG(1) << expertModeArg.getDescription() << ": " << expertMode << std::endl;
 
         ImageDepth imageDepth = parseImageDepth(depth);
+        uint32_t maxHoleSize = parseUint32String(maxHoleSizeString);
 
 
         auto *options = new egt::EGT::EGTOptions();
