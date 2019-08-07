@@ -69,11 +69,9 @@ namespace egt {
         /// \param boundingBox Feature bounding box
         /// \param bitMask Feature bit mask to copy
         Feature(uint32_t id, const BoundingBox &boundingBox, uint32_t *bitMask)
-                : _id(id), _boundingBox(boundingBox) {
+                : _id(id), _boundingBox(boundingBox), _bitMask(bitMask) {
             _nbElementsBitMask = (uint32_t) (ceil(
                     boundingBox.getHeight() * boundingBox.getWidth() / 32.));
-            _bitMask = new uint32_t[_nbElementsBitMask];
-            memcpy(this->_bitMask, bitMask, _nbElementsBitMask * sizeof(uint32_t));
         }
 
     public:

@@ -311,7 +311,6 @@ class Blob {
     }
 
     _feature = new Feature(this->getTag(), boundingBox, bitMask);
-    delete[] bitMask;
     _rowCols.clear();
   }
 

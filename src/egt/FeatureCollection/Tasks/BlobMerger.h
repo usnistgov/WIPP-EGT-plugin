@@ -293,7 +293,6 @@ namespace egt {
                 delete[] parent->getFeature()->getBitMask();
                 delete parent->getFeature();
                 auto *feature = new Feature(parent->getTag(), bb, bitMask);
-                delete[] bitMask;
 
                 //In order to maintain consistency - this will be unecessary if we send back feature instead
                 parent->setRowMin(bb.getUpperLeftRow());

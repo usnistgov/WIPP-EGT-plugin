@@ -121,7 +121,6 @@ struct ListBlobs : public IData {
             blob->setRowMax(bb.getBottomRightRow());
             delete[] feature->getBitMask();
             delete feature;
-            delete[] bitmask;
         }
     }
 
