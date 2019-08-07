@@ -84,6 +84,9 @@ namespace egt {
             memcpy(this->_bitMask, f.getBitMask(), _nbElementsBitMask * sizeof(uint32_t));
         }
 
+
+       // Feature(Feature && ) = default;
+
         Feature& operator=(const Feature& that)
         {
             if (this != &that)

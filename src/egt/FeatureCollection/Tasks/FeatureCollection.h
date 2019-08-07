@@ -36,7 +36,7 @@
 
 #include <sstream>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
-#include <FastImage/FeatureCollection/tools/AABBTree.h>
+#include <egt/FeatureCollection/tools/AABBTree.h>
 #include <egt/FeatureCollection/Data/Feature.h>
 #include <egt/FeatureCollection/Data/BoundingBox.h>
 #include "FastImage/exception/FastImageException.h"
@@ -755,6 +755,77 @@ class FeatureCollection {
       delete tile.second;
     }
   }
+
+
+    /// \brief Create a tiled tiff mask, where the pixels are 1.
+    /// \param pathLabeledMask Path to save the mask.
+    /// \param tileSize Size of tile in the tiff image
+    void createBlackWhiteMaskStreaming(const std::string &pathLabeledMask,
+                              const uint32_t tileSize = 1024) {
+      if ((tileSize & (tileSize - 1)) != 0) {
+        std::stringstream message;
+        message
+                << "Feature Collection ERROR: The tiling asked is not a power of 2.";
+        std::string m = message.str();
+        throw (fi::FastImageException(m));
+      }
+      // Get image size
+      auto
+              imageWidth = this->getImageWidth(),
+              imageHeight = this->getImageHeight();
+
+      // Create the tiff file
+      TIFF
+              *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+
+      if (tif != nullptr) {
+        TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
+        TIFFSetField(tif, TIFFTAG_IMAGELENGTH, imageHeight);
+        TIFFSetField(tif, TIFFTAG_TILELENGTH, tileSize);
+        TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileSize);
+        TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8 * sizeof(uint8_t));
+        TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
+        TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+        TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+        TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+        TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+        TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+
+        auto maxTileCol = (uint32_t)std::ceil((double)this->_imageWidth / tileSize);
+        auto maxTileRow = (uint32_t)std::ceil((double)this->_imageWidth / tileSize);
+
+        for(uint32_t tileRow = 0 ; tileRow < maxTileRow ; tileRow++){
+          for(uint32_t tileCol = 0; tileCol < maxTileCol; tileCol++){
+
+            auto tile = std::vector<uint8_t>(tileSize * tileSize, 0);
+
+            for(uint32_t j = 0; j < tileSize; j++){
+              for(uint32_t i = 0; i < tileSize; i++){
+                auto f = getFeatureFromPixel(tileRow * tileSize + j, tileCol * tileSize + i);
+                if(f != nullptr) {
+                    tile[j* tileSize + i] = 255;
+                }
+              }
+            }
+
+            TIFFWriteTile(tif,
+                          (tdata_t)tile.data(),
+                          tileCol * tileSize,
+                          tileRow * tileSize,
+                          0,
+                          0);
+
+          }
+        }
+
+        TIFFClose(tif);
+      } else {
+        std::cerr << "The File " << pathLabeledMask << " can't be opened."
+                  << std::endl;
+        exit(1);
+      }
+    }
 
 
  public:

@@ -358,7 +358,7 @@ namespace egt {
             auto fc2 = fc->erode(segmentationOptions);
       //      fc->createBlackWhiteMask("output.tiff", (uint32_t)tileWidthAtSegmentationLevel);
             delete fc;
-            fc2->createBlackWhiteMask("output2.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+            fc2->createBlackWhiteMaskStreaming("output-stream.tiff", (uint32_t)tileWidthAtSegmentationLevel);
             delete fc2;
         }
 
