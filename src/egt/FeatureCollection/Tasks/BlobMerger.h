@@ -187,7 +187,7 @@ namespace egt {
                 }
                 //turn holes into background
                 else {
-                    delete (*i);
+                    delete blob;
                     i = _holes->_blobs.erase(i);
                 }
             }
@@ -290,6 +290,7 @@ namespace egt {
                     blobs->_blobs.remove(*son);
                 }
 
+                delete[] parent->getFeature()->getBitMask();
                 delete parent->getFeature();
                 auto *feature = new Feature(parent->getTag(), bb, bitMask);
                 delete[] bitMask;

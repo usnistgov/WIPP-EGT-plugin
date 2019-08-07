@@ -86,10 +86,10 @@ class FeatureCollection {
 
   /// \brief Default FeatureCollection destructor
   virtual ~FeatureCollection() {
-//    for (const auto &feature : _vectorFeatures) {
-//      if (feature.getBitMask() != nullptr)
-//        delete[] feature.getBitMask();
-//    }
+    for (const auto &feature : _vectorFeatures) {
+      if (feature.getBitMask() != nullptr)
+        delete[] feature.getBitMask();
+    }
   }
 
   /// \brief Get Image Width
@@ -774,6 +774,8 @@ class FeatureCollection {
               imageWidth = this->getImageWidth(),
               imageHeight = this->getImageHeight();
 
+      VLOG(4) << "writing bitmask";
+
       // Create the tiff file
       TIFF
               *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
@@ -816,10 +818,13 @@ class FeatureCollection {
                           0,
                           0);
 
+            VLOG(4) << "done writing tile (" << tileRow << "," << tileCol << ")";
+
           }
         }
 
         TIFFClose(tif);
+          VLOG(4) << "done writing mask : " << pathLabeledMask.c_str();
       } else {
         std::cerr << "The File " << pathLabeledMask << " can't be opened."
                   << std::endl;
@@ -845,6 +850,8 @@ class FeatureCollection {
         this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
         ++idFeature;
       }
+
+
 
       // Preprocess the FC
       this->preProcessing();

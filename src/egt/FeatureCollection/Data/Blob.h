@@ -87,6 +87,7 @@ class Blob {
 
     virtual ~Blob() {
       if(_feature != nullptr) {
+          delete[] _feature->getBitMask();
           delete _feature;
       }
     }

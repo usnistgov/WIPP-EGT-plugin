@@ -48,7 +48,10 @@ struct ListBlobs : public IData {
       _blobs{};
 
   ~ListBlobs() override {
-    while (!_blobs.empty()) delete _blobs.front(), _blobs.pop_front();
+    while (!_blobs.empty()){
+        delete _blobs.front();
+        _blobs.pop_front();
+    }
   }
 };
 }
