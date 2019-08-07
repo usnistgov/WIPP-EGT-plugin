@@ -85,12 +85,12 @@ class FeatureCollection {
   }
 
   /// \brief Default FeatureCollection destructor
-  virtual ~FeatureCollection() {
-    for (const auto &feature : _vectorFeatures) {
-      if (feature.getBitMask() != nullptr)
-        delete[] feature.getBitMask();
-    }
-  }
+//  virtual ~FeatureCollection() {
+//    for (const auto &feature : _vectorFeatures) {
+//      if (feature.getBitMask() != nullptr)
+//        delete[] feature.getBitMask();
+//    }
+//  }
 
   /// \brief Get Image Width
   /// \return Image Width
@@ -165,7 +165,7 @@ class FeatureCollection {
 
   /// \brief Get the vector of features from the Feature collection
   /// \return The vector of features from the Feature collection
-  const std::vector<Feature> &getVectorFeatures() const {
+  std::vector<Feature> &getVectorFeatures() {
     return _vectorFeatures;
   }
 
@@ -446,148 +446,6 @@ class FeatureCollection {
   }
 
 
-
-
-    uint32_t* arrayToBitMask(const uint8_t* src, uint32_t width, uint32_t height, uint8_t foreground) {
-
-        auto bitMask = new uint32_t[(uint32_t) ceil((width * height) / 32.)]{0};
-
-        // For every pixel in the bit mask
-        for (auto pos = 0; pos < width * height; pos++) {
-            // Test if the pixel is in the current feature (using global coordinates)
-            if (src[pos] == foreground) {
-                // Add it to the bit mask
-                //optimization : right-shifting binary representation by 5 is equivalent to dividing by 32
-                auto wordPosition = pos >> (uint32_t) 5;
-                //left-shifting back previous result gives the 1D array coordinates of the word beginning
-                auto beginningOfWord = ((int32_t) (wordPosition << (uint32_t) 5));
-                //subtracting original value gives the remainder of the division by 32.
-                auto remainder = ((int32_t) pos - beginningOfWord);
-                //at which position in a binary representation the bit needs to be set?
-                auto bitPositionInDecimal = (uint32_t) abs(32 - remainder);
-                //create a 32bit word with this bit set to 1.
-                auto bitPositionInBinary = ((uint32_t) 1 << (bitPositionInDecimal - (uint32_t) 1));
-                //adding the bitPosition to the word
-                bitMask[wordPosition] = bitMask[wordPosition] | bitPositionInBinary;
-            }
-        }
-
-      return bitMask;
-    }
-
-    uint8_t* bitMaskToArray(uint32_t* bitMask, uint32_t width, uint32_t height, uint8_t foregroundValue) {
-
-      auto array = new uint8_t[width * height]{0};
-
-      for (uint32_t pos = 0; pos < width * height; pos++) {
-          if (testBitMaskValue(bitMask, pos)) {
-            array[pos] = foregroundValue;
-          }
-        }
-
-      return array;
-    }
-
-    bool testBitMaskValue(const uint32_t* bitMask, uint32_t pos) {
-      // Find the good "word" (uint32_t)
-      auto wordPosition = pos >> (uint32_t) 5;
-      // Find the good bit in the word
-      auto bitPosition = (uint32_t) abs((int32_t) 32 - ((int32_t) pos
-                                                     - (int32_t) (wordPosition << (uint32_t) 5)));
-      // Test if the bit is one
-      auto answer = (((((uint32_t) 1 << (bitPosition - (uint32_t) 1))
-                  & bitMask[wordPosition])
-              >> (bitPosition - (uint32_t) 1)) & (uint32_t) 1) == (uint32_t) 1;
-      return answer;
-  }
-
-
-    //TODO need to implement Feature getCount()0
-    FeatureCollection* filter(SegmentationOptions* options) {
-
-      VLOG(1) << "erode feature collection";
-
-      auto nbBlobsTooSmall = 0;
-      auto i = _vectorFeatures.begin();
-      while (i != _vectorFeatures.end()) {
-//        //We removed objects that are still too small after the merge occured.
-//        if((*i)->getCount() < options->MIN_OBJECT_SIZE) {
-//          nbBlobsTooSmall++;
-//          i = _vectorFeatures.erase(i);
-//        }
-//        else {
-//          i++;
-//        }
-      }
-    }
-
-
-  FeatureCollection* erode(SegmentationOptions *segmentationOptions) {
-
-    VLOG(1) << "erode feature collection";
-
-    auto erodedFeatures = std::vector<Feature>();
-    auto foregroundValue = 255;
-
-    for(const auto &feature : this->getVectorFeatures()) {
-
-      auto width = feature.getBoundingBox().getWidth();
-      auto height = feature.getBoundingBox().getHeight();
-
-      //transform each bitMask into a array of uint8 so we can use opencv
-      auto data = bitMaskToArray(feature.getBitMask(), width, height, foregroundValue);
-
-//      //TODO remove
-//      std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
-
-      //erosion from opencv
-      auto mat = cv::Mat(height, width, CV_8U,  data);
-//      cv::imwrite(outputPath + "feature-" + std::to_string(feature.getId())  + ".tif" , mat);
-      auto kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE,cv::Size(3,3));
-      cv::Mat eroded;
-      cv::erode(mat,eroded,kernel);
-      mat.release();
-      delete[] data;
-
-      auto maskCount = countNonZero(eroded);
-//      VLOG(3) << eroded;
-
-      if(maskCount < segmentationOptions->MIN_OBJECT_SIZE){
-        eroded.release();
-        VLOG(3) << "delete eroded feature";
-        continue;
-      }
-
-//      cv::imwrite(outputPath + "erodedFeature-" + std::to_string(feature.getId())  + ".tif" , eroded);
-
-
-      //transform back the matrix to an array
-      std::vector<uchar> array;
-      if (eroded.isContinuous()) {
-        array.assign((uchar*)eroded.datastart, (uchar*)eroded.dataend);
-      } else {
-        for (int i = 0; i < eroded.rows; ++i) {
-          array.insert(array.end(), eroded.ptr<uchar>(i), eroded.ptr<uchar>(i)+eroded.cols);
-        }
-      }
-      eroded.release();
-      //TODO remove
-      //printBoolArray<uint8_t>("eroded", array.data(),width,height);
-
-
-      //transform back the array to a bitmask
-      auto bitmask = arrayToBitMask(array.data(), width, height, foregroundValue);
-
-
-
-      erodedFeatures.emplace_back(feature.getId(),BoundingBox(feature.getBoundingBox()),bitmask);
-      //create feature
-      delete[] bitmask;
-    }
-
-    return new FeatureCollection(erodedFeatures, this->_imageHeight, this->_imageWidth);
-  }
-
   /// \brief Create a tiled tiff mask, where the pixels are 1.
   /// \param pathLabeledMask Path to save the mask.
   /// \param tileSize Size of tile in the tiff image
@@ -847,7 +705,7 @@ class FeatureCollection {
       for (auto blob : listBlobs->_blobs) {
         auto feature = blob->getFeature();
         //feature->printBitMask();
-        this->addFeature(idFeature, feature->getBoundingBox(), feature->getBitMask());
+        _vectorFeatures.push_back(*feature);
         ++idFeature;
       }
 
