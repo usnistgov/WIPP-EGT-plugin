@@ -61,6 +61,10 @@ Connectivity 8 for analyser
 
 Parameterize erosion
 
+-------------------
+
+EROSION ON FEATURE TILE RATHER THAN FULL FEATURES
+
 
 
 =====================

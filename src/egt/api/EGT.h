@@ -161,6 +161,7 @@ namespace egt {
                     VLOG(3) << "intensity bounds : collecting pixel for tile (" << view->getRow() << "," << view->getCol() << ").";
                     //TODO check with it has to be zero
                     std::copy_if(view->getData(), view->getData() + tileHeight * tileWidth,  std::back_inserter(intensities) , [](T val){return (val!=0);});
+                    pview->releaseMemory();
                 }
             }
 
@@ -177,7 +178,6 @@ namespace egt {
 
             segmentationParams.minPixelIntensityValue = intensities[minIndex];
             segmentationParams.maxPixelIntensityValue = intensities[maxIndex];
-
 
             fi->waitForGraphComplete();
             delete fi;
@@ -226,7 +226,7 @@ namespace egt {
             graph->addMemoryManagerEdge("gradientTile", sobelFilter, new TileAllocator<T>(tileWidth, tileHeight),
                                         options->concurrentTiles, htgs::MMType::Dynamic);
 
-//FOR DEBUGGING
+            //FOR DEBUGGING
             htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
             htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
 
