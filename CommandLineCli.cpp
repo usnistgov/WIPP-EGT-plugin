@@ -161,7 +161,7 @@ int main(int argc, const char **argv) {
                 break;
             }
             case ImageDepth::_8U: {
-                auto egt = new egt::EGT<uint8_t>();
+                auto egt = new egt::EGT<uint16_t>();
                 egt->run(options, segmentationOptions, expertModeOptions);
                 delete egt;
                 break;

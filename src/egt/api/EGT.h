@@ -25,6 +25,7 @@
 #include <egt/tasks/TiffTileWriter.h>
 #include <egt/api/EGTOptions.h>
 #include <random>
+#include "DerivedSegmentationParams.h"
 
 
 namespace egt {
@@ -58,8 +59,6 @@ namespace egt {
                                  ? expertModeOptions.at("threshold") : -1;
 
 
-            T minPixelIntensityValue = std::numeric_limits<T>::min(), maxPixelIntensityValue = std::numeric_limits<T>::max();
-
             VLOG(1) << "Execution model : ";
             VLOG(1) << "loader threads : " << options->nbLoaderThreads;
             VLOG(1) << "concurrent tiles : " << options->concurrentTiles;
@@ -73,6 +72,7 @@ namespace egt {
             //determining threshold
             auto beginThreshold = std::chrono::high_resolution_clock::now();
             T threshold{};
+
             if (options->threshold == -1) {
                 threshold = runThresholdFinder(options);
             } else {
@@ -80,13 +80,16 @@ namespace egt {
             }
             auto endThreshold = std::chrono::high_resolution_clock::now();
 
+            auto segmentationParams = DerivedSegmentationParams<T>();
+            segmentationParams.threshold = threshold;
+
             //segment
             std::shared_ptr<ListBlobs> blobs = nullptr;
             auto beginSegmentation = std::chrono::high_resolution_clock::now();
             if (segmentationOptions->MASK_ONLY) {
-                runLocalMaskGenerator(threshold, options, segmentationOptions);
+                runLocalMaskGenerator(threshold, options, segmentationOptions, segmentationParams);
             } else {
-                blobs = runSegmentation(threshold, options, segmentationOptions);
+                blobs = runSegmentation(threshold, options, segmentationOptions, segmentationParams);
             }
             auto endSegmentation = std::chrono::high_resolution_clock::now();
 
@@ -222,7 +225,7 @@ namespace egt {
          * @param options - Options for configuring EGT execution.
          * @param segmentationOptions - Parameters used for the segmentation.
          */
-        void runLocalMaskGenerator(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions) {
+        void runLocalMaskGenerator(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions, DerivedSegmentationParams<T> segmentationParams) {
             htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, VoidData> *localMaskGenerationGraph;
             htgs::TaskGraphRuntime *localMaskGenerationGraphRuntime;
 
@@ -256,7 +259,8 @@ namespace egt {
                                         imageWidthAtSegmentationLevel,
                                         nbTiles,
                                         options,
-                                        segmentationOptions);
+                                        segmentationOptions,
+                                        segmentationParams);
             auto writeMask = new TiffTileWriter<T>(
                     1,
                     imageHeightAtSegmentationLevel,
@@ -291,7 +295,7 @@ namespace egt {
          * @param segmentationOptions - Parameters used for the segmentation.
          */
         std::shared_ptr<ListBlobs>
-        runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions) {
+        runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions, DerivedSegmentationParams<T> segmentationParams) {
             htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
             htgs::TaskGraphRuntime *segmentationRuntime;
 
@@ -323,7 +327,10 @@ namespace egt {
             auto labelingFilter = new ViewAnalyseFilter<T>(options->concurrentTiles);
             auto merge = new BlobMerger<T>(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
-                                        nbTiles, options, segmentationOptions);
+                                        nbTiles,
+                                        options,
+                                        segmentationOptions,
+                                        segmentationParams);
             segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
             segmentationGraph->addEdge(fastImage2, sobelFilter2);
             segmentationGraph->addEdge(sobelFilter2, viewSegmentation);

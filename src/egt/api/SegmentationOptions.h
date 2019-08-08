@@ -18,6 +18,10 @@ public:
     uint32_t MIN_OBJECT_SIZE{};
 
     bool MASK_ONLY = false;
+
+    uint32_t MIN_PIXEL_INTENSITY_PERCENTILE{};
+    uint32_t MAX_PIXEL_INTENSITY_PERCENTILE{};
+
 };
 
 #endif //NEWEGT_SEGMENTATIONOPTIONS_H

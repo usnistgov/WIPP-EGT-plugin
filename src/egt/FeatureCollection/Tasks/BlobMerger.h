@@ -42,6 +42,7 @@
 #include <FastImage/FeatureCollection/tools/UnionFind.h>
 #include <egt/FeatureCollection/Data/ListBlobs.h>
 #include <egt/utils/FeatureExtraction.h>
+#include <egt/api/DerivedSegmentationParams.h>
 
 namespace egt {
 /// \namespace egt EGT namespace
@@ -63,8 +64,8 @@ namespace egt {
         /// \param imageHeight Image Height
         /// \param imageWidth ImageWidth
         /// \param nbTiles Number of tiles in the image5
-        BlobMerger(uint32_t imageHeight, uint32_t imageWidth, uint32_t nbTiles,  EGTOptions *options, SegmentationOptions* segmentationOptions)
-                : ITask(1), imageHeight(imageHeight), imageWidth(imageWidth), _nbTiles(nbTiles), options(options), segmentationOptions(segmentationOptions) {
+        BlobMerger(uint32_t imageHeight, uint32_t imageWidth, uint32_t nbTiles,  EGTOptions *options, SegmentationOptions* segmentationOptions, DerivedSegmentationParams<T> &segmentationParams)
+                : ITask(1), imageHeight(imageHeight), imageWidth(imageWidth), _nbTiles(nbTiles), options(options), segmentationOptions(segmentationOptions), segmentationParams(segmentationParams) {
             _blobs = new ListBlobs();
             _holes = new ListBlobs();
         }
@@ -166,7 +167,7 @@ namespace egt {
                 //transform small holes into blobs
                 if(
                     (blob->getCount() < segmentationOptions->MIN_HOLE_SIZE || blob->getCount() > segmentationOptions->MAX_HOLE_SIZE)
-//                    && (meanIntensities->at(blob) > 200 && meanIntensities->at(blob) < 600)
+                    && (meanIntensities->at(blob) > segmentationParams.minPixelIntensityValue && meanIntensities->at(blob) < segmentationParams.maxPixelIntensityValue)
                   ) {
                         this->_blobs->_blobs.push_back(blob);
                         auto row = blob->getStartRow();
@@ -354,6 +355,8 @@ namespace egt {
         SegmentationOptions* segmentationOptions{};
 
         EGTOptions *options{};
+
+        DerivedSegmentationParams<T> &segmentationParams{};
     };
 }
 
