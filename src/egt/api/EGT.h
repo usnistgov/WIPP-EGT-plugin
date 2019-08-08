@@ -380,7 +380,7 @@ namespace egt {
             for (auto blob : blobs->_blobs) {
                 T pixValue = 0,
                         featureMeanIntensity = 0;
-                long long count = 0; //TODO long long
+                uint64_t count = 0;
                 uint64_t sum = 0;
                 uint32_t featureTotalTileCount = 0;
 
@@ -388,7 +388,7 @@ namespace egt {
 
                 //We cannot use fc::feature because we reimplemented it in the egt namespace
                 //let's request all tiles for each feature
-                auto bb = feature->getBoundingBox();
+                const auto &bb = feature->getBoundingBox();
                 indexRowMin = bb.getUpperLeftRow() / fi->getTileHeight();
                 indexColMin = bb.getUpperLeftCol() / fi->getImageWidth();
                 // Handle border case
@@ -410,7 +410,6 @@ namespace egt {
                 auto tileCount = 0;
 
                 while (tileCount < featureTotalTileCount) {
-
                     auto view = fi->getAvailableViewBlocking();
                     if (view != nullptr) {
                         minRow = std::max(view->get()->getGlobalYOffset(),
@@ -430,7 +429,6 @@ namespace egt {
                                     pixValue = view->get()->getPixel(
                                             row - view->get()->getGlobalYOffset(),
                                             col - view->get()->getGlobalXOffset());
-                                    assert(pixValue == 255);
                                     sum += pixValue;
                                     count++;
                                 }
@@ -440,10 +438,11 @@ namespace egt {
                         tileCount ++;
                     }
                 }
+
                 assert(count != 0);
                 assert(sum != 0);
                 featureMeanIntensity = std::round(sum / count);
-                meanIntensities[feature->getId()] = featureMeanIntensity;
+                meanIntensities[blob] = featureMeanIntensity;
             }
 
             fi->finishedRequestingTiles();
@@ -459,7 +458,7 @@ namespace egt {
                 tileHeightAtSegmentationLevel{};
 
 
-        std::map<std::uint32_t, T> meanIntensities{};
+        std::map<Blob*, T> meanIntensities{};
 
     };
 

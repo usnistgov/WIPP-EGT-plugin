@@ -1,4 +1,4 @@
--i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "10" --maxhole "3000" --minobject "40" -x "0" -e "loader=2;tile=10;threshold=108"
+-i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "20" --maxhole "inf" --minobject "40" -x "0" -e "loader=2;tile=10;threshold=108"
 
 -i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "8U" --level "0" --minhole "1" --maxhole "200" --minobject "2" -x "0"  -e "loader=1;tile=1;threshold=108"
 
