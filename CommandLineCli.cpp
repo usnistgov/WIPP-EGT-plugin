@@ -32,18 +32,6 @@ uint32_t parseUint32String( std::string &val) {
     }
 }
 
-ImageDepth parseImageDepth(const std::string &depth) {
-    if (depth == "16U") {
-        return ImageDepth::_16U;
-    } else if (depth == "8U") {
-        return ImageDepth::_8U;
-    } else if (depth == "32F") {
-            return ImageDepth::_32F;
-    } else {
-        throw std::invalid_argument("image depth not recognized. Should  be one of : 8U, 16U, 32F");
-    }
-}
-
 std::map<std::string,uint32_t> parseExpertMode(std::string &expertMode) {
 
     std::map<std::string,uint32_t> flags = {};
@@ -126,7 +114,7 @@ int main(int argc, const char **argv) {
         VLOG(1) << MaskOnlyArg.getDescription() << ": " << std::noboolalpha  << maskOnly << ":" << std::boolalpha << maskOnly << std::endl;
         VLOG(1) << expertModeArg.getDescription() << ": " << expertMode << std::endl;
 
-        ImageDepth imageDepth = parseImageDepth(depth);
+        egt::ImageDepth imageDepth = egt::parseImageDepth(depth);
         uint32_t maxHoleSize = parseUint32String(maxHoleSizeString);
 
 
@@ -136,7 +124,7 @@ int main(int argc, const char **argv) {
         options->outputPath = outputDir;
         options->pyramidLevel = pyramidLevel;
 
-        auto segmentationOptions = new SegmentationOptions();
+        auto segmentationOptions = new egt::SegmentationOptions();
         segmentationOptions->MIN_HOLE_SIZE = minHoleSize;
         segmentationOptions->MIN_OBJECT_SIZE = minObjectSize;
         segmentationOptions->MAX_HOLE_SIZE = maxHoleSize;
@@ -148,19 +136,19 @@ int main(int argc, const char **argv) {
 
 
         switch (imageDepth) {
-            case ImageDepth::_32F: {
+            case egt::ImageDepth::_32F: {
                 auto egt = new egt::EGT<float>();
                 egt->run(options, segmentationOptions, expertModeOptions);
                 delete egt;
                 break;
             }
-            case ImageDepth::_16U: {
+            case egt::ImageDepth::_16U: {
                 auto egt = new egt::EGT<uint16_t>();
                 egt->run(options, segmentationOptions, expertModeOptions);
                 delete egt;
                 break;
             }
-            case ImageDepth::_8U: {
+            case egt::ImageDepth::_8U: {
                 auto egt = new egt::EGT<uint16_t>();
                 egt->run(options, segmentationOptions, expertModeOptions);
                 delete egt;

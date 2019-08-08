@@ -164,11 +164,19 @@ namespace egt {
             auto i = _holes->_blobs.begin();
             while (i != _holes->_blobs.end()) {
                 auto blob = (*i);
+
+                bool filter = (blob->getCount() < segmentationOptions->MIN_HOLE_SIZE || blob->getCount() > segmentationOptions->MAX_HOLE_SIZE);
+                if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::AND) {
+                    filter = filter && (meanIntensities->at(blob) > segmentationParams.minPixelIntensityValue &&
+                                        meanIntensities->at(blob) < segmentationParams.maxPixelIntensityValue);
+                }
+                else if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::OR) {
+                    filter = filter && (meanIntensities->at(blob) > segmentationParams.minPixelIntensityValue &&
+                                        meanIntensities->at(blob) < segmentationParams.maxPixelIntensityValue);
+                }
+
                 //transform small holes into blobs
-                if(
-                    (blob->getCount() < segmentationOptions->MIN_HOLE_SIZE || blob->getCount() > segmentationOptions->MAX_HOLE_SIZE)
-                    && (meanIntensities->at(blob) > segmentationParams.minPixelIntensityValue && meanIntensities->at(blob) < segmentationParams.maxPixelIntensityValue)
-                  ) {
+                if(filter) {
                         this->_blobs->_blobs.push_back(blob);
                         auto row = blob->getStartRow();
                         auto col = blob->getStartCol();

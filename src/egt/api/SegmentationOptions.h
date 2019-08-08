@@ -6,22 +6,29 @@
 #define NEWEGT_SEGMENTATIONOPTIONS_H
 
 #include <cstdint>
+#include <egt/api/DataTypes.h>
 
-class SegmentationOptions {
+namespace egt {
 
-public:
+    class SegmentationOptions {
 
-    SegmentationOptions() = default;
+    public:
 
-    uint32_t MIN_HOLE_SIZE{};
-    uint32_t MAX_HOLE_SIZE{};
-    uint32_t MIN_OBJECT_SIZE{};
+        SegmentationOptions() = default;
 
-    bool MASK_ONLY = false;
+        uint32_t MIN_HOLE_SIZE{};
+        uint32_t MAX_HOLE_SIZE{};
+        uint32_t MIN_OBJECT_SIZE{};
 
-    uint32_t MIN_PIXEL_INTENSITY_PERCENTILE{};
-    uint32_t MAX_PIXEL_INTENSITY_PERCENTILE{};
+        bool MASK_ONLY = false;
 
-};
+        uint32_t MIN_PIXEL_INTENSITY_PERCENTILE{};
+        uint32_t MAX_PIXEL_INTENSITY_PERCENTILE{};
+
+        JoinOperator KEEP_HOLES_WITH_JOIN_OPERATOR = JoinOperator::AND;
+
+    };
+
+}
 
 #endif //NEWEGT_SEGMENTATIONOPTIONS_H
