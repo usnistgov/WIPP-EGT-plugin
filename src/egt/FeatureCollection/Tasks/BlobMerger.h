@@ -41,7 +41,7 @@
 #include <utility>
 #include <FastImage/FeatureCollection/tools/UnionFind.h>
 #include <egt/FeatureCollection/Data/ListBlobs.h>
-
+#include <egt/utils/FeatureExtraction.h>
 
 namespace egt {
 /// \namespace egt EGT namespace
@@ -56,14 +56,15 @@ namespace egt {
   *  https://en.wikipedia.org/wiki/Disjoint-set_data_structure
 
   **/
+    template<class T>
     class BlobMerger : public htgs::ITask<ViewAnalyse, ListBlobs> {
     public:
         /// \brief BlobMerger constructor
         /// \param imageHeight Image Height
         /// \param imageWidth ImageWidth
         /// \param nbTiles Number of tiles in the image5
-        BlobMerger(uint32_t imageHeight, uint32_t imageWidth, uint32_t nbTiles, SegmentationOptions* segmentationOptions)
-                : ITask(1), imageHeight(imageHeight), imageWidth(imageWidth), _nbTiles(nbTiles), segmentationOptions(segmentationOptions) {
+        BlobMerger(uint32_t imageHeight, uint32_t imageWidth, uint32_t nbTiles,  EGTOptions *options, SegmentationOptions* segmentationOptions)
+                : ITask(1), imageHeight(imageHeight), imageWidth(imageWidth), _nbTiles(nbTiles), options(options), segmentationOptions(segmentationOptions) {
             _blobs = new ListBlobs();
             _holes = new ListBlobs();
         }
@@ -155,35 +156,42 @@ namespace egt {
             uint32_t nbHolesTooSmall = 0;
             auto originalNbOfHoles = _holes->_blobs.size();
 
+            auto meanIntensities = new std::unordered_map<Blob*, T >();
+            computeMeanIntensity<T>(_holes->_blobs, options, meanIntensities);
+
+
             auto i = _holes->_blobs.begin();
             while (i != _holes->_blobs.end()) {
                 auto blob = (*i);
                 //transform small holes into blobs
-                if(blob->getCount() < segmentationOptions->MIN_HOLE_SIZE || blob->getCount() > segmentationOptions->MAX_HOLE_SIZE) {
-                    this->_blobs->_blobs.push_back(blob);
-                    auto row = blob->getStartRow();
-                    auto col = blob->getStartCol();
+                if(
+                    (blob->getCount() < segmentationOptions->MIN_HOLE_SIZE || blob->getCount() > segmentationOptions->MAX_HOLE_SIZE)
+//                    && (meanIntensities->at(blob) > 200 && meanIntensities->at(blob) < 600)
+                  ) {
+                        this->_blobs->_blobs.push_back(blob);
+                        auto row = blob->getStartRow();
+                        auto col = blob->getStartCol();
 
-                    //we need to merge this hole into its containing blob
-                    //looking around its start point, we should find a valid blob to merge with
-                    std::list<Coordinate> coords{};
-                    if(row - 1 >= 0 && !blob->isPixelinFeature(row -1, col)) {
-                        coords.emplace_back(row - 1, col);
-                    }
-                    if(row < imageHeight && !blob->isPixelinFeature(row + 1, col)) {
-                        coords.emplace_back(row + 1, col);
-                    }
-                    if(col - 1 >= 0 && !blob->isPixelinFeature(row, col - 1)) {
-                        coords.emplace_back(row, col - 1);
-                    }
-                    if(col + 1 < imageWidth && !blob->isPixelinFeature(row, col + 1)) {
-                        coords.emplace_back(row, col + 1);
-                    }
-                    assert(coords.size() != 0); //otherwise we won't be able to merge with another blob!
-                    this->_toMerge[blob].merge(coords);
-                    nbHolesTooSmall++;
-                    i = _holes->_blobs.erase(i);
-                    VLOG(4) << "Transform hole at (" << row << "," << col << ") into object blob.";
+                        //we need to merge this hole into its containing blob
+                        //looking around its start point, we should find a valid blob to merge with
+                        std::list<Coordinate> coords{};
+                        if(row - 1 >= 0 && !blob->isPixelinFeature(row -1, col)) {
+                            coords.emplace_back(row - 1, col);
+                        }
+                        if(row < imageHeight && !blob->isPixelinFeature(row + 1, col)) {
+                            coords.emplace_back(row + 1, col);
+                        }
+                        if(col - 1 >= 0 && !blob->isPixelinFeature(row, col - 1)) {
+                            coords.emplace_back(row, col - 1);
+                        }
+                        if(col + 1 < imageWidth && !blob->isPixelinFeature(row, col + 1)) {
+                            coords.emplace_back(row, col + 1);
+                        }
+                        assert(!coords.empty()); //otherwise we won't be able to merge with another blob!
+                        this->_toMerge[blob].merge(coords);
+                        nbHolesTooSmall++;
+                        i = _holes->_blobs.erase(i);
+                        VLOG(4) << "Transform hole at (" << row << "," << col << ") into object blob.";
                 }
                 //turn holes into background
                 else {
@@ -344,6 +352,8 @@ namespace egt {
                 _count = 0;                   ///< Number of views analysed
 
         SegmentationOptions* segmentationOptions{};
+
+        EGTOptions *options{};
     };
 }
 

@@ -57,6 +57,9 @@ namespace egt {
             options->threshold = (expertModeOptions.find("threshold") != expertModeOptions.end())
                                  ? expertModeOptions.at("threshold") : -1;
 
+
+            T minPixelIntensityValue = std::numeric_limits<T>::min(), maxPixelIntensityValue = std::numeric_limits<T>::max();
+
             VLOG(1) << "Execution model : ";
             VLOG(1) << "loader threads : " << options->nbLoaderThreads;
             VLOG(1) << "concurrent tiles : " << options->concurrentTiles;
@@ -249,9 +252,10 @@ namespace egt {
                                                            threshold,
                                                            segmentationOptions);
             auto maskFilter = new ViewFilter<T>(options->concurrentTiles);
-            auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
+            auto merge = new BlobMerger<T>(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
                                         nbTiles,
+                                        options,
                                         segmentationOptions);
             auto writeMask = new TiffTileWriter<T>(
                     1,
@@ -317,9 +321,9 @@ namespace egt {
                                                            threshold,
                                                            segmentationOptions);
             auto labelingFilter = new ViewAnalyseFilter<T>(options->concurrentTiles);
-            auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
+            auto merge = new BlobMerger<T>(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
-                                        nbTiles, segmentationOptions);
+                                        nbTiles, options, segmentationOptions);
             segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
             segmentationGraph->addEdge(fastImage2, sobelFilter2);
             segmentationGraph->addEdge(sobelFilter2, viewSegmentation);
