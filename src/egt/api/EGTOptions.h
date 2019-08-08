@@ -17,6 +17,7 @@ namespace egt {
 
         ImageDepth imageDepth = ImageDepth::_8U;
         uint32_t pyramidLevel = 0;
+        uint32_t pixelIntensityBoundsLevelUp = 2;
 
         size_t nbLoaderThreads{};
         uint32_t concurrentTiles{};

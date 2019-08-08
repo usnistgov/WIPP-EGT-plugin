@@ -22,8 +22,8 @@ namespace egt {
 
         bool MASK_ONLY = false;
 
-        uint32_t MIN_PIXEL_INTENSITY_PERCENTILE{};
-        uint32_t MAX_PIXEL_INTENSITY_PERCENTILE{};
+        uint32_t MIN_PIXEL_INTENSITY_PERCENTILE = 0;
+        uint32_t MAX_PIXEL_INTENSITY_PERCENTILE = 100;
 
         JoinOperator KEEP_HOLES_WITH_JOIN_OPERATOR = JoinOperator::AND;
 

@@ -69,6 +69,10 @@ namespace egt {
 
             auto begin = std::chrono::high_resolution_clock::now();
 
+
+            auto segmentationParams = DerivedSegmentationParams<T>();
+            runPixelIntensityBounds(options, segmentationOptions, segmentationParams);
+
             //determining threshold
             auto beginThreshold = std::chrono::high_resolution_clock::now();
             T threshold{};
@@ -80,13 +84,13 @@ namespace egt {
             }
             auto endThreshold = std::chrono::high_resolution_clock::now();
 
-            auto segmentationParams = DerivedSegmentationParams<T>();
             segmentationParams.threshold = threshold;
 
             //segment
             std::shared_ptr<ListBlobs> blobs = nullptr;
             auto beginSegmentation = std::chrono::high_resolution_clock::now();
             if (segmentationOptions->MASK_ONLY) {
+                //TODO remove threshold for params
                 runLocalMaskGenerator(threshold, options, segmentationOptions, segmentationParams);
             } else {
                 blobs = runSegmentation(threshold, options, segmentationOptions, segmentationParams);
@@ -117,6 +121,67 @@ namespace egt {
             VLOG(1) << "    Total: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count()
                     << " mS" << std::endl;
         }
+
+
+        void runPixelIntensityBounds(EGTOptions *options, SegmentationOptions* segmentationOptions, DerivedSegmentationParams<T> &segmentationParams) {
+
+            const uint32_t radiusForThreshold = 0;
+            auto tileLoader = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
+            auto *fi = new fi::FastImage<T>(tileLoader, radiusForThreshold);
+            fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
+            fi->configureAndRun();
+
+            //we try to figure at which resolution we could calculate the intensity (max at 2).
+            uint32_t pyramidLevelToRequestforPixelIntensityBounds = options->pyramidLevel;
+            auto levelUp = options->pixelIntensityBoundsLevelUp;
+            while (pyramidLevelToRequestforPixelIntensityBounds + levelUp > fi->getNbPyramidLevels() - 1){
+                    levelUp--;
+            }
+            pyramidLevelToRequestforPixelIntensityBounds += levelUp;
+
+            uint32_t imageHeight = fi->getImageHeight(pyramidLevelToRequestforPixelIntensityBounds);
+            uint32_t imageWidth = fi->getImageWidth(pyramidLevelToRequestforPixelIntensityBounds);
+            uint32_t numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequestforPixelIntensityBounds);
+            uint32_t numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforPixelIntensityBounds);
+            uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforPixelIntensityBounds) *
+                               fi->getNumberTilesWidth(pyramidLevelToRequestforPixelIntensityBounds);
+
+            fi->requestAllTiles(true, pyramidLevelToRequestforPixelIntensityBounds);
+
+
+
+            auto intensities = std::vector<T>();
+
+            while(fi->isGraphProcessingTiles()) {
+                auto pview = fi->getAvailableViewBlocking();
+                if(pview != nullptr){
+                    auto view = pview->get();
+                    auto tileHeight = view->getTileHeight();
+                    auto tileWidth = view->getTileWidth();
+                    VLOG(3) << "intensity bounds : collecting pixel for tile (" << view->getRow() << "," << view->getCol() << ").";
+                    //TODO check with it has to be zero
+                    std::copy_if(view->getData(), view->getData() + tileHeight * tileWidth,  std::back_inserter(intensities) , [](T val){return (val!=0);});
+                }
+            }
+
+            auto size = imageHeight * imageWidth;
+            auto nonZeroSize = intensities.size();
+
+            std::sort(intensities.begin(), intensities.end());
+
+            auto minIndex = segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE / 100 * intensities.size();
+            auto maxIndex = segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE / 100 * intensities.size() - 1;
+
+            auto minValue = intensities[minIndex];
+            auto maxValue = intensities[maxIndex];
+
+            segmentationParams.minPixelIntensityValue = intensities[minIndex];
+            segmentationParams.maxPixelIntensityValue = intensities[maxIndex];
+
+
+            fi->waitForGraphComplete();
+            delete fi;
+    }
 
 
         /// ----------------------------------
