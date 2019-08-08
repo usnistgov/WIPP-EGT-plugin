@@ -130,7 +130,7 @@ int main(int argc, const char **argv) {
         uint32_t maxHoleSize = parseUint32String(maxHoleSizeString);
 
 
-        auto *options = new egt::EGT::EGTOptions();
+        auto *options = new egt::EGTOptions();
         options->imageDepth = imageDepth;
         options->inputPath = inputFile;
         options->outputPath = outputDir;
@@ -145,21 +145,30 @@ int main(int argc, const char **argv) {
 
         auto expertModeOptions = parseExpertMode(expertMode);
 
-        auto egt = new egt::EGT();
+
 
         switch (imageDepth) {
-            case ImageDepth::_32F:
-                egt->run<float>(options, segmentationOptions, expertModeOptions);
+            case ImageDepth::_32F: {
+                auto egt = new egt::EGT<float>();
+                egt->run(options, segmentationOptions, expertModeOptions);
+                delete egt;
                 break;
-            case ImageDepth::_16U:
-                egt->run<uint16_t>(options, segmentationOptions, expertModeOptions);
+            }
+            case ImageDepth::_16U: {
+                auto egt = new egt::EGT<uint16_t>();
+                egt->run(options, segmentationOptions, expertModeOptions);
+                delete egt;
                 break;
-            case ImageDepth::_8U:
-                egt->run<uint8_t >(options, segmentationOptions, expertModeOptions);
+            }
+            case ImageDepth::_8U: {
+                auto egt = new egt::EGT<uint8_t>();
+                egt->run(options, segmentationOptions, expertModeOptions);
+                delete egt;
                 break;
+            }
         }
 
-        delete egt;
+
 
     } catch (TCLAP::ArgException &e)  // catch any exceptions
     {

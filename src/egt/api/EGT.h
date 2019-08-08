@@ -23,60 +23,46 @@
 #include <egt/memory/TileAllocator.h>
 #include <egt/FeatureCollection/Tasks/ViewFilter.h>
 #include <egt/tasks/TiffTileWriter.h>
+#include <egt/api/EGTOptions.h>
 #include <random>
 
 
 namespace egt {
 
-
+    template<class T>
     class EGT {
 
     public:
-        class EGTOptions {
-
-        public:
-            std::string inputPath{};
-            std::string outputPath{};
-
-            ImageDepth imageDepth = ImageDepth::_8U;
-            uint32_t pyramidLevel = 0;
-
-            size_t nbLoaderThreads{};
-            uint32_t concurrentTiles{};
-
-            uint32_t nbSamples{};
-            uint32_t nbExperiments{};
-
-            int32_t threshold{};
-
-        };
-
 
     private:
 
 
     public:
 
-
-        /// This algorithm is divided in several graph, each fed by a different fast image.
+/// This algorithm is divided in several graph, each fed by a different fast image.
         /// The reason is that we request different radius each time and each fastImage instance is associated
         /// with a single radius. It would be possible to rewrite the algo by taking the widest radius and calculate
         /// smaller radius from there, but marginal gains would not worth the complexity introduced.
-        template<class T>
-        void run(EGTOptions *options, SegmentationOptions *segmentationOptions, std::map<std::string,uint32_t> &expertModeOptions) {
+        void run(EGTOptions *options, SegmentationOptions *segmentationOptions,
+                 std::map<std::string, uint32_t> &expertModeOptions) {
 
-            options->nbLoaderThreads = (expertModeOptions.find("loader") != expertModeOptions.end()) ? expertModeOptions.at("loader") : 1;
-            options->concurrentTiles = (expertModeOptions.find("tile") != expertModeOptions.end()) ? expertModeOptions.at("tile") : 1;
-            options->nbSamples = (expertModeOptions.find("sample") != expertModeOptions.end()) ? expertModeOptions.at("sample") : 10;
-            options->nbExperiments = (expertModeOptions.find("exp") != expertModeOptions.end()) ? expertModeOptions.at("exp") : 5;
-            options->threshold = (expertModeOptions.find("threshold") != expertModeOptions.end()) ? expertModeOptions.at("threshold") : -1;
+            options->nbLoaderThreads = (expertModeOptions.find("loader") != expertModeOptions.end())
+                                       ? expertModeOptions.at("loader") : 1;
+            options->concurrentTiles = (expertModeOptions.find("tile") != expertModeOptions.end())
+                                       ? expertModeOptions.at("tile") : 1;
+            options->nbSamples = (expertModeOptions.find("sample") != expertModeOptions.end()) ? expertModeOptions.at(
+                    "sample") : 10;
+            options->nbExperiments = (expertModeOptions.find("exp") != expertModeOptions.end()) ? expertModeOptions.at(
+                    "exp") : 5;
+            options->threshold = (expertModeOptions.find("threshold") != expertModeOptions.end())
+                                 ? expertModeOptions.at("threshold") : -1;
 
             VLOG(1) << "Execution model : ";
             VLOG(1) << "loader threads : " << options->nbLoaderThreads;
             VLOG(1) << "concurrent tiles : " << options->concurrentTiles;
             VLOG(1) << "fixed threshold : " << std::boolalpha << (options->threshold != -1);
-            if(options->threshold != -1){
-                VLOG(1) << "fixed threshold value : "  << options->threshold  << std::endl;
+            if (options->threshold != -1) {
+                VLOG(1) << "fixed threshold value : " << options->threshold << std::endl;
             }
 
             auto begin = std::chrono::high_resolution_clock::now();
@@ -84,10 +70,9 @@ namespace egt {
             //determining threshold
             auto beginThreshold = std::chrono::high_resolution_clock::now();
             T threshold{};
-            if(options->threshold == -1) {
-                threshold = runThresholdFinder<T>(options);
-            }
-            else {
+            if (options->threshold == -1) {
+                threshold = runThresholdFinder(options);
+            } else {
                 threshold = options->threshold;
             }
             auto endThreshold = std::chrono::high_resolution_clock::now();
@@ -95,17 +80,19 @@ namespace egt {
             //segment
             std::shared_ptr<ListBlobs> blobs = nullptr;
             auto beginSegmentation = std::chrono::high_resolution_clock::now();
-            if(segmentationOptions->MASK_ONLY) {
-                runLocalMaskGenerator<T>(threshold, options, segmentationOptions);
-            }
-            else {
+            if (segmentationOptions->MASK_ONLY) {
+                runLocalMaskGenerator(threshold, options, segmentationOptions);
+            } else {
                 blobs = runSegmentation(threshold, options, segmentationOptions);
             }
             auto endSegmentation = std::chrono::high_resolution_clock::now();
 
             //postprocessing of features
             auto beginFC = std::chrono::high_resolution_clock::now();
-            if(!segmentationOptions->MASK_ONLY) {
+
+
+            if (!segmentationOptions->MASK_ONLY) {
+                featureExtraction(blobs, options);
                 runBinaryMaskGeneration(blobs, segmentationOptions);
             }
             auto endFC = std::chrono::high_resolution_clock::now();
@@ -114,17 +101,21 @@ namespace egt {
             auto end = std::chrono::high_resolution_clock::now();
 
             VLOG(1) << "Execution time: ";
-            VLOG(1) << "    Threshold Detection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endThreshold - beginThreshold).count() << " mS";
-            VLOG(1) << "    Segmentation: " << std::chrono::duration_cast<std::chrono::milliseconds>(endSegmentation - beginSegmentation).count() << " mS";
-            VLOG(1) << "    Feature Collection: " << std::chrono::duration_cast<std::chrono::milliseconds>(endFC - beginFC).count() << " mS";
-            VLOG(1) << "    Total: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
+            VLOG(1) << "    Threshold Detection: "
+                    << std::chrono::duration_cast<std::chrono::milliseconds>(endThreshold - beginThreshold).count()
+                    << " mS";
+            VLOG(1) << "    Segmentation: " << std::chrono::duration_cast<std::chrono::milliseconds>(
+                    endSegmentation - beginSegmentation).count() << " mS";
+            VLOG(1) << "    Feature Collection: "
+                    << std::chrono::duration_cast<std::chrono::milliseconds>(endFC - beginFC).count() << " mS";
+            VLOG(1) << "    Total: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count()
+                    << " mS" << std::endl;
         }
 
 
         /// ----------------------------------
         /// The first graph finds the threshold value used to segment the image
         /// ----------------------------------
-        template<class T>
         T runThresholdFinder(EGTOptions *options) {
 
             const uint32_t pyramidLevelToRequestforThreshold = options->pyramidLevel;
@@ -132,7 +123,7 @@ namespace egt {
 
             T threshold = 0;
 
-            auto tileLoader = new egt::PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
+            auto tileLoader = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
             auto *fi = new fi::FastImage<T>(tileLoader, radiusForThreshold);
             fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
             auto fastImage = fi->configureAndMoveToTaskGraphTask("Fast Image");
@@ -148,36 +139,38 @@ namespace egt {
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
 
-            auto nbOfSamples = std::min(nbTiles, (uint32_t)10);
+            auto nbOfSamples = std::min(nbTiles, (uint32_t) 10);
             size_t nbOfSamplingExperiment = 5;
 
             auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
             auto sobelFilter = new CustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
 
-            auto thresholdFinder = new egt::ThresholdFinder<T>(nbOfSamplingExperiment, tileHeight * tileWidth , nbOfSamples, options->imageDepth);
-            graph->addEdge(fastImage,sobelFilter);
-            graph->addEdge(sobelFilter,thresholdFinder);
+            auto thresholdFinder = new ThresholdFinder<T>(nbOfSamplingExperiment, tileHeight * tileWidth, nbOfSamples,
+                                                          options->imageDepth);
+            graph->addEdge(fastImage, sobelFilter);
+            graph->addEdge(sobelFilter, thresholdFinder);
             graph->addGraphProducerTask(thresholdFinder);
 
             //MEMORY MANAGEMENT
-            graph->addMemoryManagerEdge("gradientTile",sobelFilter, new TileAllocator<T>(tileWidth , tileHeight),options->concurrentTiles, htgs::MMType::Dynamic);
+            graph->addMemoryManagerEdge("gradientTile", sobelFilter, new TileAllocator<T>(tileWidth, tileHeight),
+                                        options->concurrentTiles, htgs::MMType::Dynamic);
 
 //FOR DEBUGGING
-                htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
-                htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
+            htgs::TaskGraphSignalHandler::registerTaskGraph(graph);
+            htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
 
             auto *runtime = new htgs::TaskGraphRuntime(graph);
             runtime->executeRuntime();
 
             auto seed1 = std::chrono::system_clock::now().time_since_epoch().count();
             std::default_random_engine generator(seed1);
-            std::uniform_int_distribution<uint32_t > distributionRowRange(0,numTileRow - 1);
-            std::uniform_int_distribution<uint32_t > distributionColRange(0,numTileCol - 1);
+            std::uniform_int_distribution<uint32_t> distributionRowRange(0, numTileRow - 1);
+            std::uniform_int_distribution<uint32_t> distributionColRange(0, numTileCol - 1);
 
-            for(auto i = 0; i < nbOfSamplingExperiment * nbOfSamples ; i++){
+            for (auto i = 0; i < nbOfSamplingExperiment * nbOfSamples; i++) {
                 uint32_t randomRow = distributionRowRange(generator);
                 uint32_t randomCol = distributionColRange(generator);
-                VLOG(3) << "Requesting tile : (" << randomRow << ", " << randomCol <<")";
+                VLOG(3) << "Requesting tile : (" << randomRow << ", " << randomCol << ")";
                 fi->requestTile(randomRow, randomCol, false, pyramidLevelToRequestforThreshold);
             }
 
@@ -194,14 +187,14 @@ namespace egt {
             }
 
             double sum = 0;
-            for(T t : thresholdCandidates){
+            for (T t : thresholdCandidates) {
                 sum += t;
             }
-            threshold = sum/thresholdCandidates.size();
+            threshold = sum / thresholdCandidates.size();
             VLOG(3) << "Threshold value using average: " << threshold;
 
-            std::sort(thresholdCandidates.begin(),thresholdCandidates.end());
-            auto medianIndex = std::ceil(thresholdCandidates.size()/2);
+            std::sort(thresholdCandidates.begin(), thresholdCandidates.end());
+            auto medianIndex = std::ceil(thresholdCandidates.size() / 2);
             threshold = thresholdCandidates[medianIndex];
             VLOG(3) << "Threshold value using median : " << threshold;
 
@@ -226,17 +219,16 @@ namespace egt {
          * @param options - Options for configuring EGT execution.
          * @param segmentationOptions - Parameters used for the segmentation.
          */
-        template <class T>
-        void runLocalMaskGenerator(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions){
+        void runLocalMaskGenerator(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions) {
             htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, VoidData> *localMaskGenerationGraph;
             htgs::TaskGraphRuntime *localMaskGenerationGraphRuntime;
 
-            uint32_t pyramidLevelToRequestForSegmentation =  options->pyramidLevel;
+            uint32_t pyramidLevelToRequestForSegmentation = options->pyramidLevel;
             //radius of 2 since we need first apply convo, obtain a gradient of size n+1,
             //and then check the ghost region for potential merges for each tile of size n.
             uint32_t segmentationRadius = 2;
 
-            auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
+            auto tileLoader2 = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
             auto *fi = new fi::FastImage<T>(tileLoader2, segmentationRadius);
             fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
             auto fastImageTask = fi->configureAndMoveToTaskGraphTask("Fast Image");
@@ -248,14 +240,14 @@ namespace egt {
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
 
             auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
-            auto viewSegmentation = new egt::EGTViewAnalyzer<T>(options->concurrentTiles,
-                                                                imageHeightAtSegmentationLevel,
-                                                                imageWidthAtSegmentationLevel,
-                                                                tileHeigthAtSegmentationLevel,
-                                                                tileWidthAtSegmentationLevel,
-                                                                4,
-                                                                threshold,
-                                                                segmentationOptions);
+            auto viewSegmentation = new EGTViewAnalyzer<T>(options->concurrentTiles,
+                                                           imageHeightAtSegmentationLevel,
+                                                           imageWidthAtSegmentationLevel,
+                                                           tileHeigthAtSegmentationLevel,
+                                                           tileWidthAtSegmentationLevel,
+                                                           4,
+                                                           threshold,
+                                                           segmentationOptions);
             auto maskFilter = new ViewFilter<T>(options->concurrentTiles);
             auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
@@ -294,17 +286,17 @@ namespace egt {
          * @param options - Options for configuring EGT execution.
          * @param segmentationOptions - Parameters used for the segmentation.
          */
-        template <class T>
-        std::shared_ptr<ListBlobs> runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions){
+        std::shared_ptr<ListBlobs>
+        runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions) {
             htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
             htgs::TaskGraphRuntime *segmentationRuntime;
 
-            uint32_t pyramidLevelToRequestForSegmentation =  options->pyramidLevel;
+            uint32_t pyramidLevelToRequestForSegmentation = options->pyramidLevel;
             //radius of 2 since we need first apply convo, obtain a gradient of size n+1,
             //and then check the ghost region for potential merges for each tile of size n.
             uint32_t segmentationRadius = 2;
 
-            auto tileLoader2 = new egt::PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
+            auto tileLoader2 = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
             auto *fi = new fi::FastImage<T>(tileLoader2, segmentationRadius);
             fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
             auto fastImage2 = fi->configureAndMoveToTaskGraphTask("Fast Image 2");
@@ -314,23 +306,23 @@ namespace egt {
             tileWidthAtSegmentationLevel = fi->getTileWidth(pyramidLevelToRequestForSegmentation);
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
-            auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(options->concurrentTiles,options->imageDepth,1,1);
+            auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
 
-            auto viewSegmentation = new egt::EGTViewAnalyzer<T>(options->concurrentTiles,
-                                                                imageHeightAtSegmentationLevel,
-                                                                imageWidthAtSegmentationLevel,
-                                                                tileHeightAtSegmentationLevel,
-                                                                tileWidthAtSegmentationLevel,
-                                                                4,
-                                                                threshold,
-                                                                segmentationOptions);
+            auto viewSegmentation = new EGTViewAnalyzer<T>(options->concurrentTiles,
+                                                           imageHeightAtSegmentationLevel,
+                                                           imageWidthAtSegmentationLevel,
+                                                           tileHeightAtSegmentationLevel,
+                                                           tileWidthAtSegmentationLevel,
+                                                           4,
+                                                           threshold,
+                                                           segmentationOptions);
             auto labelingFilter = new ViewAnalyseFilter<T>(options->concurrentTiles);
             auto merge = new BlobMerger(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
                                         nbTiles, segmentationOptions);
             segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
-            segmentationGraph->addEdge(fastImage2,sobelFilter2);
-            segmentationGraph->addEdge(sobelFilter2,viewSegmentation);
+            segmentationGraph->addEdge(fastImage2, sobelFilter2);
+            segmentationGraph->addEdge(sobelFilter2, viewSegmentation);
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
             segmentationGraph->addEdge(labelingFilter, merge);
             segmentationGraph->addGraphProducerTask(merge);
@@ -353,11 +345,110 @@ namespace egt {
 
         void runBinaryMaskGeneration(std::shared_ptr<ListBlobs> blob, SegmentationOptions *segmentationOptions) {
             VLOG(1) << "generating a segmentation mask";
-        //    blob->erode(segmentationOptions);
+            //    blob->erode(segmentationOptions);
+
             auto fc = new FeatureCollection();
             fc->createFCFromCompactListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
-            fc->createBlackWhiteMaskStreaming("output-stream.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+            //   fc->createBlackWhiteMaskStreaming("output-stream.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+            fc->createBlackWhiteMask("output-stream.tiff", (uint32_t) tileWidthAtSegmentationLevel);
             delete fc;
+        }
+
+
+        void featureExtraction(std::shared_ptr<ListBlobs> blobs, EGTOptions *options) {
+
+            const uint32_t pyramidLevelToRequestforThreshold = options->pyramidLevel;
+            const uint32_t radiusForFeatureExtraction = 0;
+
+            auto tileLoader = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
+            auto *fi = new fi::FastImage<T>(tileLoader, radiusForFeatureExtraction);
+            fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
+            fi->configureAndRun();
+
+            uint32_t
+                    indexRowMin = 0,
+                    indexRowMax = 0,
+                    indexColMin = 0,
+                    indexColMax = 0;
+
+            uint32_t
+                    minRow = 0,
+                    maxRow = 0,
+                    minCol = 0,
+                    maxCol = 0;
+
+            for (auto blob : blobs->_blobs) {
+                T pixValue = 0,
+                        featureMeanIntensity = 0;
+                long long count = 0; //TODO long long
+                uint64_t sum = 0;
+                uint32_t featureTotalTileCount = 0;
+
+                auto feature = blob->getFeature();
+
+                //We cannot use fc::feature because we reimplemented it in the egt namespace
+                //let's request all tiles for each feature
+                auto bb = feature->getBoundingBox();
+                indexRowMin = bb.getUpperLeftRow() / fi->getTileHeight();
+                indexColMin = bb.getUpperLeftCol() / fi->getImageWidth();
+                // Handle border case
+                if (bb.getBottomRightCol() == fi->getImageWidth())
+                    indexColMax = fi->getNumberTilesWidth();
+                else
+                    indexColMax = (bb.getBottomRightCol() / fi->getTileWidth()) + 1;
+                if (bb.getBottomRightRow() == fi->getImageHeight())
+                    indexRowMax = fi->getNumberTilesHeight();
+                else
+                    indexRowMax = (bb.getBottomRightRow() / fi->getTileHeight()) + 1;
+                for (auto indexRow = indexRowMin; indexRow < indexRowMax; ++indexRow) {
+                    for (auto indexCol = indexColMin; indexCol < indexColMax; ++indexCol) {
+                        fi->requestTile(indexRow,indexCol, false);
+                        featureTotalTileCount++;
+                    }
+                }
+
+                auto tileCount = 0;
+
+                while (tileCount < featureTotalTileCount) {
+
+                    auto view = fi->getAvailableViewBlocking();
+                    if (view != nullptr) {
+                        minRow = std::max(view->get()->getGlobalYOffset(),
+                                          feature->getBoundingBox().getUpperLeftRow());
+                        maxRow = std::min(
+                                view->get()->getGlobalYOffset() + view->get()->getTileHeight(),
+                                feature->getBoundingBox().getBottomRightRow());
+                        minCol = std::max(view->get()->getGlobalXOffset(),
+                                          feature->getBoundingBox().getUpperLeftCol());
+                        maxCol = std::min(
+                                view->get()->getGlobalXOffset() + view->get()->getTileWidth(),
+                                feature->getBoundingBox().getBottomRightCol());
+
+                        for (auto row = minRow; row < maxRow; ++row) {
+                            for (auto col = minCol; col < maxCol; ++col) {
+                                if (feature->isImagePixelInBitMask(row, col)) {
+                                    pixValue = view->get()->getPixel(
+                                            row - view->get()->getGlobalYOffset(),
+                                            col - view->get()->getGlobalXOffset());
+                                    assert(pixValue == 255);
+                                    sum += pixValue;
+                                    count++;
+                                }
+                            }
+                        }
+                        view->releaseMemory();
+                        tileCount ++;
+                    }
+                }
+                assert(count != 0);
+                assert(sum != 0);
+                featureMeanIntensity = std::round(sum / count);
+                meanIntensities[feature->getId()] = featureMeanIntensity;
+            }
+
+            fi->finishedRequestingTiles();
+            fi->waitForGraphComplete();
+            delete fi;
         }
 
 
@@ -367,9 +458,10 @@ namespace egt {
                 tileWidthAtSegmentationLevel{},
                 tileHeightAtSegmentationLevel{};
 
+
+        std::map<std::uint32_t, T> meanIntensities{};
+
     };
-
-
 
 
 }

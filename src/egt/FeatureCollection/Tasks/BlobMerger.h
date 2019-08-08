@@ -254,7 +254,7 @@ namespace egt {
 
             //Merge connected blobs
             //One blob is considered the parent of all the others.
-            for (auto pS : parentSons) {
+            for (auto &pS : parentSons) {
                 auto parent = pS.first;
                 auto sons = pS.second;
                 VLOG(4) << "nb of sons: " << sons.size(); //for debug
@@ -280,14 +280,14 @@ namespace egt {
                 //the parent will contain the merged feature
                 parent->addToBitMask(bitMask, bb);
 
-                for (auto son = sons.begin(); son != sons.end(); ++son) {
-                    if (*son == parent) {
+                for (auto son : sons) {
+                    if (son == parent) {
                         continue;
                     }
-                    (*son)->addToBitMask(bitMask, bb);
-                    parent->setCount(parent->getCount() + (*son)->getCount());
-                    delete (*son); //we keep only the parent, we can delete the sons
-                    blobs->_blobs.remove(*son);
+                    son->addToBitMask(bitMask, bb);
+                    parent->setCount(parent->getCount() + son->getCount());
+                    delete son; //we keep only the parent, we can delete the sons
+                    blobs->_blobs.remove(son);
                 }
 
                 delete[] parent->getFeature()->getBitMask();
@@ -304,15 +304,15 @@ namespace egt {
             }
         }
 
-        BoundingBox calculateBoundingBox(std::set<Blob *> sons) {
+        BoundingBox calculateBoundingBox(std::set<Blob *> &sons) {
 
             uint32_t upperLeftRow = std::numeric_limits<int32_t>::max(),
                     upperLeftCol = std::numeric_limits<int32_t>::max(),
                     bottomRightRow = 0,
                     bottomRightCol = 0;
 
-            for (auto son = sons.begin(); son != sons.end(); ++son) {
-                auto bb = (*son)->getFeature()->getBoundingBox();
+            for (auto son : sons) {
+                auto bb = son->getFeature()->getBoundingBox();
                 upperLeftRow = (bb.getUpperLeftRow() < upperLeftRow) ? bb.getUpperLeftRow() : upperLeftRow;
                 upperLeftCol = (bb.getUpperLeftCol() < upperLeftCol) ? bb.getUpperLeftCol() : upperLeftCol;
                 bottomRightRow = (bb.getBottomRightRow() > bottomRightRow) ? bb.getBottomRightRow() : bottomRightRow;
