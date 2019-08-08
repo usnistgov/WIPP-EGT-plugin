@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <glog/logging.h>
 #include <iomanip>
+#include <egt/api/DerivedSegmentationParams.h>
 
 namespace egt {
 
@@ -49,6 +50,21 @@ namespace egt {
         oss << std::endl;
 
         VLOG(0) << oss.str();
+    }
+
+    template <class T>
+    bool computeHoleFillingCriteria(uint64_t area, T meanIntensity, SegmentationOptions* segmentationOptions, DerivedSegmentationParams<T> &segmentationParams) {
+        bool filter = (area < segmentationOptions->MIN_HOLE_SIZE || area > segmentationOptions->MAX_HOLE_SIZE);
+        if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::AND) {
+            filter = filter && (meanIntensity > segmentationParams.minPixelIntensityValue &&
+                                meanIntensity < segmentationParams.maxPixelIntensityValue);
+        }
+        else if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::OR) {
+            filter = filter && (meanIntensity > segmentationParams.minPixelIntensityValue &&
+                                meanIntensity < segmentationParams.maxPixelIntensityValue);
+        }
+
+        return filter;
     }
 }
 

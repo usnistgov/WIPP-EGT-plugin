@@ -165,15 +165,10 @@ namespace egt {
             while (i != _holes->_blobs.end()) {
                 auto blob = (*i);
 
-                bool filter = (blob->getCount() < segmentationOptions->MIN_HOLE_SIZE || blob->getCount() > segmentationOptions->MAX_HOLE_SIZE);
-                if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::AND) {
-                    filter = filter && (meanIntensities->at(blob) > segmentationParams.minPixelIntensityValue &&
-                                        meanIntensities->at(blob) < segmentationParams.maxPixelIntensityValue);
-                }
-                else if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::OR) {
-                    filter = filter && (meanIntensities->at(blob) > segmentationParams.minPixelIntensityValue &&
-                                        meanIntensities->at(blob) < segmentationParams.maxPixelIntensityValue);
-                }
+                auto area = blob->getCount();
+                auto meanIntensity = meanIntensities->at(blob);
+
+                auto filter = computeHoleFillingCriteria<T>(area, meanIntensity, segmentationOptions, segmentationParams);
 
                 //transform small holes into blobs
                 if(filter) {
