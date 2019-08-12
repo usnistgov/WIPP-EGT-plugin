@@ -53,10 +53,10 @@ namespace egt {
                                        ? expertModeOptions.at("loader") : 1;
             options->concurrentTiles = (expertModeOptions.find("tile") != expertModeOptions.end())
                                        ? expertModeOptions.at("tile") : 1;
-            options->nbSamples = (expertModeOptions.find("sample") != expertModeOptions.end()) ? expertModeOptions.at(
-                    "sample") : 10;
+            options->nbTilePerSample = (expertModeOptions.find("sample") != expertModeOptions.end()) ? expertModeOptions.at(
+                    "sample") : -1;
             options->nbExperiments = (expertModeOptions.find("exp") != expertModeOptions.end()) ? expertModeOptions.at(
-                    "exp") : 5;
+                    "exp") : -1;
             options->threshold = (expertModeOptions.find("threshold") != expertModeOptions.end())
                                  ? expertModeOptions.at("threshold") : -1;
 
@@ -67,6 +67,12 @@ namespace egt {
             VLOG(1) << "fixed threshold : " << std::boolalpha << (options->threshold != -1);
             if (options->threshold != -1) {
                 VLOG(1) << "fixed threshold value : " << options->threshold << std::endl;
+            }
+            if (options->nbTilePerSample != -1){
+                VLOG(1) << "Threshold finder. Nb of tiles per sample requested: " << options->nbTilePerSample << std::endl;
+            }
+            if (options->nbExperiments != -1){
+                VLOG(1) << "Threshold finder. Nb of experiments requested: " << options->nbExperiments << std::endl;
             }
 
             auto begin = std::chrono::high_resolution_clock::now();
@@ -212,8 +218,11 @@ namespace egt {
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
 
-            auto nbOfSamples = nbTiles;
-            size_t nbOfSamplingExperiment = 1;
+            auto nbOfSamples = (options->nbTilePerSample != -1) ? std::min((int32_t)nbTiles, options->nbTilePerSample) : nbTiles;
+            auto nbOfSamplingExperiment = (size_t)((options->nbExperiments != -1) ? options->nbExperiments : 1);
+
+            VLOG(1) << "Threshold finder. Nb of tiles per sample: " << nbOfSamples << std::endl;
+            VLOG(1) << "Threshold finder. Nb of experiments: " << nbOfSamplingExperiment << std::endl;
 
             auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
             auto sobelFilter = new CustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);

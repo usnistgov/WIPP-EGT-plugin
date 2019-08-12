@@ -22,8 +22,8 @@ namespace egt {
         size_t nbLoaderThreads{};
         uint32_t concurrentTiles{};
 
-        uint32_t nbSamples{};
-        uint32_t nbExperiments{};
+        int32_t nbTilePerSample = -1;
+        int32_t nbExperiments = -1;
 
         int32_t threshold{};
 
