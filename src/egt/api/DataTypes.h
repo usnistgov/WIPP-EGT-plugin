@@ -68,7 +68,7 @@ namespace egt {
         } else if (joinOperatorString == "or") {
             return JoinOperator::OR;
         } else {
-            throw std::invalid_argument("image depth not recognized. Should  be one of : 8U, 16U, 32F");
+            throw std::invalid_argument("join operator should be one of: 'and','or'");
         }
     };
 

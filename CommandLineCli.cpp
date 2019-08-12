@@ -89,6 +89,21 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::string> expertModeArg("e", "expertmode", "Expert mode", false, "", "string");
         cmd.add(expertModeArg);
 
+        std::vector<std::string> joinOperatorsAllowed;
+        joinOperatorsAllowed.emplace_back("and");
+        joinOperatorsAllowed.emplace_back("or");
+        TCLAP::ValuesConstraint<std::string> allowedJoinOperatorVals( joinOperatorsAllowed );
+        TCLAP::ValueArg<std::string> joinOperatorArg("","op","Keep Holes Intensity Join Operator",false,"and",&allowedJoinOperatorVals);
+        cmd.add( joinOperatorArg );
+
+        TCLAP::ValueArg<std::uint32_t> minPixelIntensityPercentileArg("", "minintensity", "Min Pixel Intensity Percentile", false, 0, "uint32_t");
+        cmd.add(minPixelIntensityPercentileArg);
+
+        TCLAP::ValueArg<std::uint32_t> maxPixelIntensityPercentileArg("", "maxintensity", "Max Pixel Intensity Percentile", false, 100, "uint32_t");
+        cmd.add(maxPixelIntensityPercentileArg);
+
+
+
         cmd.parse(argc, argv);
 
         std::string inputFile = inputFileArg.getValue();
@@ -100,6 +115,9 @@ int main(int argc, const char **argv) {
         uint32_t minObjectSize = MinObjectSizeArg.getValue();
         bool maskOnly = MaskOnlyArg.getValue();
         std::string expertMode = expertModeArg.getValue();
+        std::string joinOperatorString = joinOperatorArg.getValue();
+        uint32_t minPixelIntensityPercentile = minPixelIntensityPercentileArg.getValue();
+        uint32_t maxPixelIntensityPercentile = maxPixelIntensityPercentileArg.getValue();
 
         if (!hasEnding(outputDir, "/")) {
             outputDir += "/";
@@ -111,11 +129,15 @@ int main(int argc, const char **argv) {
         VLOG(1) << MinHoleSizeArg.getDescription() << ": " << minHoleSize << std::endl;
         VLOG(1) << MaxHoleSizeArg.getDescription() << ": " << maxHoleSizeString << std::endl;
         VLOG(1) << MinObjectSizeArg.getDescription() << ": " << minObjectSize << std::endl;
+        VLOG(1) << joinOperatorArg.getDescription() << ": " << joinOperatorString << std::endl;
+        VLOG(1) << minPixelIntensityPercentileArg.getDescription() << ": " << minPixelIntensityPercentile << std::endl;
+        VLOG(1) << maxPixelIntensityPercentileArg.getDescription() << ": " << maxPixelIntensityPercentile << std::endl;
         VLOG(1) << MaskOnlyArg.getDescription() << ": " << std::noboolalpha  << maskOnly << ":" << std::boolalpha << maskOnly << std::endl;
         VLOG(1) << expertModeArg.getDescription() << ": " << expertMode << std::endl;
 
         egt::ImageDepth imageDepth = egt::parseImageDepth(depth);
         uint32_t maxHoleSize = parseUint32String(maxHoleSizeString);
+        egt::JoinOperator op = egt::parseJoinOperator(joinOperatorString);
 
 
         auto *options = new egt::EGTOptions();
@@ -129,11 +151,11 @@ int main(int argc, const char **argv) {
         segmentationOptions->MIN_OBJECT_SIZE = minObjectSize;
         segmentationOptions->MAX_HOLE_SIZE = maxHoleSize;
         segmentationOptions->MASK_ONLY = maskOnly;
-
+        segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR = op;
+        segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE = minPixelIntensityPercentile;
+        segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE = maxPixelIntensityPercentile;
 
         auto expertModeOptions = parseExpertMode(expertMode);
-
-
 
         switch (imageDepth) {
             case egt::ImageDepth::_32F: {

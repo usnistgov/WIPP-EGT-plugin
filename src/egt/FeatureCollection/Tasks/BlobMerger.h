@@ -207,6 +207,7 @@ namespace egt {
             VLOG(3) << "original number of holes : " << originalNbOfHoles;
             VLOG(3) << "nb of holes filled : " << nbHolesTooSmall;
 
+            delete meanIntensities;
         }
 
         /**

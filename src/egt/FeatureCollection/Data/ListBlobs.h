@@ -58,7 +58,7 @@ struct ListBlobs : public IData {
 
         VLOG(1) << "erode feature collection";
 
-        auto foregroundValue = 255;
+        uint8_t foregroundValue = 255;
 
         for(auto &blob : _blobs) {
 

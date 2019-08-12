@@ -1,167 +1,178 @@
-    /// \brief Create a tiled tiff mask, where the pixels are 1.
-    /// \param pathLabeledMask Path to save the mask.
-    /// \param tileSize Size of tile in the tiff image
-    void createBlackWhiteMask2(const std::string &pathLabeledMask,
-                              const uint32_t tileSize = 1024) {
-      if ((tileSize & (tileSize - 1)) != 0) {
-        std::stringstream message;
-        message
-                << "Feature Collection ERROR: The tiling asked is not a power of 2.";
-        std::string m = message.str();
-        throw (fi::FastImageException(m));
-      }
-      // Get image size
-      auto
-              imageWidth = this->getImageWidth(),
-              imageHeight = this->getImageHeight();
+/home/gerardin/CLionProjects/newEgt/cmake-build-debug/commandLineCli -i /home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif -o /home/gerardin/CLionProjects/newEgt/outputs/ -d 16U --level 0 --minhole 20 --maxhole inf --minobject 40 --op or --minintensity 50 --maxintensity 100 -x 0 -e loader=1;tile=1
+WARNING: Logging before InitGoogleLogging() is written to STDERR
+I0812 15:59:55.933133  6813 CommandLineCli.cpp:126] (required)  input images directory: /home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif
+I0812 15:59:55.933193  6813 CommandLineCli.cpp:127] (required)  output directory: /home/gerardin/CLionProjects/newEgt/outputs/
+I0812 15:59:55.933198  6813 CommandLineCli.cpp:128] Pyramid Level: 0
+I0812 15:59:55.933202  6813 CommandLineCli.cpp:129] Minimum Hole Size: 20
+I0812 15:59:55.933205  6813 CommandLineCli.cpp:130] Maximum Hole Size: inf
+I0812 15:59:55.933208  6813 CommandLineCli.cpp:131] Minimum Object Size: 40
+I0812 15:59:55.933210  6813 CommandLineCli.cpp:132] Keep Holes Intensity Join Operator: or
+I0812 15:59:55.933213  6813 CommandLineCli.cpp:133] Min Pixel Intensity Percentile: 50
+I0812 15:59:55.933216  6813 CommandLineCli.cpp:134] Max Pixel Intensity Percentile: 100
+I0812 15:59:55.933219  6813 CommandLineCli.cpp:135] Mask only: 0:false
+I0812 15:59:55.933248  6813 CommandLineCli.cpp:136] Expert mode: loader=1;tile=1
+I0812 15:59:55.933259  6813 EGT.h:64] Execution model :
+I0812 15:59:55.933262  6813 EGT.h:65] loader threads : 1
+I0812 15:59:55.933264  6813 EGT.h:66] concurrent tiles : 1
+I0812 15:59:55.933267  6813 EGT.h:67] fixed threshold : false
+I0812 15:59:55.934794  6813 EGT.h:163] intensity bounds : collecting pixel for tile (0,0).
+I0812 15:59:55.936667  6813 EGT.h:163] intensity bounds : collecting pixel for tile (0,1).
+I0812 15:59:55.938791  6813 EGT.h:163] intensity bounds : collecting pixel for tile (0,2).
+I0812 15:59:55.940305  6813 EGT.h:163] intensity bounds : collecting pixel for tile (1,2).
+I0812 15:59:55.941614  6813 EGT.h:163] intensity bounds : collecting pixel for tile (1,1).
+I0812 15:59:55.943543  6813 EGT.h:163] intensity bounds : collecting pixel for tile (1,0).
+I0812 15:59:55.945137  6813 EGT.h:163] intensity bounds : collecting pixel for tile (2,0).
+I0812 15:59:55.945469  6813 EGT.h:163] intensity bounds : collecting pixel for tile (2,1).
+I0812 15:59:55.945909  6813 EGT.h:163] intensity bounds : collecting pixel for tile (2,2).
+I0812 15:59:56.027657  6813 EGT.h:246] Requesting tile : (2, 2)
+I0812 15:59:56.027675  6813 EGT.h:246] Requesting tile : (0, 1)
+I0812 15:59:56.027680  6813 EGT.h:246] Requesting tile : (1, 0)
+I0812 15:59:56.027686  6813 EGT.h:246] Requesting tile : (1, 2)
+I0812 15:59:56.027690  6813 EGT.h:246] Requesting tile : (1, 0)
+I0812 15:59:56.027709  6813 EGT.h:246] Requesting tile : (2, 0)
+I0812 15:59:56.027714  6813 EGT.h:246] Requesting tile : (1, 0)
+I0812 15:59:56.027719  6813 EGT.h:246] Requesting tile : (1, 2)
+I0812 15:59:56.027724  6813 EGT.h:246] Requesting tile : (0, 1)
+I0812 15:59:56.029305  6833 CustomSobelFilter3by3.h:51] Custom Sobel Filter for tile (2 , 2) ...
+I0812 15:59:56.030351  6833 CustomSobelFilter3by3.h:51] Custom Sobel Filter for tile (0 , 1) ...
+I0812 15:59:56.032001  6833 CustomSobelFilter3by3.h:51] Custom Sobel Filter for tile (1 , 0) ...
+I0812 15:59:56.034682  6833 CustomSobelFilter3by3.h:51] Custom Sobel Filter for tile (1 , 2) ...
+I0812 15:59:56.037143  6833 CustomSobelFilter3by3.h:51] Custom Sobel Filter for tile (1 , 0) ...
+I0812 15:59:56.038992  6833 CustomSobelFilter3by3.h:51] Custom Sobel Filter for tile (2 , 0) ...
+I0812 15:59:56.040406  6833 CustomSobelFilter3by3.h:51] Custom Sobel Filter for tile (1 , 0) ...
+I0812 15:59:56.042423  6833 CustomSobelFilter3by3.h:51] Custom Sobel Filter for tile (1 , 2) ...
+I0812 15:59:56.045151  6833 CustomSobelFilter3by3.h:51] Custom Sobel Filter for tile (0 , 1) ...
+I0812 15:59:56.047498  6834 ThresholdFinder.h:49] Determining Threshold...
+I0812 15:59:56.047507  6834 ThresholdFinder.h:51] we have run gradient on : 9 sample tiles.
+I0812 15:59:56.047511  6834 ThresholdFinder.h:56] Nb of gradient pixels : 589824
+I0812 15:59:56.047515  6834 ThresholdFinder.h:57] min : 1
+I0812 15:59:56.047520  6834 ThresholdFinder.h:58] max : 5589
+I0812 15:59:56.051061  6834 ThresholdFinder.h:117] peak value 0 : 0.0774633
+I0812 15:59:56.051080  6834 ThresholdFinder.h:118] peak index 0 : 9
+I0812 15:59:56.051084  6834 ThresholdFinder.h:117] peak value 1 : 0.0841525
+I0812 15:59:56.051090  6834 ThresholdFinder.h:118] peak index 1 : 6
+I0812 15:59:56.051092  6834 ThresholdFinder.h:117] peak value 2 : 0.0859606
+I0812 15:59:56.051096  6834 ThresholdFinder.h:118] peak index 2 : 8
+I0812 15:59:56.051101  6834 ThresholdFinder.h:121] mode loc : 8 of 1000buckets.
+I0812 15:59:56.051110  6834 ThresholdFinder.h:135] lower bound : 26
+I0812 15:59:56.051112  6834 ThresholdFinder.h:136] upper bound : 161
+I0812 15:59:56.051117  6834 ThresholdFinder.h:149] area : 0.029482
+I0812 15:59:56.051121  6834 ThresholdFinder.h:171] percentile of pixels threshold value : 95
+I0812 15:59:56.051126  6834 ThresholdFinder.h:177] sorting all pixel values...
+I0812 15:59:56.147027  6834 ThresholdFinder.h:186] threshold pixel gradient intensity value : 124
+I0812 15:59:56.147079  6813 EGT.h:267] Threshold value using average: 124
+I0812 15:59:56.147094  6813 EGT.h:272] Threshold value using median : 124
+I0812 15:59:56.147100  6813 EGT.h:274] Threshold value : 124
+Writing dot file for task graph with compute time coloring to color-compute-time-thresholdGraph.xdot
+I0812 15:59:56.149921  6853 EGTSobelFilter.h:59] Custom Sobel Filter for tile (0 , 0) ...
+I0812 15:59:56.290729  6854 EGTGradientViewAnalyzer.h:131] segmenting tile (0 , 0) :
+I0812 15:59:56.290745  6854 EGTGradientViewAnalyzer.h:132] holes turned to foreground : 17
+I0812 15:59:56.290765  6854 EGTGradientViewAnalyzer.h:133] objects removed because too small: 610
+I0812 15:59:56.290766  6854 EGTGradientViewAnalyzer.h:134] objects found: 3
+I0812 15:59:56.290771  6854 EGTGradientViewAnalyzer.h:135] objects to merge: 3
+I0812 15:59:56.291326  6853 EGTSobelFilter.h:59] Custom Sobel Filter for tile (0 , 1) ...
+I0812 15:59:56.426677  6854 EGTGradientViewAnalyzer.h:131] segmenting tile (0 , 1) :
+I0812 15:59:56.426697  6854 EGTGradientViewAnalyzer.h:132] holes turned to foreground : 103
+I0812 15:59:56.426699  6854 EGTGradientViewAnalyzer.h:133] objects removed because too small: 1160
+I0812 15:59:56.426702  6854 EGTGradientViewAnalyzer.h:134] objects found: 9
+I0812 15:59:56.426704  6854 EGTGradientViewAnalyzer.h:135] objects to merge: 4
+I0812 15:59:56.426966  6853 EGTSobelFilter.h:59] Custom Sobel Filter for tile (0 , 2) ...
+I0812 15:59:56.521674  6854 EGTGradientViewAnalyzer.h:131] segmenting tile (0 , 2) :
+I0812 15:59:56.521688  6854 EGTGradientViewAnalyzer.h:132] holes turned to foreground : 152
+I0812 15:59:56.521708  6854 EGTGradientViewAnalyzer.h:133] objects removed because too small: 1463
+I0812 15:59:56.521709  6854 EGTGradientViewAnalyzer.h:134] objects found: 10
+I0812 15:59:56.521713  6854 EGTGradientViewAnalyzer.h:135] objects to merge: 2
+I0812 15:59:56.522259  6853 EGTSobelFilter.h:59] Custom Sobel Filter for tile (1 , 2) ...
+I0812 15:59:56.622543  6854 EGTGradientViewAnalyzer.h:131] segmenting tile (1 , 2) :
+I0812 15:59:56.622557  6854 EGTGradientViewAnalyzer.h:132] holes turned to foreground : 316
+I0812 15:59:56.622576  6854 EGTGradientViewAnalyzer.h:133] objects removed because too small: 1811
+I0812 15:59:56.622579  6854 EGTGradientViewAnalyzer.h:134] objects found: 12
+I0812 15:59:56.622582  6854 EGTGradientViewAnalyzer.h:135] objects to merge: 2
+I0812 15:59:56.624071  6853 EGTSobelFilter.h:59] Custom Sobel Filter for tile (1 , 1) ...
+I0812 15:59:56.759835  6854 EGTGradientViewAnalyzer.h:131] segmenting tile (1 , 1) :
+I0812 15:59:56.759850  6854 EGTGradientViewAnalyzer.h:132] holes turned to foreground : 392
+I0812 15:59:56.759868  6854 EGTGradientViewAnalyzer.h:133] objects removed because too small: 2316
+I0812 15:59:56.759871  6854 EGTGradientViewAnalyzer.h:134] objects found: 7
+I0812 15:59:56.759876  6854 EGTGradientViewAnalyzer.h:135] objects to merge: 1
+I0812 15:59:56.761020  6853 EGTSobelFilter.h:59] Custom Sobel Filter for tile (1 , 0) ...
+I0812 15:59:56.894038  6854 EGTGradientViewAnalyzer.h:131] segmenting tile (1 , 0) :
+I0812 15:59:56.894093  6854 EGTGradientViewAnalyzer.h:132] holes turned to foreground : 466
+I0812 15:59:56.894095  6854 EGTGradientViewAnalyzer.h:133] objects removed because too small: 2928
+I0812 15:59:56.894098  6854 EGTGradientViewAnalyzer.h:134] objects found: 10
+I0812 15:59:56.894102  6854 EGTGradientViewAnalyzer.h:135] objects to merge: 3
+I0812 15:59:56.894424  6853 EGTSobelFilter.h:59] Custom Sobel Filter for tile (2 , 0) ...
+I0812 15:59:56.898725  6854 EGTGradientViewAnalyzer.h:131] segmenting tile (2 , 0) :
+I0812 15:59:56.898737  6854 EGTGradientViewAnalyzer.h:132] holes turned to foreground : 468
+I0812 15:59:56.898741  6854 EGTGradientViewAnalyzer.h:133] objects removed because too small: 2951
+I0812 15:59:56.898742  6854 EGTGradientViewAnalyzer.h:134] objects found: 2
+I0812 15:59:56.898746  6854 EGTGradientViewAnalyzer.h:135] objects to merge: 0
+I0812 15:59:56.899276  6853 EGTSobelFilter.h:59] Custom Sobel Filter for tile (2 , 1) ...
+I0812 15:59:56.903319  6854 EGTGradientViewAnalyzer.h:131] segmenting tile (2 , 1) :
+I0812 15:59:56.903327  6854 EGTGradientViewAnalyzer.h:132] holes turned to foreground : 469
+I0812 15:59:56.903347  6854 EGTGradientViewAnalyzer.h:133] objects removed because too small: 2969
+I0812 15:59:56.903348  6854 EGTGradientViewAnalyzer.h:134] objects found: 0
+I0812 15:59:56.903352  6854 EGTGradientViewAnalyzer.h:135] objects to merge: 0
+I0812 15:59:56.903653  6853 EGTSobelFilter.h:59] Custom Sobel Filter for tile (2 , 2) ...
+I0812 15:59:56.906651  6854 EGTGradientViewAnalyzer.h:131] segmenting tile (2 , 2) :
+I0812 15:59:56.906659  6854 EGTGradientViewAnalyzer.h:132] holes turned to foreground : 476
+I0812 15:59:56.906662  6854 EGTGradientViewAnalyzer.h:133] objects removed because too small: 2993
+I0812 15:59:56.906680  6854 EGTGradientViewAnalyzer.h:134] objects found: 2
+I0812 15:59:56.906682  6854 EGTGradientViewAnalyzer.h:135] objects to merge: 0
+I0812 15:59:56.906792  6856 BlobMerger.h:107] merging 19 holes...
+I0812 15:59:56.906816  6856 BlobMerger.h:108] merging 55 blobs...
+I0812 15:59:56.907506  6856 BlobMerger.h:273] nb of sons: 19
+I0812 15:59:56.983839  6856 BlobMerger.h:207] original number of holes : 1
+I0812 15:59:56.983853  6856 BlobMerger.h:208] nb of holes filled : 0
+I0812 15:59:56.983963  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.983968  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.983970  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.983973  6856 BlobMerger.h:273] nb of sons: 2
+I0812 15:59:56.984004  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984009  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984012  6856 BlobMerger.h:273] nb of sons: 2
+I0812 15:59:56.984020  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984025  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984027  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984030  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984031  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984033  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984036  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984038  6856 BlobMerger.h:273] nb of sons: 2
+I0812 15:59:56.984166  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984170  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984174  6856 BlobMerger.h:273] nb of sons: 2
+I0812 15:59:56.984181  6856 BlobMerger.h:273] nb of sons: 2
+I0812 15:59:56.984189  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984194  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984199  6856 BlobMerger.h:273] nb of sons: 3
+I0812 15:59:56.984431  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984434  6856 BlobMerger.h:273] nb of sons: 2
+I0812 15:59:56.984441  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984445  6856 BlobMerger.h:273] nb of sons: 4
+I0812 15:59:56.984490  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984494  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984498  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984503  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984508  6856 BlobMerger.h:273] nb of sons: 2
+I0812 15:59:56.984514  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984519  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984524  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984529  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984534  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984537  6856 BlobMerger.h:273] nb of sons: 2
+I0812 15:59:56.984545  6856 BlobMerger.h:273] nb of sons: 3
+I0812 15:59:56.984630  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984634  6856 BlobMerger.h:273] nb of sons: 1
+I0812 15:59:56.984652  6856 BlobMerger.h:236] original nb of objects : 40
+I0812 15:59:56.984655  6856 BlobMerger.h:237] nb of small objects that have been removed : 7
+I0812 15:59:56.984659  6856 BlobMerger.h:238] total nb of objects after filtering: 33
+I0812 15:59:56.984664  6856 BlobMerger.h:118] after last merge, we have : 33 blobs left
+I0812 15:59:56.984668  6856 BlobMerger.h:121]     Merge blobs: 77 mS
+I0812 15:59:56.996935  6813 EGT.h:427] generating a segmentation mask
+I0812 15:59:56.999024  6813 EGT.h:115] Execution time:
+I0812 15:59:56.999033  6813 EGT.h:116]     Threshold Detection: 120 mS
+I0812 15:59:56.999037  6813 EGT.h:119]     Segmentation: 836 mS
+I0812 15:59:56.999040  6813 EGT.h:121]     Feature Collection: 14 mS
+I0812 15:59:56.999043  6813 EGT.h:123]     Total: 1065 mS
 
-      // Create two tiles pointer: one empty, one to be filled
-      std::vector<uint8_t>
-              *emptyTile = new std::vector<uint8_t>(tileSize * tileSize, 0),
-              *currentTile = nullptr;
-
-      // Create a pair to create a coordinate (row/col)
-      std::pair<uint32_t, uint32_t>
-              currentCoordinates;
-
-      // Create the tiff file
-      TIFF
-              *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
-
-      uint32_t
-              upperLeftRowFeature = 0,
-              upperLeftColFeature = 0,
-              bottomRightRowFeature = 0,
-              bottomRightColFeature = 0,
-              minRowTile = 0,
-              minColTile = 0,
-              upperLeftRow = 0,
-              upperLeftCol = 0,
-              bottomRightRow = 0,
-              bottomRightCol = 0,
-              indexMinTileRow = 0,
-              indexMaxTileRow = 0,
-              indexMinTileCol = 0,
-              indexMaxTileCol = 0;
-
-      // Create a map of coordinate -> Tile
-      std::map<std::pair<uint32_t, uint32_t>, std::vector<uint8_t> *>
-              loadedTiles;
-
-      if (tif != nullptr) {
-        TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
-        TIFFSetField(tif, TIFFTAG_IMAGELENGTH, imageHeight);
-        TIFFSetField(tif, TIFFTAG_TILELENGTH, tileSize);
-        TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileSize);
-        TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8 * sizeof(uint8_t));
-        TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
-        TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
-        TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
-        TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
-        TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-        TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-
-        // For every feature in the feature collection
-        for (const auto &feature : this->_features) {
-
-          // Get the bounding box
-          upperLeftRowFeature = feature->getBoundingBox().getUpperLeftRow();
-          upperLeftColFeature = feature->getBoundingBox().getUpperLeftCol();
-          bottomRightRowFeature = feature->getBoundingBox().getBottomRightRow();
-          bottomRightColFeature = feature->getBoundingBox().getBottomRightCol();
-
-          indexMinTileRow = upperLeftRowFeature / tileSize;
-          indexMinTileCol = upperLeftColFeature / tileSize;
-
-          indexMaxTileRow = (bottomRightRowFeature - 1) / tileSize;
-          indexMaxTileCol = (bottomRightColFeature - 1) / tileSize;
-
-          // For every view in the bounding box
-          for (uint32_t indexRow = indexMinTileRow; indexRow <= indexMaxTileRow;
-               ++indexRow) {
-            for (uint32_t indexCol = indexMinTileCol; indexCol <= indexMaxTileCol;
-                 ++indexCol) {
-
-              // Get the tile, from the map or create one
-              currentCoordinates =
-                      std::pair<uint32_t, uint32_t>(indexRow, indexCol);
-              if (loadedTiles.find(currentCoordinates) == loadedTiles.end()) {
-                loadedTiles[currentCoordinates] =
-                        new std::vector<uint8_t>(tileSize * tileSize, 0);
-              }
-              currentTile = loadedTiles[currentCoordinates];
-
-              // Get the indexes used for the computation
-              minRowTile = indexRow * tileSize;
-              minColTile = indexCol * tileSize;
-
-              upperLeftRow = std::max(minRowTile, upperLeftRowFeature);
-              upperLeftCol = std::max(minColTile, upperLeftColFeature);
-
-              bottomRightRow =
-                      std::min(bottomRightRowFeature, (indexRow + 1) * tileSize);
-              bottomRightCol =
-                      std::min(bottomRightColFeature, (indexCol + 1) * tileSize);
-
-              // For every pixel in the tile
-              for (uint32_t rowTileFeature = upperLeftRow;
-                   rowTileFeature < bottomRightRow; ++rowTileFeature) {
-                for (uint32_t colTileFeature = upperLeftCol;
-                     colTileFeature < bottomRightCol; ++colTileFeature) {
-
-                  // If the pixel is in the feature
-                  if (feature->isInBitMask(rowTileFeature, colTileFeature)) {
-                    currentTile->at((rowTileFeature - minRowTile) * tileSize
-                                    + (colTileFeature - minColTile)) = 255;
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        indexMaxTileRow = (this->getImageHeight() - 1) / tileSize;
-        indexMaxTileCol = (this->getImageWidth() - 1) / tileSize;
-
-        // For every tile in the image
-        for (uint32_t indexRow = 0; indexRow <= indexMaxTileRow; indexRow++) {
-          for (uint32_t indexCol = 0; indexCol <= indexMaxTileCol; indexCol++) {
-
-            // Get the tile from it coordinates in the map
-            currentCoordinates =
-                    std::pair<uint32_t, uint32_t>(indexRow, indexCol);
-            // If it doesn't exist write the blank tile
-            if (loadedTiles.find(currentCoordinates) == loadedTiles.end()) {
-
-              TIFFWriteTile(tif,
-                            emptyTile->data(),
-                            indexCol * tileSize,
-                            indexRow * tileSize,
-                            0,
-                            0);
-            } else {
-              // Write the filled tile
-              TIFFWriteTile(tif,
-                            (loadedTiles[currentCoordinates])->data(),
-                            indexCol * tileSize,
-                            indexRow * tileSize,
-                            0,
-                            0);
-            }
-
-          }
-        }
-        // Close the tif
-        TIFFClose(tif);
-      } else {
-        std::cerr << "The File " << pathLabeledMask << " can't be opened."
-                  << std::endl;
-        exit(1);
-      }
-
-      delete emptyTile;
-      for (auto &tile : loadedTiles) {
-        delete tile.second;
-      }
-    }
+Process finished with exit code 0

@@ -60,7 +60,7 @@ namespace egt {
                                 meanIntensity < segmentationParams.maxPixelIntensityValue);
         }
         else if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::OR) {
-            filter = filter && (meanIntensity > segmentationParams.minPixelIntensityValue &&
+            filter = filter || (meanIntensity > segmentationParams.minPixelIntensityValue &&
                                 meanIntensity < segmentationParams.maxPixelIntensityValue);
         }
 

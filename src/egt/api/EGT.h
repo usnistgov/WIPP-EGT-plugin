@@ -25,6 +25,8 @@
 #include <egt/tasks/TiffTileWriter.h>
 #include <egt/api/EGTOptions.h>
 #include <random>
+#include <egt/tasks/EGTSobelFilter.h>
+#include <egt/FeatureCollection/Tasks/EGTGradientViewAnalyzer.h>
 #include "DerivedSegmentationParams.h"
 
 
@@ -170,8 +172,8 @@ namespace egt {
 
             std::sort(intensities.begin(), intensities.end());
 
-            auto minIndex = segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE / 100 * intensities.size();
-            auto maxIndex = segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE / 100 * intensities.size() - 1;
+            auto minIndex = segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE * intensities.size() / 100  - 1;
+            auto maxIndex = segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE* intensities.size() / 100  - 1;
 
             auto minValue = intensities[minIndex];
             auto maxValue = intensities[maxIndex];
@@ -210,8 +212,8 @@ namespace egt {
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
 
-            auto nbOfSamples = std::min(nbTiles, (uint32_t) 10);
-            size_t nbOfSamplingExperiment = 5;
+            auto nbOfSamples = nbTiles;
+            size_t nbOfSamplingExperiment = 1;
 
             auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
             auto sobelFilter = new CustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
@@ -310,15 +312,16 @@ namespace egt {
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
 
-            auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
-            auto viewSegmentation = new EGTViewAnalyzer<T>(options->concurrentTiles,
+            auto sobelFilter2 = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+            auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
                                                            imageHeightAtSegmentationLevel,
                                                            imageWidthAtSegmentationLevel,
                                                            tileHeigthAtSegmentationLevel,
                                                            tileWidthAtSegmentationLevel,
                                                            4,
                                                            threshold,
-                                                           segmentationOptions);
+                                                           segmentationOptions,
+                                                           segmentationParams);
             auto maskFilter = new ViewFilter<T>(options->concurrentTiles);
             auto merge = new BlobMerger<T>(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
@@ -379,16 +382,17 @@ namespace egt {
             tileWidthAtSegmentationLevel = fi->getTileWidth(pyramidLevelToRequestForSegmentation);
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
-            auto sobelFilter2 = new FCCustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+            auto sobelFilter2 = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
 
-            auto viewSegmentation = new EGTViewAnalyzer<T>(options->concurrentTiles,
+            auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
                                                            imageHeightAtSegmentationLevel,
                                                            imageWidthAtSegmentationLevel,
                                                            tileHeightAtSegmentationLevel,
                                                            tileWidthAtSegmentationLevel,
                                                            4,
                                                            threshold,
-                                                           segmentationOptions);
+                                                           segmentationOptions,
+                                                           segmentationParams);
             auto labelingFilter = new ViewAnalyseFilter<T>(options->concurrentTiles);
             auto merge = new BlobMerger<T>(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
