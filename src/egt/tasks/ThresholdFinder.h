@@ -153,12 +153,12 @@ namespace egt {
 
                 //compute percentile threshold from the empirical model : Y = aX + b
                 //TODO CHECK - taken from the book - in java code we have other values
-                double s1 = 3;
-                double s2 = 50;
-                double a = -1.3517;
-                double b = 98.8726;
+                double saturation1 = 3;
+                double saturation2 = 42;
+                double a = (95.0 - 40.0) / (saturation1 - saturation2);
+                double b = 95 - a * saturation1;
                 double percentileThreshold = std::round(a * (area * 100) + b);
-                percentileThreshold = (percentileThreshold > 95) ? 95 : percentileThreshold;
+                percentileThreshold = (percentileThreshold > 98) ? 98 : percentileThreshold;
                 percentileThreshold = (percentileThreshold < 25) ? 25 : percentileThreshold;
 
 

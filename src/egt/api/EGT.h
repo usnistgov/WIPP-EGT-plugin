@@ -218,6 +218,10 @@ namespace egt {
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforThreshold) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestforThreshold);
 
+            auto randomExperiments = true;
+            if(options->nbTilePerSample == -1 && options->nbExperiments == -1) {
+                randomExperiments = false;
+            }
             auto nbOfSamples = (options->nbTilePerSample != -1) ? std::min((int32_t)nbTiles, options->nbTilePerSample) : nbTiles;
             auto nbOfSamplingExperiment = (size_t)((options->nbExperiments != -1) ? options->nbExperiments : 1);
 
@@ -249,11 +253,16 @@ namespace egt {
             std::uniform_int_distribution<uint32_t> distributionRowRange(0, numTileRow - 1);
             std::uniform_int_distribution<uint32_t> distributionColRange(0, numTileCol - 1);
 
-            for (auto i = 0; i < nbOfSamplingExperiment * nbOfSamples; i++) {
-                uint32_t randomRow = distributionRowRange(generator);
-                uint32_t randomCol = distributionColRange(generator);
-                VLOG(3) << "Requesting tile : (" << randomRow << ", " << randomCol << ")";
-                fi->requestTile(randomRow, randomCol, false, pyramidLevelToRequestforThreshold);
+            if(randomExperiments) {
+                for (auto i = 0; i < nbOfSamplingExperiment * nbOfSamples; i++) {
+                    uint32_t randomRow = distributionRowRange(generator);
+                    uint32_t randomCol = distributionColRange(generator);
+                    VLOG(3) << "Requesting tile : (" << randomRow << ", " << randomCol << ")";
+                    fi->requestTile(randomRow, randomCol, false, pyramidLevelToRequestforThreshold);
+                }
+            }
+            else {
+                fi->requestAllTiles(false,pyramidLevelToRequestforThreshold);
             }
 
             fi->finishedRequestingTiles();

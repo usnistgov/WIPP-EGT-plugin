@@ -104,8 +104,8 @@ namespace egt {
 
                 auto startMerge = std::chrono::high_resolution_clock::now();
 
-                VLOG(1) << "merging " << this->_holes->_blobs.size() << " holes...";
-                VLOG(1) << "merging " << this->_blobs->_blobs.size() << " blobs...";
+                VLOG(1) << "detected " << this->_holes->_blobs.size() << " holes..." << this->_holesToMerge.size() << " to merge.";
+                VLOG(1) << "detected " << this->_blobs->_blobs.size() << " objects..." << this->_toMerge.size() << " to merge.";
 
                 _count = 0;
                 //flag set to true because we should remove holes not linked to anything because we have already removed background info
