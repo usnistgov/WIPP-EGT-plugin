@@ -125,6 +125,8 @@ namespace egt {
                 VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
                 VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
                 VLOG(3) << "objects removed because too small: " << objectRemovedCount;
+                VLOG(3) << "holes found: " << _vAnalyse->getHoles().size();
+                VLOG(3) << "holes to merge: " << _vAnalyse->getHolesToMerge().size();
                 VLOG(3) << "objects found: " << _vAnalyse->getBlobs().size();
                 VLOG(3) << "objects to merge: " << _vAnalyse->getToMerge().size();
                 view->releaseMemory();
