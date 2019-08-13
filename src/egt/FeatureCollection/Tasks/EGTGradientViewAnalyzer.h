@@ -192,7 +192,7 @@ namespace egt {
        }
 
        /**
-        * We have a queue of pixels to visit. Take the first one and explore its neighbors as well.
+        * We have a queue of pixels to visit. Take the first one and explore its neighbors.
         * @param blobColor
         */
         void expandBlob(Color blobColor){
@@ -226,49 +226,28 @@ namespace egt {
 
                 //background and foreground blobs are not handled the same way
                 if(blobColor == BACKGROUND) {
-
-                    UserType meanIntensity = computeMeanIntensity();
-
-                    //IF WE HAVE A SMALL BLOB THAT IS NOT TO BE MERGED, WE CONSIDER IT IS A HOLE THAT NEEDS TO BE FILLED
-                    //we reset all pixels as UNVISITED foreground.
-                    auto area = _currentBlob->getCount();
-                    auto filter = computeHoleFillingCriteria<UserType>(area, meanIntensity, _options, _segmentationParams);
-
-                    if (!_currentBlob->isToMerge() && filter) {
-
-                        for (auto it = _currentBlob->getRowCols().begin();
-                             it != _currentBlob->getRowCols().end(); ++it) {
-                            auto pRow = it->first;
-                            for (auto pCol : it->second) {
-                                auto xOffset = _view->getGlobalXOffset();
-                                auto yOffset = _view->getGlobalYOffset();
-
-                                markAsUnvisited(pRow - yOffset, pCol - xOffset);
-
-                                if(_options->MASK_ONLY){
-                                    _view->setPixel(pRow - yOffset, pCol - xOffset, 255);
-                                }
-                                else {
-                                    _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
-                                }
-                            }
-                        }
-                        delete _currentBlob;
-                        holeRemovedCount++;
-                    }
-                    //we do not know enough, so we need to merge the background blob
-                    else {
-                        //WE ADD IT
+                    //we know this hole is on the border, so we keep track of it for the merge.
+                    if (_currentBlob->isToMerge()) {
                         if(!_options->MASK_ONLY) {
                             _currentBlob->compactBlobDataIntoFeature();
                             _vAnalyse->insertHole(_currentBlob);
                         }
                     }
-
+                    //for local hole, decide if we fill it up.
+                    else {
+                        UserType meanIntensity = computeMeanIntensity();
+                        auto area = _currentBlob->getCount();
+                        auto keepHole = computeKeepHoleCriteria<UserType>(area, meanIntensity, _options, _segmentationParams);
+                        if(!keepHole) {
+                            fillUpHole();
+                        }
+                        delete _currentBlob;
+                        holeRemovedCount++;
+                    }
                 }
                 else {
-                    //WE HAVE A SMALL OBJECT THAT DOES NOT NEED MERGE, WE REMOVE IT
-                    if (_currentBlob->getCount() < _options->MIN_OBJECT_SIZE && !_currentBlob->isToMerge()) {
+                    //we delete small objects
+                    if (!_currentBlob->isToMerge() && _currentBlob->getCount() < _options->MIN_OBJECT_SIZE) {
 
                         if(_options->MASK_ONLY){
                             for (auto it = _currentBlob->getRowCols().begin();
@@ -281,12 +260,11 @@ namespace egt {
                                 }
                             }
                         }
-
                         delete _currentBlob;
                         objectRemovedCount++;
                     }
+                    // we keep track of the others
                     else{
-                        //WE ADD IT
                         if(!_options->MASK_ONLY) {
                             _currentBlob->compactBlobDataIntoFeature();
                             _vAnalyse->insertBlob(_currentBlob);
@@ -299,12 +277,12 @@ namespace egt {
 
 
         /**
-         * Create a new blob at this pixel and check its neighbors to kickstart its expansion.
+         * Create a new blob at a given position and try to expand it.
          * @param row
          * @param col
          * @param blobColor
          */
-        void createBlob(int32_t row, int32_t col, Color blobColor){
+        void createBlob(int32_t row, int32_t col, Color blobColor) {
             markAsVisited(row, col);
             //add pixel to a new blob
             _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
@@ -419,6 +397,25 @@ namespace egt {
             }
             auto intensity = (UserType)(sum / count);
             return intensity;
+        }
+
+        void fillUpHole(){
+            for (auto it = _currentBlob->getRowCols().begin();
+                 it != _currentBlob->getRowCols().end(); ++it) {
+                auto pRow = it->first;
+                for (auto pCol : it->second) {
+                    auto xOffset = _view->getGlobalXOffset();
+                    auto yOffset = _view->getGlobalYOffset();
+
+                    markAsUnvisited(pRow - yOffset, pCol - xOffset);
+
+                    if (_options->MASK_ONLY) {
+                        _view->setPixel(pRow - yOffset, pCol - xOffset, 255);
+                    } else {
+                        _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
+                    }
+                }
+            }
         }
 
 

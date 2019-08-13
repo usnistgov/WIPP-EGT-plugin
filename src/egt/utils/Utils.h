@@ -53,7 +53,8 @@ namespace egt {
     }
 
     template <class T>
-    bool computeHoleFillingCriteria(uint64_t area, T meanIntensity, SegmentationOptions* segmentationOptions, DerivedSegmentationParams<T> &segmentationParams) {
+    bool computeKeepHoleCriteria(uint64_t area, T meanIntensity, SegmentationOptions *segmentationOptions,
+                                 DerivedSegmentationParams<T> &segmentationParams) {
         bool filter = (area < segmentationOptions->MIN_HOLE_SIZE || area > segmentationOptions->MAX_HOLE_SIZE);
         if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::AND) {
             filter = filter && (meanIntensity > segmentationParams.minPixelIntensityValue &&

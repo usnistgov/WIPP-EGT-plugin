@@ -168,7 +168,7 @@ namespace egt {
                 auto area = blob->getCount();
                 auto meanIntensity = meanIntensities->at(blob);
 
-                auto filter = computeHoleFillingCriteria<T>(area, meanIntensity, segmentationOptions, segmentationParams);
+                auto filter = computeKeepHoleCriteria<T>(area, meanIntensity, segmentationOptions, segmentationParams);
 
                 //transform small holes into blobs
                 if(filter) {
