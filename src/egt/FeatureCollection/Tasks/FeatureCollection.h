@@ -84,14 +84,6 @@ class FeatureCollection {
     this->deserialize(pathFeatureCollection);
   }
 
-  /// \brief Default FeatureCollection destructor
-//  virtual ~FeatureCollection() {
-//    for (const auto &feature : _vectorFeatures) {
-//      if (feature.getBitMask() != nullptr)
-//        delete[] feature.getBitMask();
-//    }
-//  }
-
   /// \brief Get Image Width
   /// \return Image Width
   uint32_t getImageWidth() const { return _imageWidth; }
@@ -683,6 +675,100 @@ class FeatureCollection {
 
         TIFFClose(tif);
           VLOG(4) << "done writing mask : " << pathLabeledMask.c_str();
+      } else {
+        std::cerr << "The File " << pathLabeledMask << " can't be opened."
+                  << std::endl;
+        exit(1);
+      }
+    }
+
+
+    /// \brief Create a tiled tiff mask, where the pixels are 1.
+    /// \param pathLabeledMask Path to save the mask.
+    /// \param tileSize Size of tile in the tiff image
+    template <class T>
+    void createLabeledMaskStreaming(const std::string &pathLabeledMask, const uint32_t tileSize = 1024, ImageDepth depth = ImageDepth::_8U) {
+
+      uint32_t resolution = 0;
+
+      switch (depth){
+          case ImageDepth::_8U : {
+            resolution = 8 * sizeof(uint8_t);
+            break;
+          }
+          case ImageDepth::_16U : {
+            resolution = 8 * sizeof(uint16_t);
+            break;
+          }
+          case ImageDepth::_32U : {
+            resolution = 8 * sizeof(uint32_t);
+            break;
+          }
+      }
+
+      if ((tileSize & (tileSize - 1)) != 0) {
+        std::stringstream message;
+        message
+                << "Feature Collection ERROR: The tiling asked is not a power of 2.";
+        std::string m = message.str();
+        throw (fi::FastImageException(m));
+      }
+      // Get image size
+      auto
+              imageWidth = this->getImageWidth(),
+              imageHeight = this->getImageHeight();
+
+      VLOG(4) << "writing bitmask";
+
+      // Create the tiff file
+      TIFF
+              *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+
+      if (tif != nullptr) {
+        TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
+        TIFFSetField(tif, TIFFTAG_IMAGELENGTH, imageHeight);
+        TIFFSetField(tif, TIFFTAG_TILELENGTH, tileSize);
+        TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileSize);
+        TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, resolution);
+        TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
+        TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+        TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+        TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+        TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+        TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+
+        auto maxTileCol = (uint32_t)std::ceil((double)this->_imageWidth / tileSize);
+        auto maxTileRow = (uint32_t)std::ceil((double)this->_imageWidth / tileSize);
+
+        for(uint32_t tileRow = 0 ; tileRow < maxTileRow ; tileRow++){
+          for(uint32_t tileCol = 0; tileCol < maxTileCol; tileCol++){
+
+            auto tile = std::vector<T>(tileSize * tileSize, 0);
+
+            for(uint32_t j = 0; j < tileSize; j++){
+              for(uint32_t i = 0; i < tileSize; i++){
+                auto f = getFeatureFromPixel(tileRow * tileSize + j, tileCol * tileSize + i);
+                if(f != nullptr) {
+                  tile[j* tileSize + i] = f->getId() + 1;
+                }
+              }
+            }
+
+            TIFFWriteTile(tif,
+                          (tdata_t)tile.data(),
+                          tileCol * tileSize,
+                          tileRow * tileSize,
+                          0,
+                          0);
+
+            VLOG(4) << "done writing tile (" << tileRow << "," << tileCol << ")";
+
+          }
+        }
+
+        TIFFClose(tif);
+        VLOG(4) << "done writing mask : " << pathLabeledMask.c_str();
       } else {
         std::cerr << "The File " << pathLabeledMask << " can't be opened."
                   << std::endl;

@@ -63,8 +63,8 @@ namespace egt {
 
             //copy the original view
             T* original = new T[tileWidth * tileHeight]();
-            for(auto row = radius; row < view->getViewHeight() - radius; row++){
-                std::copy_n(viewData + radius, tileWidth, original);
+            for(auto row = 0; row < view->getTileHeight(); row++){
+                std::copy_n(viewData + (row + radius) * tileWidth + radius, tileWidth, original + row * tileWidth);
             }
 
             //Emulate Sobel as implemented in ImageJ

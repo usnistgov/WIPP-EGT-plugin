@@ -37,6 +37,23 @@ namespace egt {
 
 
     template<class T>
+    void printArray(std::string title, T *data, uint32_t w, uint32_t h, int space) {
+        std::ostringstream oss;
+
+        oss << title << std::endl;
+        for (size_t i = 0; i < h; ++i) {
+            for (size_t j = 0; j < w; ++j) {
+                oss << std::setw(space) << (data[i * w + j]) << " ";
+            }
+            oss << std::endl;
+        }
+        oss << std::endl;
+
+        VLOG(3) << oss.str();
+    }
+
+
+    template<class T>
     void printBoolArray(std::string title, T *data, uint32_t w, uint32_t h) {
         std::ostringstream oss;
 
@@ -55,17 +72,17 @@ namespace egt {
     template <class T>
     bool computeKeepHoleCriteria(uint64_t area, T meanIntensity, SegmentationOptions *segmentationOptions,
                                  DerivedSegmentationParams<T> &segmentationParams) {
-        bool filter = (area < segmentationOptions->MIN_HOLE_SIZE || area > segmentationOptions->MAX_HOLE_SIZE);
+        bool keepHole = (area > segmentationOptions->MIN_HOLE_SIZE && area < segmentationOptions->MAX_HOLE_SIZE);
         if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::AND) {
-            filter = filter && (meanIntensity > segmentationParams.minPixelIntensityValue &&
+            keepHole = keepHole && (meanIntensity > segmentationParams.minPixelIntensityValue &&
                                 meanIntensity < segmentationParams.maxPixelIntensityValue);
         }
         else if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::OR) {
-            filter = filter || (meanIntensity > segmentationParams.minPixelIntensityValue &&
+            keepHole = keepHole || (meanIntensity > segmentationParams.minPixelIntensityValue &&
                                 meanIntensity < segmentationParams.maxPixelIntensityValue);
         }
 
-        return filter;
+        return keepHole;
     }
 }
 

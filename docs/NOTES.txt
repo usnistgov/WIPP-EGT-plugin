@@ -49,21 +49,20 @@ TODO
 Improvement : accelerate.
  In merge, we should look at each pixel in the list of coordinates and if it is in the blob we just merged, we should delete them.
 
-----------
-After erosion, size must be recalculated to remove objects that became too small.
-This means refactoring feature so the number of pixels is readily available.
+Parameterize erosion with different erosion
 
-----------
 
 Connectivity 8 for analyser
-
-----------
-
-Parameterize erosion
-
 -------------------
 
 EROSION ON FEATURE TILE RATHER THAN FULL FEATURES
+Two approach :
+- read from disk, rewrite each as a mask, apply erosion, write bitmask back => a lot of extra computation + IO
+- have a loader of feature bitmask in fast image. Unpack tile, erode, copy back the modified bitmask
+(but not necessarily a tight bounding box anymore).
+
+Better : rewrite custom erosion on feature.
+Any other treatment that would require only the bitmask? Probably not. Only feature extraction that has to do with shape.
 
 
 
@@ -94,3 +93,31 @@ with what seem one object but labeled as several objects.
 Things to look at
 
 For dataset test2, two background blobs are found not be linked even though it look like they are connected in the final mask
+
+
+=================
+DOMAIN : THINGS TO ASK
+
+can we take a percentile in the histogram rather than in the full pixel info?
+That would be huge perf improvment.
+
+
+================================
+Optimizations
+
+Resolution
+- Resolution adapts to the input. We won't manipulate 32bits floating point encoded gradient if the input image is 8bits.
+- We adapt the labeled mask resolution to the number of features represented. Ex: if we have 120 features, we will only generate an 8bit mask.
+
+Thresholdfinder
+ - limit the number of operations, duplication of data structures etc....
+ - sampling the image to calculate the histogram and the gradient pixel threshold intensity.
+ - possibility to use a higher resolution if using a pyramid (does not seem to lead to valid result)
+
+Intensity Threshold values :
+ - Bounds can also be computed at a higher level of the pyramid.
+
+Local treatment for mask generation with a merging step.
+
+
+

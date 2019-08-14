@@ -59,6 +59,8 @@ namespace egt {
                     "exp") : -1;
             options->threshold = (expertModeOptions.find("threshold") != expertModeOptions.end())
                                  ? expertModeOptions.at("threshold") : -1;
+            options->pixelIntensityBoundsLevelUp = (expertModeOptions.find("intensitylevel") != expertModeOptions.end())
+                    ? expertModeOptions.at("intensitylevel") : 0;
 
 
             VLOG(1) << "Execution model : ";
@@ -68,12 +70,14 @@ namespace egt {
             if (options->threshold != -1) {
                 VLOG(1) << "fixed threshold value : " << options->threshold << std::endl;
             }
-            if (options->nbTilePerSample != -1){
+            VLOG(1) << "threshold is calculated at pyramid level: " << options->pyramidLevel;
+            if (options->nbTilePerSample != -1) {
                 VLOG(1) << "Threshold finder. Nb of tiles per sample requested: " << options->nbTilePerSample << std::endl;
             }
-            if (options->nbExperiments != -1){
+            if (options->nbExperiments != -1) {
                 VLOG(1) << "Threshold finder. Nb of experiments requested: " << options->nbExperiments << std::endl;
             }
+            VLOG(1) << "min and max intensity are calculated at pyramid level: " << options->pixelIntensityBoundsLevelUp;
 
             auto begin = std::chrono::high_resolution_clock::now();
 
@@ -98,20 +102,19 @@ namespace egt {
             std::shared_ptr<ListBlobs> blobs = nullptr;
             auto beginSegmentation = std::chrono::high_resolution_clock::now();
             if (segmentationOptions->MASK_ONLY) {
-                //TODO remove threshold for params
                 runLocalMaskGenerator(threshold, options, segmentationOptions, segmentationParams);
             } else {
                 blobs = runSegmentation(threshold, options, segmentationOptions, segmentationParams);
             }
             auto endSegmentation = std::chrono::high_resolution_clock::now();
 
-            //postprocessing of features
             auto beginFC = std::chrono::high_resolution_clock::now();
-
-
+            //postprocessing of features
             if (!segmentationOptions->MASK_ONLY) {
-                featureExtraction(blobs, options);
-                runBinaryMaskGeneration(blobs, segmentationOptions);
+                // TODO remove. It was just an example of feature extraction.
+                // computeMeanIntensities(blobs, options);
+                blobs->erode(segmentationOptions);
+                runMaskGeneration(blobs, options, segmentationOptions);
             }
             auto endFC = std::chrono::high_resolution_clock::now();
 
@@ -441,19 +444,44 @@ namespace egt {
             return blobs;
         }
 
-        void runBinaryMaskGeneration(std::shared_ptr<ListBlobs> blob, SegmentationOptions *segmentationOptions) {
+        void runMaskGeneration(std::shared_ptr<ListBlobs> blob, EGTOptions *options,
+                               SegmentationOptions *segmentationOptions) {
             VLOG(1) << "generating a segmentation mask";
-            //    blob->erode(segmentationOptions);
-
             auto fc = new FeatureCollection();
             fc->createFCFromCompactListBlobs(blob.get(), imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
-            //   fc->createBlackWhiteMaskStreaming("output-stream.tiff", (uint32_t)tileWidthAtSegmentationLevel);
-            fc->createBlackWhiteMask("output-stream.tiff", (uint32_t) tileWidthAtSegmentationLevel);
+
+            //TODO CHECK WHAT TO DO. This is the fast way of writing a image but also memory hungry (needs to load all tiles in memory).
+            //TODO should we make it an option?
+       //     fc->createBlackWhiteMask("output.tiff", (uint32_t) tileWidthAtSegmentationLevel);
+
+
+            //generating a labeled mask. Let's try to find the appropriate resolution we need to correctly render each feature.
+            if(options->label) {
+                auto nbBlobs = blob->_blobs.size();
+                auto depth = ImageDepth::_32U;
+
+                if (nbBlobs < 256) {
+                    depth = ImageDepth::_8U;
+                    fc->createLabeledMaskStreaming<uint8_t>("output-labeled.tiff", (uint32_t) tileWidthAtSegmentationLevel,
+                                                            depth);
+                } else if (nbBlobs < 256 * 256) {
+                    depth = ImageDepth::_16U;
+                    fc->createLabeledMaskStreaming<uint16_t>("output-labeled.tiff", (uint32_t) tileWidthAtSegmentationLevel,
+                                                             depth);
+                } else {
+                    fc->createLabeledMaskStreaming<uint32_t>("output-labeled.tiff", (uint32_t) tileWidthAtSegmentationLevel,
+                                                             depth);
+                }
+            }
+            else {
+                fc->createBlackWhiteMaskStreaming("output-bw.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+            }
+
             delete fc;
         }
 
 
-        void featureExtraction(std::shared_ptr<ListBlobs> blobs, EGTOptions *options) {
+        void computeMeanIntensities(std::shared_ptr<ListBlobs> blobs, EGTOptions *options) {
 
             const uint32_t pyramidLevelToRequestforThreshold = options->pyramidLevel;
             const uint32_t radiusForFeatureExtraction = 0;

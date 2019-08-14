@@ -48,7 +48,7 @@ namespace egt {
 /// \namespace egt EGT namespace
 
 /**
-  * @class BlobMerger BlobMerger.h <FastImage/FeatureCollection/Tasks/BlobMerger.h>
+  * @class BlobMerger BlobMerger.h <egt/FeatureCollection/Tasks/BlobMerger.h>
   *
   * @brief Merges multiple egt::ViewAnalyse to build the Feature Collection.
   *
@@ -108,7 +108,6 @@ namespace egt {
                 VLOG(1) << "detected " << this->_blobs->_blobs.size() << " objects..." << this->_toMerge.size() << " to merge.";
 
                 _count = 0;
-                //flag set to true because we should remove holes not linked to anything because we have already removed background info
                 merge(_holesToMerge,_holes, true);
                 filterHoles();
                 merge(_toMerge,_blobs, false);
@@ -168,10 +167,10 @@ namespace egt {
                 auto area = blob->getCount();
                 auto meanIntensity = meanIntensities->at(blob);
 
-                auto filter = computeKeepHoleCriteria<T>(area, meanIntensity, segmentationOptions, segmentationParams);
+                auto keepHole = computeKeepHoleCriteria<T>(area, meanIntensity, segmentationOptions, segmentationParams);
 
                 //transform small holes into blobs
-                if(filter) {
+                if(!keepHole) {
                         this->_blobs->_blobs.push_back(blob);
                         auto row = blob->getStartRow();
                         auto col = blob->getStartCol();
@@ -239,7 +238,7 @@ namespace egt {
         }
 
         /// \brief Merge all the blobs from all the view analyser
-        void merge(std::map<Blob *, std::list<Coordinate >> &toMerge, ListBlobs *blobs, bool deleteLonelyBlobs) {
+        void merge(std::map<Blob *, std::list<Coordinate >> &toMerge, ListBlobs *blobs, bool isHole) {
             fc::UnionFind<Blob>
                     uf{};
 
@@ -273,11 +272,11 @@ namespace egt {
                 VLOG(4) << "nb of sons: " << sons.size(); //for debug
 
                 if (sons.size() == 1) {
-                    // if we have a lonely hole to merge, it is because it was connected to the background
-                    // so we remove it.
-                    if((*sons.begin())->isToMerge() && deleteLonelyBlobs){
+                    //holes that do not need merge can be ignored. Let's delete them.
+                    if((*sons.begin())->isToMerge() && isHole){
                         for(auto s : sons){
                             delete s;
+                            //TODO CHECK unecessary, This step can be removed if it provides some speedup.
                             blobs->_blobs.remove(s);
                         }
                         sons.clear();
@@ -307,7 +306,7 @@ namespace egt {
                 delete parent->getFeature();
                 auto *feature = new Feature(parent->getTag(), bb, bitMask);
 
-                //In order to maintain consistency - this will be unecessary if we send back feature instead
+                //For consistency, let's update redundant info
                 parent->setRowMin(bb.getUpperLeftRow());
                 parent->setRowMax(bb.getBottomRightRow());
                 parent->setColMin(bb.getUpperLeftCol());
@@ -317,6 +316,11 @@ namespace egt {
             }
         }
 
+        /**
+         * Calculate the tightest bounding box containing all the blobs individual bounding box.
+         * @param sons
+         * @return
+         */
         BoundingBox calculateBoundingBox(std::set<Blob *> &sons) {
 
             uint32_t upperLeftRow = std::numeric_limits<int32_t>::max(),

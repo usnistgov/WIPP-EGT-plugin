@@ -89,6 +89,9 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::string> expertModeArg("e", "expertmode", "Expert mode", false, "", "string");
         cmd.add(expertModeArg);
 
+        TCLAP::SwitchArg labelFlag("","label","Generate a labeled mask", false);
+        cmd.add(labelFlag);
+
         std::vector<std::string> joinOperatorsAllowed;
         joinOperatorsAllowed.emplace_back("and");
         joinOperatorsAllowed.emplace_back("or");
@@ -118,6 +121,7 @@ int main(int argc, const char **argv) {
         std::string joinOperatorString = joinOperatorArg.getValue();
         uint32_t minPixelIntensityPercentile = minPixelIntensityPercentileArg.getValue();
         uint32_t maxPixelIntensityPercentile = maxPixelIntensityPercentileArg.getValue();
+        bool label = labelFlag.getValue();
 
         if (!hasEnding(outputDir, "/")) {
             outputDir += "/";
@@ -133,7 +137,9 @@ int main(int argc, const char **argv) {
         VLOG(1) << minPixelIntensityPercentileArg.getDescription() << ": " << minPixelIntensityPercentile << std::endl;
         VLOG(1) << maxPixelIntensityPercentileArg.getDescription() << ": " << maxPixelIntensityPercentile << std::endl;
         VLOG(1) << MaskOnlyArg.getDescription() << ": " << std::noboolalpha  << maskOnly << ":" << std::boolalpha << maskOnly << std::endl;
+        VLOG(1) << labelFlag.getDescription() << ": " << std::boolalpha << label << std::endl;
         VLOG(1) << expertModeArg.getDescription() << ": " << expertMode << std::endl;
+
 
         egt::ImageDepth imageDepth = egt::parseImageDepth(depth);
         uint32_t maxHoleSize = parseUint32String(maxHoleSizeString);
@@ -145,6 +151,7 @@ int main(int argc, const char **argv) {
         options->inputPath = inputFile;
         options->outputPath = outputDir;
         options->pyramidLevel = pyramidLevel;
+        options->label = label;
 
         auto segmentationOptions = new egt::SegmentationOptions();
         segmentationOptions->MIN_HOLE_SIZE = minHoleSize;

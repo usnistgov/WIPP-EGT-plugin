@@ -13,6 +13,7 @@ namespace egt {
     enum class ImageDepth {
         _8U,
         _16U,
+        _32U,
         _32F
     };
 
@@ -22,7 +23,10 @@ namespace egt {
             return ImageDepth::_16U;
         } else if (depth == "8U") {
             return ImageDepth::_8U;
-        } else if (depth == "32F") {
+        } else if (depth == "32U") {
+            return ImageDepth ::_32U;
+        }
+          else if (depth == "32F") {
             return ImageDepth::_32F;
         } else {
             throw std::invalid_argument("image depth not recognized. Should  be one of : 8U, 16U, 32F");

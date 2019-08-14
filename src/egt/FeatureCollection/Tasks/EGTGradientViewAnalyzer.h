@@ -53,16 +53,17 @@
 namespace egt {
 
 /**
-  * @class ViewAnalyser ViewAnalyser.h <FastImage/FeatureCollection/Tasks/ViewAnalyser.h>
+  * @class EGTGradientViewAnalyser EGTGradientViewAnalyser.h <egt/FeatureCollection/Tasks/EGTGradientViewAnalyser.h>
   *
-  * @brief View Analyser, HTGS task, take a FastImage view and produce a
-  * ViewAnalyse to the BlobMerger.
+  * @brief View Analyser, HTGS task, take a GradientView and produce a
+  * ViewAnalyse for the BlobMerger.
   *
-  * @details HTGS tasks, which run a flood algorithm
+  * @details HTGS task which segments an image tile using a flood algorithm
   * (https://en.wikipedia.org/wiki/Flood_fill) in a view to find the different
-  * connected pixels called blob. Two connected rules are proposed:
+  * connected pixels called blobs. Two connected rules are proposed:
   * _4 (North, South, East, West)
   * _8 (North, North-East, North-West, South, South-East, South-West, East, West)
+  * Blobs can represent Object (Foreground color) or Holes (Background color).
   *
   * @tparam UserType File pixel type
   **/
@@ -109,7 +110,6 @@ namespace egt {
             _toVisit.clear(); //clear queue that keeps track of neighbors to visit when flooding
             _visited.assign(_visited.size(), false); //clear container that keeps track of all visited pixels in a pass through the image.
             _currentBlob = nullptr;
-            //TILE DIMENSION MIGHT CHANGE AND BE SMALLER, LET'S DO LESS WORK IF POSSIBLE
             _tileHeight = _view->getTileHeight();
             _tileWidth = _view->getTileWidth();
 
@@ -131,7 +131,7 @@ namespace egt {
                 VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
                 VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
                 VLOG(3) << "objects removed because too small: " << objectRemovedCount;
-                VLOG(3) << "holes found: " << _vAnalyse->getHoles().size();
+                VLOG(3) << "holes we keep track of in the merge: " << _vAnalyse->getHoles().size();
                 VLOG(3) << "holes to merge: " << _vAnalyse->getHolesToMerge().size();
                 VLOG(3) << "objects found: " << _vAnalyse->getBlobs().size();
                 VLOG(3) << "objects to merge: " << _vAnalyse->getToMerge().size();
@@ -192,7 +192,7 @@ namespace egt {
        }
 
        /**
-        * We have a queue of pixels to visit. Take the first one and explore its neighbors.
+        * We have a queue of pixels to visit. Dequeue the first one and explore its neighbors.
         * @param blobColor
         */
         void expandBlob(Color blobColor){
@@ -211,9 +211,8 @@ namespace egt {
                     _view->getGlobalYOffset() + neighbourCoord.first,
                     _view->getGlobalXOffset() + neighbourCoord.second);
 
-
             if (_rank == 4) {
-                analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, blobColor, true);
+                analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, blobColor);
             }
         }
 
@@ -222,8 +221,6 @@ namespace egt {
          * @param blobColor
          */
         void blobCompleted(Color blobColor) {
-                VLOG(5) << "blob size: " << _currentBlob->getCount();
-
                 //background and foreground blobs are not handled the same way
                 if(blobColor == BACKGROUND) {
                     //we know this hole is on the border, so we keep track of it for the merge.
@@ -284,21 +281,23 @@ namespace egt {
          */
         void createBlob(int32_t row, int32_t col, Color blobColor) {
             markAsVisited(row, col);
-            //add pixel to a new blob
+            //add pixel to a new blob (we are recording the global position)
             _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
             _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
-            //make sure we don't look at it again
 
             //look at its neighbors
             if (_rank == 4) {
-                analyseNeighbour4(row, col, blobColor, true);
+                analyseNeighbour4(row, col, blobColor);
+            }
+            else {
+                analyseNeighbour8(row, col, blobColor);
             }
         }
 
         /// \brief Analyse the neighbour of a pixel for a 4-connectivity
         /// \param row Pixel's row
         /// \param col Pixel's col
-        void analyseNeighbour4(int32_t row, int32_t col, Color color,bool erode) {
+        void analyseNeighbour4(int32_t row, int32_t col, Color color) {
 
             auto globalRow = row + _view->getGlobalYOffset();
             auto globalCol = col + _view->getGlobalXOffset();
@@ -384,10 +383,18 @@ namespace egt {
             }
         }
 
-        UserType computeMeanIntensity(){
+        void analyseNeighbour8(int32_t row, int32_t col, Color color) {
+        }
+
+
+        /**
+         * @return the mean intensity for this blob.
+         */
+        UserType computeMeanIntensity() {
             auto xOffset = _view->getGlobalXOffset();
             auto yOffset = _view->getGlobalYOffset();
             uint64_t sum = 0, count = 0;
+
             for(const auto &entry : _currentBlob->getRowCols()) {
                 auto row = entry.first;
                 for(const auto col : entry.second) {
@@ -396,10 +403,16 @@ namespace egt {
                 }
             }
             auto intensity = (UserType)(sum / count);
+
+            DLOG(INFO) << "hole (" << _currentBlob->getTag()  << ") mean intensity "  << intensity;
+
             return intensity;
         }
 
-        void fillUpHole(){
+        /**
+         * Set every pixel value to foreground and make sure those pixels are visited again in the object detection step.
+         */
+        void fillUpHole() {
             for (auto it = _currentBlob->getRowCols().begin();
                  it != _currentBlob->getRowCols().end(); ++it) {
                 auto pRow = it->first;
@@ -416,6 +429,8 @@ namespace egt {
                     }
                 }
             }
+
+            DLOG(INFO) << "hole (" << _currentBlob->getTag()  << ") filled up : "  << _currentBlob->getCount() << " pixels turned into foreground.";
         }
 
 
@@ -442,8 +457,7 @@ namespace egt {
         fi::View<UserType>* _view;
         UserType* _originalView;
 
-        const uint8_t _rank{};                      ///< Rank to the connectivity:
-        ///< 4=> 4-connectivity, 8=> 8-connectivity
+        const uint8_t _rank{}; ///< Rank to the connectivity: < 4=> 4-connectivity, 8=> 8-connectivity
 
 
         std::vector<bool> _visited{}; ///keep track of every pixel we looked at.
@@ -472,8 +486,7 @@ namespace egt {
         ViewAnalyse *_vAnalyse = nullptr;         ///< Current view analyse
 
         uint32_t objectRemovedCount{},
-                 holeRemovedCount{},
-                 backgroundCount{};
+                 holeRemovedCount{};
 
 
     };

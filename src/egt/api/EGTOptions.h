@@ -27,6 +27,8 @@ namespace egt {
 
         int32_t threshold{};
 
+        bool label{};
+
     };
 }
 
