@@ -116,7 +116,7 @@ namespace egt {
             if (!segmentationOptions->MASK_ONLY) {
                 // TODO remove. It was just an example of feature extraction.
                 // computeMeanIntensities(blobs, options);
-                blobs->erode(segmentationOptions);
+           //     blobs->erode(segmentationOptions);
                 runMaskGeneration(blobs, options, segmentationOptions);
             }
             auto endFC = std::chrono::high_resolution_clock::now();
@@ -160,9 +160,34 @@ namespace egt {
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforPixelIntensityBounds) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestforPixelIntensityBounds);
 
-            fi->requestAllTiles(true, pyramidLevelToRequestforPixelIntensityBounds);
 
 
+            auto randomExperiments = true;
+            if(options->nbTilePerSample == -1 && options->nbExperiments == -1) {
+                randomExperiments = false;
+            }
+            auto nbOfSamples = (options->nbTilePerSample != -1) ? std::min((int32_t)nbTiles, options->nbTilePerSample) : nbTiles;
+            auto nbOfSamplingExperiment = (size_t)((options->nbExperiments != -1) ? options->nbExperiments : 1);
+
+            VLOG(1) << "Pixel intensity bounds finder. Nb of tiles per sample: " << nbOfSamples << std::endl;
+            VLOG(1) << "Pixel intensity bounds finder. Nb of experiments: " << nbOfSamplingExperiment << std::endl;
+
+            if(randomExperiments) {
+                auto seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+                std::default_random_engine generator(seed1);
+                std::uniform_int_distribution<uint32_t> distributionRowRange(0, numTileRow - 1);
+                std::uniform_int_distribution<uint32_t> distributionColRange(0, numTileCol - 1);
+                for (auto i = 0; i < nbOfSamplingExperiment * nbOfSamples; i++) {
+                    uint32_t randomRow = distributionRowRange(generator);
+                    uint32_t randomCol = distributionColRange(generator);
+                    VLOG(3) << "Requesting tile : (" << randomRow << ", " << randomCol << ")";
+                    fi->requestTile(randomRow, randomCol, false, pyramidLevelToRequestforPixelIntensityBounds);
+                }
+                fi->finishedRequestingTiles();
+            }
+            else {
+                fi->requestAllTiles(true,pyramidLevelToRequestforPixelIntensityBounds);
+            }
 
             auto intensities = std::vector<T>();
 
@@ -184,14 +209,17 @@ namespace egt {
 
             std::sort(intensities.begin(), intensities.end());
 
-            auto minIndex = segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE * intensities.size() / 100  - 1;
-            auto maxIndex = segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE* intensities.size() / 100  - 1;
+            auto minIndex = (double)(segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE * intensities.size()) / 100;
+            auto maxIndex = (double)(segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE * intensities.size()) / 100  - 1;
 
             auto minValue = intensities[minIndex];
             auto maxValue = intensities[maxIndex];
 
             segmentationParams.minPixelIntensityValue = intensities[minIndex];
             segmentationParams.maxPixelIntensityValue = intensities[maxIndex];
+
+            VLOG(1) << "min pixel intensity : " << segmentationParams.minPixelIntensityValue;
+            VLOG(1) << "max pixel intensity : " << segmentationParams.maxPixelIntensityValue;
 
             fi->waitForGraphComplete();
             delete fi;
@@ -254,12 +282,11 @@ namespace egt {
             auto *runtime = new htgs::TaskGraphRuntime(graph);
             runtime->executeRuntime();
 
-            auto seed1 = std::chrono::system_clock::now().time_since_epoch().count();
-            std::default_random_engine generator(seed1);
-            std::uniform_int_distribution<uint32_t> distributionRowRange(0, numTileRow - 1);
-            std::uniform_int_distribution<uint32_t> distributionColRange(0, numTileCol - 1);
-
             if(randomExperiments) {
+                auto seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+                std::default_random_engine generator(seed1);
+                std::uniform_int_distribution<uint32_t> distributionRowRange(0, numTileRow - 1);
+                std::uniform_int_distribution<uint32_t> distributionColRange(0, numTileCol - 1);
                 for (auto i = 0; i < nbOfSamplingExperiment * nbOfSamples; i++) {
                     uint32_t randomRow = distributionRowRange(generator);
                     uint32_t randomCol = distributionColRange(generator);

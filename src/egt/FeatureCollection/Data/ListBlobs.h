@@ -70,13 +70,16 @@ struct ListBlobs : public IData {
             //transform each bitMask into a array of uint8 so we can use opencv
             auto data = bitMaskToArray(feature->getBitMask(), width, height, foregroundValue);
 
+//            printArray<uint8_t>("", data, width, height, 3);
+
 //      //TODO remove
 //      std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
 
             //erosion from opencv
             auto mat = cv::Mat(height, width, CV_8U,  data);
 //      cv::imwrite(outputPath + "feature-" + std::to_string(feature.getId())  + ".tif" , mat);
-            auto kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE,cv::Size(3,3));
+//            auto kernel = cv::getStructuringElement(cv::MORPH_ERODE,cv::Size(3,3), cv::Point(1,1));
+            auto kernel = cv::getStructuringElement(cv::MORPH_ERODE,cv::Size(3,3), cv::Point(1,1));
             cv::Mat eroded;
             cv::erode(mat,eroded,kernel);
             mat.release();
@@ -105,7 +108,7 @@ struct ListBlobs : public IData {
             }
             eroded.release();
             //TODO remove
-            //printBoolArray<uint8_t>("eroded", array.data(),width,height);
+//            printBoolArray<uint8_t>("eroded", array.data(),width,height);
 
 
             //transform back the array to a bitmask
