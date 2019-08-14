@@ -99,7 +99,6 @@ namespace egt {
             }
 
             assert(count != 0);
-            assert(sum != 0);
             featureMeanIntensity = std::round(sum / count);
             meanIntensities->insert({blob, featureMeanIntensity});
         }

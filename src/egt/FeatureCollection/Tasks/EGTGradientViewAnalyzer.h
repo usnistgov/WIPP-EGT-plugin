@@ -165,6 +165,9 @@ namespace egt {
     private:
 
         void run(Color blobColor){
+
+//            printArray<UserType>("", _view->getData(), _view->getViewWidth(), _view->getViewHeight(), 4);
+
             for (int32_t row = 0; row < _tileHeight; ++row) {
                 for (int32_t col = 0; col < _tileWidth; ++col) {
 
@@ -211,8 +214,11 @@ namespace egt {
                     _view->getGlobalYOffset() + neighbourCoord.first,
                     _view->getGlobalXOffset() + neighbourCoord.second);
 
-            if (_rank == 4) {
+            if (blobColor == BACKGROUND) {
                 analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, blobColor);
+            }
+            else {
+                analyseNeighbour8(neighbourCoord.first, neighbourCoord.second, blobColor);
             }
         }
 
@@ -286,7 +292,7 @@ namespace egt {
             _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
 
             //look at its neighbors
-            if (_rank == 4) {
+            if (blobColor == BACKGROUND) {
                 analyseNeighbour4(row, col, blobColor);
             }
             else {
@@ -353,7 +359,7 @@ namespace egt {
             }
             // Add blob to merge list if tile right pixel has the same value than the view pixel on its right (continuity)
             // test that we are also not at the edge of the full image.
-            if (col + 1 == _tileWidth && col + _view->getGlobalXOffset() + 1 != _imageWidth) {
+            if (col + 1 == _tileWidth && globalCol + 1 != _imageWidth) {
                 if (getColor(row, col + 1) == color) {
 
                     auto coords =std::pair<int32_t, int32_t>(globalRow,globalCol + 1);
@@ -384,6 +390,128 @@ namespace egt {
         }
 
         void analyseNeighbour8(int32_t row, int32_t col, Color color) {
+
+            // Analyse the pixels around the pixel
+            int32_t
+                    minRow = std::max(0, row - 1),
+                    maxRow = std::min(_view->getTileHeight(), row + 2),
+                    minCol = std::max(0, col - 1),
+                    maxCol = std::min(_view->getTileWidth(), col + 2);
+
+            for (int32_t rowP = minRow; rowP < maxRow; ++rowP) {
+                for (int32_t colP = minCol; colP < maxCol; ++colP) {
+                    if (!visited(rowP, colP)  && getColor(rowP, colP) == color) {
+                        _toVisit.emplace(rowP, colP);
+                    }
+                }
+            }
+
+            //WE DON'T NEED MERGING IF WE GENERATE ONLY THE MASK
+            if(_options->MASK_ONLY){
+                return;
+            }
+
+
+            auto globalRow = row + _view->getGlobalYOffset();
+            auto globalCol = col + _view->getGlobalXOffset();
+
+            //Check if the blob in this tile belongs to a bigger blob extending several tiles.
+            //We only to look at EAST and SOUTH so we can later merge only once, TOP to BOTTOM and LEFT to RIGHT.
+
+            //test whether pixel is at the image border AND is not at the edge of the full image.
+            bool onTileBottomBorder = (row + 1 == _tileHeight && globalRow + 1 != _imageHeight);
+            bool onTileRightBorder = (col + 1 == _tileWidth && globalCol + 1 != _imageWidth);
+            bool onTileTopBorder = (row == 0 && globalRow != 0);
+            bool onTileLeftBorder = (col == 0 && globalCol != 0);
+
+            if (onTileBottomBorder) {
+                if (getColor(row + 1, col) == color) {
+                    auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol);
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(_currentBlob, coords);
+                    }
+                    _currentBlob->setToMerge(true);
+                }
+            }
+
+            if (onTileRightBorder) {
+                if (getColor(row, col + 1) == color) {
+
+                    auto coords =std::pair<int32_t, int32_t>(globalRow,globalCol + 1);
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(_currentBlob, coords);
+                    }
+                    _currentBlob->setToMerge(true);
+                }
+            }
+
+            //Bottom right pixel
+            if (onTileRightBorder && onTileBottomBorder) {
+                if (getColor(row + 1, col + 1) == color) {
+
+                    auto coords =std::pair<int32_t, int32_t>(globalRow + 1,globalCol + 1);
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(_currentBlob, coords);
+                    }
+                    _currentBlob->setToMerge(true);
+                }
+            }
+
+            //Top right pixel (we could have alternatively check the bottom left)
+            if (onTileRightBorder && onTileTopBorder) {
+                if (getColor(row - 1, col + 1) == color) {
+
+                    auto coords =std::pair<int32_t, int32_t>(globalRow - 1,globalCol + 1);
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(_currentBlob, coords);
+                    }
+                    _currentBlob->setToMerge(true);
+                }
+            }
+
+
+            // We need to set a flag so we know how to filter this blob.
+
+            if (onTileTopBorder) {
+                if (getColor(row - 1, col) == color) {
+                    _currentBlob->setToMerge(true);
+                }
+            }
+
+            if (onTileLeftBorder) {
+                if (getColor(row, col - 1) == color) {
+                    _currentBlob->setToMerge(true);
+                }
+            }
+
+            if (onTileLeftBorder && onTileTopBorder) {
+                if (getColor(row - 1, col - 1) == color) {
+                    _currentBlob->setToMerge(true);
+                }
+            }
+
+            if (onTileLeftBorder && onTileBottomBorder) {
+                if (getColor(row + 1, col - 1) == color) {
+                    _currentBlob->setToMerge(true);
+                }
+            }
+
         }
 
 

@@ -107,11 +107,6 @@ namespace egt {
 //            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img5);
 //            img5.release();
 
-            auto img5 = cv::Mat(tileHeight, tileWidth, convertToOpencvType(depth), original);
-            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img5);
-            img5.release();
-
-//          delete[] tileOut;
             auto gradientView = new GradientView<T>(data,original);
 
             // Write the output tile

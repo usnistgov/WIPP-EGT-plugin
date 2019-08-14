@@ -194,7 +194,7 @@ namespace egt {
                         this->_toMerge[blob].merge(coords);
                         nbHolesTooSmall++;
                         i = _holes->_blobs.erase(i);
-                        VLOG(4) << "Transform hole at (" << row << "," << col << ") into object blob.";
+                        VLOG(4) << "Transform hole at (" << row << "," << col << ") of size "<< blob->getCount() <<" into object blob.";
                 }
                 //turn holes into background
                 else {

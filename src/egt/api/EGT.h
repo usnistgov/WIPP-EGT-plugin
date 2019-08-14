@@ -62,6 +62,9 @@ namespace egt {
             options->pixelIntensityBoundsLevelUp = (expertModeOptions.find("intensitylevel") != expertModeOptions.end())
                     ? expertModeOptions.at("intensitylevel") : 0;
 
+            options->rank = (expertModeOptions.find("rank") != expertModeOptions.end())
+                                 ? expertModeOptions.at("rank") : 4;
+
 
             VLOG(1) << "Execution model : ";
             VLOG(1) << "loader threads : " << options->nbLoaderThreads;
@@ -339,7 +342,7 @@ namespace egt {
                                                            imageWidthAtSegmentationLevel,
                                                            tileHeigthAtSegmentationLevel,
                                                            tileWidthAtSegmentationLevel,
-                                                           4,
+                                                           options->rank,
                                                            threshold,
                                                            segmentationOptions,
                                                            segmentationParams);
@@ -410,7 +413,7 @@ namespace egt {
                                                            imageWidthAtSegmentationLevel,
                                                            tileHeightAtSegmentationLevel,
                                                            tileWidthAtSegmentationLevel,
-                                                           4,
+                                                           options->rank,
                                                            threshold,
                                                            segmentationOptions,
                                                            segmentationParams);

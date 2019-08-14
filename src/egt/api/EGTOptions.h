@@ -29,6 +29,8 @@ namespace egt {
 
         bool label{};
 
+        int rank{};
+
     };
 }
 
