@@ -28,6 +28,7 @@
 #include <egt/tasks/EGTSobelFilter.h>
 #include <egt/FeatureCollection/Tasks/EGTGradientViewAnalyzer.h>
 #include "DerivedSegmentationParams.h"
+#include <experimental/filesystem>
 
 
 namespace egt {
@@ -127,7 +128,6 @@ namespace egt {
             }
             auto endFC = std::chrono::high_resolution_clock::now();
 
-            delete segmentationOptions;
             auto end = std::chrono::high_resolution_clock::now();
 
             VLOG(1) << "Execution time: ";
@@ -490,39 +490,49 @@ namespace egt {
             //TODO should we make it an option?
        //     fc->createBlackWhiteMask("output.tiff", (uint32_t) tileWidthAtSegmentationLevel);
 
+            std::experimental::filesystem::path path = options->inputPath;
+            std::string inputFilename = path.filename();
+            std::string outputFilenamePrefix = "";
 
             //generating a labeled mask. Let's try to find the appropriate resolution we need to correctly render each feature.
             if(options->label) {
                 auto nbBlobs = blob->_blobs.size();
                 auto depth = ImageDepth::_32U;
 
+                outputFilenamePrefix = "labeled-mask-";
+                auto outputFilename = outputFilenamePrefix + inputFilename;
+
                 if(options->streamingWrite) {
                     if (nbBlobs < 256) {
                         depth = ImageDepth::_8U;
-                        fc->createLabeledMaskStreaming<uint8_t>("output-labeled.tiff",
+                        fc->createLabeledMaskStreaming<uint8_t>(outputFilename,
                                                                 (uint32_t) tileWidthAtSegmentationLevel,
                                                                 depth);
                     } else if (nbBlobs < 256 * 256) {
                         depth = ImageDepth::_16U;
-                        fc->createLabeledMaskStreaming<uint16_t>("output-labeled.tiff",
+                        fc->createLabeledMaskStreaming<uint16_t>(outputFilename,
                                                                  (uint32_t) tileWidthAtSegmentationLevel,
                                                                  depth);
                     } else {
-                        fc->createLabeledMaskStreaming<uint32_t>("output-labeled.tiff",
+                        fc->createLabeledMaskStreaming<uint32_t>(outputFilename,
                                                                  (uint32_t) tileWidthAtSegmentationLevel,
                                                                  depth);
                     }
                 }
                 else {
-                    fc->createLabeledMask("output-labeled.tiff");
+                    fc->createLabeledMask(outputFilename);
                 }
             }
             else {
+
+                outputFilenamePrefix = "bw-mask-";
+                auto outputFilename = outputFilenamePrefix + inputFilename;
+
                 if(options->streamingWrite) {
-                    fc->createBlackWhiteMaskStreaming("output-bw.tiff", (uint32_t) tileWidthAtSegmentationLevel);
+                    fc->createBlackWhiteMaskStreaming(outputFilename, (uint32_t) tileWidthAtSegmentationLevel);
                 }
                 else{
-                    fc->createBlackWhiteMask("output.tiff", (uint32_t) tileWidthAtSegmentationLevel);
+                    fc->createBlackWhiteMask(outputFilename, (uint32_t) tileWidthAtSegmentationLevel);
                 }
             }
 

@@ -10,6 +10,7 @@
 #include <glog/logging.h>
 #include <iomanip>
 #include <egt/api/DerivedSegmentationParams.h>
+#include <egt/api/SegmentationOptions.h>
 
 namespace egt {
 

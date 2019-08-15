@@ -85,6 +85,4 @@ add_subdirectory(test)
 set(SRC_FILES src src/egt/tasks/ViewToConvOutDataConverter.h src/egt/tasks/FCCustomSobelFilter3by3.h src/egt/FeatureCollection/Tasks/EGTViewAnalyzer.h src/egt/api/SegmentationOptions.h src/egt/FeatureCollection/Data/ViewOrViewAnalyse.h  src/egt/FeatureCollection/Tasks/ViewAnalyseFilter.h src/egt/tasks/TiffTileWriter.h src/egt/FeatureCollection/Tasks/ViewFilter.h src/egt/FeatureCollection/Data/Feature.h)
 
 
-
-add_executable(main main.cpp ${SRC_FILES})
 add_executable(commandLineCli CommandLineCli.cpp ${SRC_FILES} src/egt/FeatureCollection/Data/Feature.h src/egt/FeatureCollection/Data/BoundingBox.h)

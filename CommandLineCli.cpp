@@ -11,8 +11,9 @@
 #include <glog/logging.h>
 #include <egt/api/SegmentationOptions.h>
 #include <egt/api/EGT.h>
+#include <experimental/filesystem>
 
-
+namespace fs = std::experimental::filesystem;
 
 
 bool hasEnding(std::string const &fullString, std::string const &ending) {
@@ -56,14 +57,41 @@ std::map<std::string,uint32_t> parseExpertMode(std::string &expertMode) {
     return flags;
 }
 
+void run(egt::ImageDepth imageDepth, egt::EGTOptions* &options, egt::SegmentationOptions* &segmentationOptions, std::map<std::string,uint32_t> &expertModeOptions){
+
+    VLOG(1) << "Processing image : " << options->inputPath;
+
+    switch (imageDepth) {
+        case egt::ImageDepth::_32F: {
+            auto egt = new egt::EGT<float>();
+            egt->run(options, segmentationOptions, expertModeOptions);
+            delete egt;
+            break;
+        }
+        case egt::ImageDepth::_16U: {
+            auto egt = new egt::EGT<uint16_t>();
+            egt->run(options, segmentationOptions, expertModeOptions);
+            delete egt;
+            break;
+        }
+        case egt::ImageDepth::_8U: {
+            auto egt = new egt::EGT<uint16_t>();
+            egt->run(options, segmentationOptions, expertModeOptions);
+            delete egt;
+            break;
+        }
+    }
+
+}
+
 int main(int argc, const char **argv) {
 
     try {
         TCLAP::CmdLine cmd("EGT", ' ', "1.0");
 
-        TCLAP::ValueArg<std::string> inputFileArg("i", "images", "input images directory", true, "",
+        TCLAP::ValueArg<std::string> inputPathArg("i", "images", "input images directory", true, "",
                                                        "filePath");
-        cmd.add(inputFileArg);
+        cmd.add(inputPathArg);
 
         TCLAP::ValueArg<std::string> outputFileArg("o", "output", "output directory", true, "", "filePath");
         cmd.add(outputFileArg);
@@ -112,7 +140,7 @@ int main(int argc, const char **argv) {
 
         cmd.parse(argc, argv);
 
-        std::string inputFile = inputFileArg.getValue();
+        std::string inputPath = inputPathArg.getValue();
         std::string outputDir = outputFileArg.getValue();
         uint32_t pyramidLevel = pyramidLevelArg.getValue();
         std::string depth = imageDepthArg.getValue();
@@ -131,7 +159,7 @@ int main(int argc, const char **argv) {
             outputDir += "/";
         }
 
-        VLOG(1) << inputFileArg.getDescription() << ": " << inputFile << std::endl;
+        VLOG(1) << inputPathArg.getDescription() << ": " << inputPath << std::endl;
         VLOG(1) << outputFileArg.getDescription() << ": " << outputDir << std::endl;
         VLOG(1) << pyramidLevelArg.getDescription() << ": " << pyramidLevel << std::endl;
         VLOG(1) << MinHoleSizeArg.getDescription() << ": " << minHoleSize << std::endl;
@@ -153,7 +181,6 @@ int main(int argc, const char **argv) {
 
         auto *options = new egt::EGTOptions();
         options->imageDepth = imageDepth;
-        options->inputPath = inputFile;
         options->outputPath = outputDir;
         options->pyramidLevel = pyramidLevel;
         options->label = label;
@@ -170,29 +197,22 @@ int main(int argc, const char **argv) {
 
         auto expertModeOptions = parseExpertMode(expertMode);
 
-        switch (imageDepth) {
-            case egt::ImageDepth::_32F: {
-                auto egt = new egt::EGT<float>();
-                egt->run(options, segmentationOptions, expertModeOptions);
-                delete egt;
-                break;
-            }
-            case egt::ImageDepth::_16U: {
-                auto egt = new egt::EGT<uint16_t>();
-                egt->run(options, segmentationOptions, expertModeOptions);
-                delete egt;
-                break;
-            }
-            case egt::ImageDepth::_8U: {
-                auto egt = new egt::EGT<uint16_t>();
-                egt->run(options, segmentationOptions, expertModeOptions);
-                delete egt;
-                break;
+        if (hasEnding(inputPath, "/")) {
+            VLOG(1) << "Processing folder : " <<  inputPath;
+            for (const auto &entry : fs::directory_iterator(inputPath)) {
+                if (!hasEnding(entry.path(), ".tiff")) {
+                    options->inputPath = entry.path();
+                    run(imageDepth, options, segmentationOptions, expertModeOptions);
+                }
             }
         }
+        else {
+            options->inputPath = inputPath;
+            run(imageDepth, options, segmentationOptions, expertModeOptions);
 
-
-
+            delete segmentationOptions;
+            delete options;
+        }
     } catch (TCLAP::ArgException &e)  // catch any exceptions
     {
         DLOG(FATAL) << "error: " << e.error() << " for arg " << e.argId() << std::endl;
