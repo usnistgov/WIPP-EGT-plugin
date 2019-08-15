@@ -33,6 +33,8 @@ namespace egt {
 
         bool streamingWrite{};
 
+        bool erode{};
+
     };
 }
 

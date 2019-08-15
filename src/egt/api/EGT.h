@@ -71,6 +71,9 @@ namespace egt {
             options->streamingWrite = (expertModeOptions.find("streaming") != expertModeOptions.end())
                             ? expertModeOptions.at("streaming") : false;
 
+            options->erode = (expertModeOptions.find("erode") != expertModeOptions.end())
+                                      ? expertModeOptions.at("erode") : true;
+
 
             VLOG(1) << "Execution model : ";
             VLOG(1) << "loader threads : " << options->nbLoaderThreads;
@@ -125,7 +128,9 @@ namespace egt {
             if (!segmentationOptions->MASK_ONLY) {
                 // TODO remove. It was just an example of feature extraction.
                 // computeMeanIntensities(blobs, options);
-           //     blobs->erode(segmentationOptions);
+                if(options->erode) {
+                    blobs->erode(segmentationOptions);
+                }
                 runMaskGeneration(blobs, options, segmentationOptions);
             }
             auto endFC = std::chrono::high_resolution_clock::now();
