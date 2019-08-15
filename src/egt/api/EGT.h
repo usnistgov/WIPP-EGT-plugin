@@ -33,6 +33,8 @@
 
 namespace egt {
 
+    namespace fs = std::experimental::filesystem;
+
     template<class T>
     class EGT {
 
@@ -490,7 +492,7 @@ namespace egt {
             //TODO should we make it an option?
        //     fc->createBlackWhiteMask("output.tiff", (uint32_t) tileWidthAtSegmentationLevel);
 
-            std::experimental::filesystem::path path = options->inputPath;
+            fs::path path = options->inputPath;
             std::string inputFilename = path.filename();
             std::string outputFilenamePrefix = "";
 
@@ -501,38 +503,40 @@ namespace egt {
 
                 outputFilenamePrefix = "labeled-mask-";
                 auto outputFilename = outputFilenamePrefix + inputFilename;
+                auto outputFilepath =  (fs::path(options->outputPath) / outputFilename).string();
 
                 if(options->streamingWrite) {
                     if (nbBlobs < 256) {
                         depth = ImageDepth::_8U;
-                        fc->createLabeledMaskStreaming<uint8_t>(outputFilename,
+                        fc->createLabeledMaskStreaming<uint8_t>(outputFilepath,
                                                                 (uint32_t) tileWidthAtSegmentationLevel,
                                                                 depth);
                     } else if (nbBlobs < 256 * 256) {
                         depth = ImageDepth::_16U;
-                        fc->createLabeledMaskStreaming<uint16_t>(outputFilename,
+                        fc->createLabeledMaskStreaming<uint16_t>(outputFilepath,
                                                                  (uint32_t) tileWidthAtSegmentationLevel,
                                                                  depth);
                     } else {
-                        fc->createLabeledMaskStreaming<uint32_t>(outputFilename,
+                        fc->createLabeledMaskStreaming<uint32_t>(outputFilepath,
                                                                  (uint32_t) tileWidthAtSegmentationLevel,
                                                                  depth);
                     }
                 }
                 else {
-                    fc->createLabeledMask(outputFilename);
+                    fc->createLabeledMask(outputFilepath);
                 }
             }
             else {
 
                 outputFilenamePrefix = "bw-mask-";
                 auto outputFilename = outputFilenamePrefix + inputFilename;
+                auto outputFilepath =  (fs::path(options->outputPath) / outputFilename).string();
 
                 if(options->streamingWrite) {
-                    fc->createBlackWhiteMaskStreaming(outputFilename, (uint32_t) tileWidthAtSegmentationLevel);
+                    fc->createBlackWhiteMaskStreaming(outputFilepath, (uint32_t) tileWidthAtSegmentationLevel);
                 }
                 else{
-                    fc->createBlackWhiteMask(outputFilename, (uint32_t) tileWidthAtSegmentationLevel);
+                    fc->createBlackWhiteMask(outputFilepath, (uint32_t) tileWidthAtSegmentationLevel);
                 }
             }
 
