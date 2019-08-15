@@ -65,6 +65,9 @@ namespace egt {
             options->rank = (expertModeOptions.find("rank") != expertModeOptions.end())
                                  ? expertModeOptions.at("rank") : 4;
 
+            options->streamingWrite = (expertModeOptions.find("streaming") != expertModeOptions.end())
+                            ? expertModeOptions.at("streaming") : false;
+
 
             VLOG(1) << "Execution model : ";
             VLOG(1) << "loader threads : " << options->nbLoaderThreads;
@@ -86,7 +89,10 @@ namespace egt {
 
 
             auto segmentationParams = DerivedSegmentationParams<T>();
-            runPixelIntensityBounds(options, segmentationOptions, segmentationParams);
+
+            if(! segmentationOptions->disableIntensityFilter) {
+                runPixelIntensityBounds(options, segmentationOptions, segmentationParams);
+            }
 
             //determining threshold
             auto beginThreshold = std::chrono::high_resolution_clock::now();
@@ -490,21 +496,34 @@ namespace egt {
                 auto nbBlobs = blob->_blobs.size();
                 auto depth = ImageDepth::_32U;
 
-                if (nbBlobs < 256) {
-                    depth = ImageDepth::_8U;
-                    fc->createLabeledMaskStreaming<uint8_t>("output-labeled.tiff", (uint32_t) tileWidthAtSegmentationLevel,
-                                                            depth);
-                } else if (nbBlobs < 256 * 256) {
-                    depth = ImageDepth::_16U;
-                    fc->createLabeledMaskStreaming<uint16_t>("output-labeled.tiff", (uint32_t) tileWidthAtSegmentationLevel,
-                                                             depth);
-                } else {
-                    fc->createLabeledMaskStreaming<uint32_t>("output-labeled.tiff", (uint32_t) tileWidthAtSegmentationLevel,
-                                                             depth);
+                if(options->streamingWrite) {
+                    if (nbBlobs < 256) {
+                        depth = ImageDepth::_8U;
+                        fc->createLabeledMaskStreaming<uint8_t>("output-labeled.tiff",
+                                                                (uint32_t) tileWidthAtSegmentationLevel,
+                                                                depth);
+                    } else if (nbBlobs < 256 * 256) {
+                        depth = ImageDepth::_16U;
+                        fc->createLabeledMaskStreaming<uint16_t>("output-labeled.tiff",
+                                                                 (uint32_t) tileWidthAtSegmentationLevel,
+                                                                 depth);
+                    } else {
+                        fc->createLabeledMaskStreaming<uint32_t>("output-labeled.tiff",
+                                                                 (uint32_t) tileWidthAtSegmentationLevel,
+                                                                 depth);
+                    }
+                }
+                else {
+                    fc->createLabeledMask("output-labeled.tiff");
                 }
             }
             else {
-                fc->createBlackWhiteMaskStreaming("output-bw.tiff", (uint32_t)tileWidthAtSegmentationLevel);
+                if(options->streamingWrite) {
+                    fc->createBlackWhiteMaskStreaming("output-bw.tiff", (uint32_t) tileWidthAtSegmentationLevel);
+                }
+                else{
+                    fc->createBlackWhiteMask("output.tiff", (uint32_t) tileWidthAtSegmentationLevel);
+                }
             }
 
             delete fc;

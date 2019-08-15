@@ -21,6 +21,11 @@ if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 endif(APPLE)
 
+#TODO TRY STH LIKE THAT TO STRIP LOGS
+#if(PRODUCTION)
+#    set(GOOGLE_STRIP_LOG 1)
+#endif(PRODUCTION)
+
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer")
 
 

@@ -56,7 +56,7 @@ namespace egt {
             auto tileWidth = view->getTileWidth();
             auto tileHeight = view->getTileHeight();
 
-            VLOG(3) << "Custom Sobel Filter for tile (" << view->getRow() << " , " << view->getCol() << ") ..." ;
+            VLOG(3) << "Sobel Filter for tile (" << view->getRow() << " , " << view->getCol() << ") ..." ;
 
 
             T* tileOut = new T[viewWidth * viewHeight]();
@@ -117,7 +117,7 @@ namespace egt {
             return new EGTSobelFilter(this->getNumThreads(), this->depth, this->startRow, this->startCol);
         }
 
-        std::string getName() override { return "Custom Sobel Filter 3 * 3"; }
+        std::string getName() override { return "Sobel Filter 3 * 3"; }
 
     };
 

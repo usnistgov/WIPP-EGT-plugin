@@ -153,21 +153,29 @@ namespace egt {
          * Filter holes : Small holes are filled. Bigger holes are considered background.
          */
         void filterHoles() {
+            VLOG(4) << "filter holes... ";
             uint32_t nbHolesTooSmall = 0;
             auto originalNbOfHoles = _holes->_blobs.size();
+            auto meanIntensities = new std::unordered_map<Blob *, T>();
 
-            auto meanIntensities = new std::unordered_map<Blob*, T >();
-            computeMeanIntensity<T>(_holes->_blobs, options, meanIntensities);
-
+            if(! segmentationOptions->disableIntensityFilter) {
+                computeMeanIntensity<T>(_holes->_blobs, options, meanIntensities);
+            }
 
             auto i = _holes->_blobs.begin();
             while (i != _holes->_blobs.end()) {
                 auto blob = (*i);
 
+                bool keepHole = false;
                 auto area = blob->getCount();
-                auto meanIntensity = meanIntensities->at(blob);
 
-                auto keepHole = computeKeepHoleCriteria<T>(area, meanIntensity, segmentationOptions, segmentationParams);
+                if(! segmentationOptions->disableIntensityFilter) {
+                    auto meanIntensity = meanIntensities->at(blob);
+                    keepHole = computeKeepHoleCriteria<T>(area, meanIntensity, segmentationOptions, segmentationParams);
+                }
+                else {
+                    keepHole = computeKeepHoleAreaOnlyCriteria<T>(area, segmentationOptions, segmentationParams);
+                }
 
                 //transform small holes into blobs
                 if(!keepHole) {
@@ -194,7 +202,7 @@ namespace egt {
                         this->_toMerge[blob].merge(coords);
                         nbHolesTooSmall++;
                         i = _holes->_blobs.erase(i);
-                        VLOG(4) << "Transform hole at (" << row << "," << col << ") of size "<< blob->getCount() <<" into object blob.";
+                        VLOG(5) << "Transform hole at (" << row << "," << col << ") of size "<< blob->getCount() <<" into object blob.";
                 }
                 //turn holes into background
                 else {
@@ -203,8 +211,10 @@ namespace egt {
                 }
             }
 
-            VLOG(3) << "original number of holes : " << originalNbOfHoles;
-            VLOG(3) << "nb of holes filled : " << nbHolesTooSmall;
+            assert(_holes->_blobs.size() == 0);
+
+            VLOG(4) << "original number of holes : " << originalNbOfHoles;
+            VLOG(4) << "nb of holes filled : " << nbHolesTooSmall;
 
             delete meanIntensities;
         }
@@ -213,6 +223,7 @@ namespace egt {
          * Filter objects : Remove small objects.
          */
         void filterObjects() {
+            VLOG(4) << "filter objects... ";
 
             uint32_t nbBlobsTooSmall = 0;
 
@@ -269,20 +280,9 @@ namespace egt {
             for (auto &pS : parentSons) {
                 auto parent = pS.first;
                 auto sons = pS.second;
-                VLOG(4) << "nb of sons: " << sons.size(); //for debug
+                DLOG(INFO) << "nb of blobs to merge: " << sons.size();
 
-                if (sons.size() == 1) {
-                    //holes that do not need merge can be ignored. Let's delete them.
-                    if((*sons.begin())->isToMerge() && isHole){
-                        for(auto s : sons){
-                            delete s;
-                            //TODO CHECK unecessary, This step can be removed if it provides some speedup.
-                            blobs->_blobs.remove(s);
-                        }
-                        sons.clear();
-                    }
-                    continue;
-                }
+                assert(!(isHole && sons.size() == 1)); //we only collected holes that needs merge
 
                 //To merge several blobs, we calculate the resulting bounding box and fill a bitmask of the same dimensions.
                 auto bb = calculateBoundingBox(sons);

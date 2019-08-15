@@ -27,6 +27,8 @@ namespace egt {
 
         JoinOperator KEEP_HOLES_WITH_JOIN_OPERATOR = JoinOperator::AND;
 
+        bool disableIntensityFilter = false;
+
     };
 
 }

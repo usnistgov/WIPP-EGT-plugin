@@ -70,16 +70,24 @@ namespace egt {
     }
 
     template <class T>
+    bool computeKeepHoleAreaOnlyCriteria(uint64_t area, SegmentationOptions *segmentationOptions,
+                                 DerivedSegmentationParams<T> &segmentationParams) {
+        return (area >= segmentationOptions->MIN_HOLE_SIZE && area <= segmentationOptions->MAX_HOLE_SIZE);
+
+    }
+
+
+    template <class T>
     bool computeKeepHoleCriteria(uint64_t area, T meanIntensity, SegmentationOptions *segmentationOptions,
                                  DerivedSegmentationParams<T> &segmentationParams) {
-        bool keepHole = (area >= segmentationOptions->MIN_HOLE_SIZE && area <= segmentationOptions->MAX_HOLE_SIZE);
+        bool keepHole = computeKeepHoleAreaOnlyCriteria(area, segmentationOptions, segmentationParams);
+
         if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::AND) {
             keepHole = keepHole && (meanIntensity >= segmentationParams.minPixelIntensityValue &&
-                                meanIntensity <= segmentationParams.maxPixelIntensityValue);
-        }
-        else if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::OR) {
+                                    meanIntensity <= segmentationParams.maxPixelIntensityValue);
+        } else if (segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR == JoinOperator::OR) {
             keepHole = keepHole || (meanIntensity >= segmentationParams.minPixelIntensityValue &&
-                                meanIntensity <= segmentationParams.maxPixelIntensityValue);
+                                    meanIntensity <= segmentationParams.maxPixelIntensityValue);
         }
 
         return keepHole;

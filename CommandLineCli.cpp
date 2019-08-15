@@ -92,6 +92,9 @@ int main(int argc, const char **argv) {
         TCLAP::SwitchArg labelFlag("","label","Generate a labeled mask", false);
         cmd.add(labelFlag);
 
+        TCLAP::SwitchArg disableIntensityFilterArg("", "disableIntensityFilter", "disable intensity filter", false);
+        cmd.add(disableIntensityFilterArg);
+
         std::vector<std::string> joinOperatorsAllowed;
         joinOperatorsAllowed.emplace_back("and");
         joinOperatorsAllowed.emplace_back("or");
@@ -122,6 +125,7 @@ int main(int argc, const char **argv) {
         uint32_t minPixelIntensityPercentile = minPixelIntensityPercentileArg.getValue();
         uint32_t maxPixelIntensityPercentile = maxPixelIntensityPercentileArg.getValue();
         bool label = labelFlag.getValue();
+        bool disableIntensityFilter = disableIntensityFilterArg.getValue();
 
         if (!hasEnding(outputDir, "/")) {
             outputDir += "/";
@@ -138,6 +142,7 @@ int main(int argc, const char **argv) {
         VLOG(1) << maxPixelIntensityPercentileArg.getDescription() << ": " << maxPixelIntensityPercentile << std::endl;
         VLOG(1) << MaskOnlyArg.getDescription() << ": " << std::noboolalpha  << maskOnly << ":" << std::boolalpha << maskOnly << std::endl;
         VLOG(1) << labelFlag.getDescription() << ": " << std::boolalpha << label << std::endl;
+        VLOG(1) << disableIntensityFilterArg.getDescription() << ": " << std::boolalpha << disableIntensityFilter << std::endl;
         VLOG(1) << expertModeArg.getDescription() << ": " << expertMode << std::endl;
 
 
@@ -161,6 +166,7 @@ int main(int argc, const char **argv) {
         segmentationOptions->KEEP_HOLES_WITH_JOIN_OPERATOR = op;
         segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE = minPixelIntensityPercentile;
         segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE = maxPixelIntensityPercentile;
+        segmentationOptions->disableIntensityFilter = disableIntensityFilter;
 
         auto expertModeOptions = parseExpertMode(expertMode);
 

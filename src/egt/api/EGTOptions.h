@@ -31,6 +31,8 @@ namespace egt {
 
         int rank{};
 
+        bool streamingWrite{};
+
     };
 }
 

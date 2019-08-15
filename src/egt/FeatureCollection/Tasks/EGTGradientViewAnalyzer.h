@@ -92,7 +92,7 @@ namespace egt {
                   _tileWidth(tileWidth),
                   _rank(rank),
                   _background(background),
-                  _options(options),
+                  _segmentationOptions(options),
                   _segmentationParams(params),
                   _vAnalyse(nullptr) {
             _visited = std::vector<bool>((unsigned long)(_tileWidth * _tileHeight), false);
@@ -112,13 +112,19 @@ namespace egt {
             _currentBlob = nullptr;
             _tileHeight = _view->getTileHeight();
             _tileWidth = _view->getTileWidth();
+            _imageSize = _tileWidth * _tileHeight;
 
+            visitedCount = 0;
             run(BACKGROUND); //find holes
+            auto backgroundPixelCount = visitedCount;
+            visitedCount = 0;
             run(FOREGROUND); //find objects
+            auto foregroundPixelCount = visitedCount;
+            assert(_imageSize == backgroundPixelCount + foregroundPixelCount);
 
             //if MASK_ONLY, we return the view with all pixel set to 0 (background) or 255 (foreground).
             //Let's not forget to delete the viewAnalyse since we are done with it.
-            if(_options->MASK_ONLY) {
+            if(_segmentationOptions->MASK_ONLY) {
                 VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
                 VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
                 VLOG(3) << "objects removed because too small: " << objectRemovedCount;
@@ -150,7 +156,7 @@ namespace egt {
                                                            _tileWidth,
                                                            _rank,
                                                            _background,
-                                                           _options,
+                                                           _segmentationOptions,
                                                            _segmentationParams);
             return viewAnalyzer;
         }
@@ -165,7 +171,6 @@ namespace egt {
     private:
 
         void run(Color blobColor){
-
 //            printArray<UserType>("", _view->getData(), _view->getViewWidth(), _view->getViewHeight(), 4);
 
             for (int32_t row = 0; row < _tileHeight; ++row) {
@@ -205,7 +210,7 @@ namespace egt {
             markAsVisited(neighbourCoord.first,
                           neighbourCoord.second);
 
-            if(_options->MASK_ONLY){
+            if(_segmentationOptions->MASK_ONLY){
                 auto maskValue = (getColor(neighbourCoord.first, neighbourCoord.second) == FOREGROUND) ? 255 : 0;
                 _view->setPixel(neighbourCoord.first,neighbourCoord.second, maskValue);
             }
@@ -231,16 +236,24 @@ namespace egt {
                 if(blobColor == BACKGROUND) {
                     //we know this hole is on the border, so we keep track of it for the merge.
                     if (_currentBlob->isToMerge()) {
-                        if(!_options->MASK_ONLY) {
+                        if(!_segmentationOptions->MASK_ONLY) {
                             _currentBlob->compactBlobDataIntoFeature();
                             _vAnalyse->insertHole(_currentBlob);
                         }
                     }
                     //for local hole, decide if we fill it up.
                     else {
-                        UserType meanIntensity = computeMeanIntensity();
+                        bool keepHole = false;
                         auto area = _currentBlob->getCount();
-                        auto keepHole = computeKeepHoleCriteria<UserType>(area, meanIntensity, _options, _segmentationParams);
+
+                        if( _segmentationOptions->disableIntensityFilter) {
+                            keepHole = computeKeepHoleAreaOnlyCriteria<UserType>(area, _segmentationOptions, _segmentationParams);
+                        }
+                        else {
+                            UserType meanIntensity = computeMeanIntensity();
+                            keepHole = computeKeepHoleCriteria<UserType>(area, meanIntensity, _segmentationOptions, _segmentationParams);
+                        }
+
                         if(!keepHole) {
                             fillUpHole();
                         }
@@ -250,9 +263,9 @@ namespace egt {
                 }
                 else {
                     //we delete small objects
-                    if (!_currentBlob->isToMerge() && _currentBlob->getCount() < _options->MIN_OBJECT_SIZE) {
+                    if (!_currentBlob->isToMerge() && _currentBlob->getCount() < _segmentationOptions->MIN_OBJECT_SIZE) {
 
-                        if(_options->MASK_ONLY){
+                        if(_segmentationOptions->MASK_ONLY){
                             for (auto it = _currentBlob->getRowCols().begin();
                                  it != _currentBlob->getRowCols().end(); ++it) {
                                 auto pRow = it->first;
@@ -268,7 +281,7 @@ namespace egt {
                     }
                     // we keep track of the others
                     else{
-                        if(!_options->MASK_ONLY) {
+                        if(!_segmentationOptions->MASK_ONLY) {
                             _currentBlob->compactBlobDataIntoFeature();
                             _vAnalyse->insertBlob(_currentBlob);
                         }
@@ -335,7 +348,7 @@ namespace egt {
             }
 
             //WE DON'T NEED MERGING IF WE GENERATE ONLY THE MASK
-            if(_options->MASK_ONLY){
+            if(_segmentationOptions->MASK_ONLY){
                 return;
             }
 
@@ -407,7 +420,7 @@ namespace egt {
             }
 
             //WE DON'T NEED MERGING IF WE GENERATE ONLY THE MASK
-            if(_options->MASK_ONLY){
+            if(_segmentationOptions->MASK_ONLY){
                 return;
             }
 
@@ -550,7 +563,7 @@ namespace egt {
 
                     markAsUnvisited(pRow - yOffset, pCol - xOffset);
 
-                    if (_options->MASK_ONLY) {
+                    if (_segmentationOptions->MASK_ONLY) {
                         _view->setPixel(pRow - yOffset, pCol - xOffset, 255);
                     } else {
                         _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
@@ -564,10 +577,12 @@ namespace egt {
 
         void markAsVisited(int32_t row, int32_t col) {
             _visited[row * _tileWidth + col] = true;
+            visitedCount++;
         }
 
         void markAsUnvisited(int32_t row, int32_t col) {
             _visited[row * _tileWidth + col] = false;
+            visitedCount--;
         }
 
         inline bool visited(int32_t row, int32_t col){
@@ -580,6 +595,7 @@ namespace egt {
             }
             return Color::BACKGROUND;
         }
+
 
 
         fi::View<UserType>* _view;
@@ -598,6 +614,7 @@ namespace egt {
         int32_t
                 _tileHeight{},                ///< Tile actual height
                 _tileWidth{};                 ///< Tile actual width
+        int64_t _imageSize{};
 
 
         UserType _background{}; /// Threshold value chosen to represent the value above which we have a foreground pixel.
@@ -607,14 +624,15 @@ namespace egt {
                 _imageHeight{},               ///< Mask height
                 _imageWidth{};                ///< Mask width
 
-        SegmentationOptions* _options{};
+        SegmentationOptions* _segmentationOptions{};
         DerivedSegmentationParams<UserType> _segmentationParams{};
 
 
         ViewAnalyse *_vAnalyse = nullptr;         ///< Current view analyse
 
-        uint32_t objectRemovedCount{},
-                 holeRemovedCount{};
+        uint32_t objectRemovedCount = 0,
+                 holeRemovedCount = 0,
+                 visitedCount = 0;
 
 
     };
