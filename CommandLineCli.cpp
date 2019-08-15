@@ -197,7 +197,7 @@ int main(int argc, const char **argv) {
 
         auto expertModeOptions = parseExpertMode(expertMode);
 
-        if (hasEnding(inputPath, "/")) {
+        if (fs::is_directory(inputPath)) {
             VLOG(1) << "Processing folder : " <<  inputPath;
             for (const auto &entry : fs::directory_iterator(inputPath)) {
                 if (!hasEnding(entry.path(), ".tiff")) {
