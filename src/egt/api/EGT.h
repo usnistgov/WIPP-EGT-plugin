@@ -69,10 +69,10 @@ namespace egt {
                                  ? expertModeOptions.at("rank") : 4;
 
             options->streamingWrite = (expertModeOptions.find("streaming") != expertModeOptions.end())
-                            ? expertModeOptions.at("streaming") : false;
+                            ? expertModeOptions.at("streaming") == 1 : false;
 
             options->erode = (expertModeOptions.find("erode") != expertModeOptions.end())
-                                      ? expertModeOptions.at("erode") : true;
+                                      ? expertModeOptions.at("erode") == 1 : true;
 
 
             VLOG(1) << "Execution model : ";
@@ -90,7 +90,7 @@ namespace egt {
                 VLOG(1) << "Threshold finder. Nb of experiments requested: " << options->nbExperiments << std::endl;
             }
             VLOG(1) << "min and max intensity are calculated at pyramid level: " << options->pixelIntensityBoundsLevelUp;
-
+            VLOG(1) << "performing erosion: " << std::boolalpha << options->erode;
             auto begin = std::chrono::high_resolution_clock::now();
 
 

@@ -44,6 +44,7 @@
 #include <FastImage/exception/FastImageException.h>
 #include "BoundingBox.h"
 #include <FastImage/FeatureCollection/tools/Vector2.h>
+#include <glog/logging.h>
 
 namespace egt {
 /// \namespace fc FeatureCollection namespace
@@ -73,6 +74,9 @@ namespace egt {
             _nbElementsBitMask = (uint32_t) (ceil(
                     boundingBox.getHeight() * boundingBox.getWidth() / 32.));
         }
+
+        explicit Feature() :  _boundingBox(BoundingBox(0,0,0,0)) {
+        };
 
         /// \brief Id getter
         /// \return Id

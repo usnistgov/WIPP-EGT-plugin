@@ -545,7 +545,7 @@ namespace egt {
             }
             auto intensity = (UserType)(sum / count);
 
-            DLOG(INFO) << "hole (" << _currentBlob->getTag()  << ") mean intensity "  << intensity;
+            VLOG(5) << "hole (" << _currentBlob->getTag()  << ") mean intensity "  << intensity;
 
             return intensity;
         }
@@ -571,7 +571,7 @@ namespace egt {
                 }
             }
 
-            DLOG(INFO) << "hole (" << _currentBlob->getTag()  << ") filled up : "  << _currentBlob->getCount() << " pixels turned into foreground.";
+            VLOG(5) << "hole (" << _currentBlob->getTag()  << ") filled up : "  << _currentBlob->getCount() << " pixels turned into foreground.";
         }
 
 

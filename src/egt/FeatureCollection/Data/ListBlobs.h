@@ -35,6 +35,8 @@
 #define FASTIMAGE_LISTBLOBS_H
 
 #include "Blob.h"
+#include <egt/loaders/FeatureBitmaskLoader.h>
+
 namespace egt {
 /// \namespace fc FeatureCollection namespace
 
@@ -67,54 +69,151 @@ struct ListBlobs : public IData {
             auto width = feature->getBoundingBox().getWidth();
             auto height = feature->getBoundingBox().getHeight();
 
-            //transform each bitMask into a array of uint8 so we can use opencv
-            auto data = bitMaskToArray(feature->getBitMask(), width, height, foregroundValue);
+            uint32_t* bitMask;
+            uint64_t maskCount = 0;
+
+            //TODO change value
+            if(width * height > 2048 * 2048) {
+
+                VLOG(3) << "eroding a large feature of size: " << width * height << ". Let start a fast image to process it";
+
+                //prepare bitmask for the full feature
+                bitMask = new uint32_t[(uint32_t) ceil((width * height) / 32.)]{0};
+
+                //TODO CHECK
+                auto loader = new FeatureBitmaskLoader<int>(*feature,1024);
+                auto fi = new fi::FastImage<int>(loader,0);
+                fi->getFastImageOptions()->setNumberOfViewParallel(4);
+                fi->configureAndRun();
+                fi->requestAllTiles(true);
+                while(fi->isGraphProcessingTiles()) {
+
+                    auto pview = fi->getAvailableViewBlocking();
+                    if (pview != nullptr) {
+                        auto view = pview->get();
+                        auto data = view->getData();
+                        auto tileHeight = view->getTileHeight();
+                        auto tileWidth = view->getTileWidth();
+
+                        auto mat = cv::Mat(tileHeight, tileWidth, CV_8U,  data);
+                        auto kernel = cv::getStructuringElement(cv::MORPH_ERODE,cv::Size(3,3), cv::Point(1,1));
+                        cv::Mat eroded;
+                        cv::erode(mat,eroded,kernel);
+                        mat.release();
+
+                        //transform back the matrix to an array
+                        std::vector<uchar> array;
+                        if (eroded.isContinuous()) {
+                            array.assign((uchar*)eroded.datastart, (uchar*)eroded.dataend);
+                        } else {
+                            for (int i = 0; i < eroded.rows; ++i) {
+                                array.insert(array.end(), eroded.ptr<uchar>(i), eroded.ptr<uchar>(i)+eroded.cols);
+                            }
+                        }
+                        eroded.release();
+
+                        uint32_t
+                                rowMin = (uint32_t) view->getGlobalYOffset(),
+                                colMin = (uint32_t) view->getGlobalXOffset(),
+                                rowMax = (uint32_t) view->getGlobalYOffset() + tileHeight,
+                                colMax = (uint32_t) view->getGlobalXOffset() + tileWidth,
+                                ulRowL = 0,
+                                ulColL = 0,
+                                wordPosition = 0,
+                                bitPositionInDecimal = 0,
+                                absolutePosition = 0;
+
+                        auto erodedData = array.data();
+                        // Copy back each foreground pixel in the view back to the bitmask.
+                        for (auto row = 0; row < tileHeight; ++row) {
+                            for (auto col = 0; col < tileWidth; ++col) {
+                                // Test if the pixel is in the current feature (using global coordinates)
+                                if (erodedData[row * view->getTileWidth() + col] == 1) {
+                                    maskCount++;
+                                    // Add it to the bit mask
+                                    ulRowL = row + rowMin; //convert to local coordinates
+                                    ulColL = col + colMin;
+                                    absolutePosition = ulRowL * width + ulColL; //to 1D array coordinates
+                                    //optimization : right-shifting binary representation by 5 is equivalent to dividing by 32
+                                    wordPosition = absolutePosition >> (uint32_t) 5;
+                                    //left-shifting back previous result gives the 1D array coordinates of the word beginning
+                                    auto beginningOfWord = ((int32_t) (wordPosition << (uint32_t) 5));
+                                    //subtracting original value gives the remainder of the division by 32.
+                                    auto remainder = ((int32_t) absolutePosition - beginningOfWord);
+                                    //at which position in a binary representation the bit needs to be set?
+                                    bitPositionInDecimal = (uint32_t) abs(32 - remainder);
+                                    //create a 32bit word with this bit set to 1.
+                                    auto bitPositionInBinary = ((uint32_t) 1 << (bitPositionInDecimal - (uint32_t) 1));
+                                    //adding the bitPosition to the word
+                                    bitMask[wordPosition] = bitMask[wordPosition] | bitPositionInBinary;
+                                }
+                            }
+                        }
+
+                        pview->releaseMemory();
+                    }
+                }
+                fi->waitForGraphComplete();
+                delete fi;
+
+                if (maskCount < segmentationOptions->MIN_OBJECT_SIZE) {
+                    VLOG(3) << "delete eroded feature. Reason : feature size < "
+                            << segmentationOptions->MIN_OBJECT_SIZE;
+                    delete[] bitMask;
+                    continue;
+                }
+            }
+            else {
+                //transform each bitMask into a array of uint8 so we can use opencv
+                auto data = bitMaskToArray(feature->getBitMask(), width, height, foregroundValue);
 
 //            printArray<uint8_t>("", data, width, height, 3);
 
 //      //TODO remove
 //      std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
 
-            //erosion from opencv
-            auto mat = cv::Mat(height, width, CV_8U,  data);
+                //erosion from opencv
+                auto mat = cv::Mat(height, width, CV_8U, data);
 //      cv::imwrite(outputPath + "feature-" + std::to_string(feature.getId())  + ".tif" , mat);
 //            auto kernel = cv::getStructuringElement(cv::MORPH_ERODE,cv::Size(3,3), cv::Point(1,1));
-            auto kernel = cv::getStructuringElement(cv::MORPH_ERODE,cv::Size(3,3), cv::Point(1,1));
-            cv::Mat eroded;
-            cv::erode(mat,eroded,kernel);
-            mat.release();
-            delete[] data;
+                auto kernel = cv::getStructuringElement(cv::MORPH_ERODE, cv::Size(3, 3), cv::Point(1, 1));
+                cv::Mat eroded;
+                cv::erode(mat, eroded, kernel);
+                mat.release();
+                delete[] data;
 
-            uint64_t maskCount = (uint64_t)countNonZero(eroded);
+                maskCount = (uint64_t) countNonZero(eroded);
 //      VLOG(3) << eroded;
 
-            if(maskCount < segmentationOptions->MIN_OBJECT_SIZE){
-                eroded.release();
-                VLOG(3) << "delete eroded feature. Reason : feature size < " << segmentationOptions->MIN_OBJECT_SIZE;
-                continue;
-            }
+                if (maskCount < segmentationOptions->MIN_OBJECT_SIZE) {
+                    eroded.release();
+                    VLOG(3) << "delete eroded feature. Reason : feature size < "
+                            << segmentationOptions->MIN_OBJECT_SIZE;
+                    continue;
+                }
 
 //      cv::imwrite(outputPath + "erodedFeature-" + std::to_string(feature.getId())  + ".tif" , eroded);
 
 
-            //transform back the matrix to an array
-            std::vector<uchar> array;
-            if (eroded.isContinuous()) {
-                array.assign((uchar*)eroded.datastart, (uchar*)eroded.dataend);
-            } else {
-                for (int i = 0; i < eroded.rows; ++i) {
-                    array.insert(array.end(), eroded.ptr<uchar>(i), eroded.ptr<uchar>(i)+eroded.cols);
+                //transform back the matrix to an array
+                std::vector<uchar> array;
+                if (eroded.isContinuous()) {
+                    array.assign((uchar *) eroded.datastart, (uchar *) eroded.dataend);
+                } else {
+                    for (int i = 0; i < eroded.rows; ++i) {
+                        array.insert(array.end(), eroded.ptr<uchar>(i), eroded.ptr<uchar>(i) + eroded.cols);
+                    }
                 }
-            }
-            eroded.release();
-            //TODO remove
+                eroded.release();
+                //TODO remove
 //            printBoolArray<uint8_t>("eroded", array.data(),width,height);
 
 
-            //transform back the array to a bitmask
-            auto bitmask = arrayToBitMask(array.data(), width, height, foregroundValue);
+                //transform back the array to a bitmask
+                bitMask = arrayToBitMask(array.data(), width, height, foregroundValue);
+            }
 
-            blob->setFeature(new Feature(feature->getId(), feature->getBoundingBox(), bitmask));
+            blob->setFeature(new Feature(feature->getId(), feature->getBoundingBox(), bitMask));
             blob->setCount(maskCount);
             auto bb = feature->getBoundingBox();
             blob->setColMin(bb.getUpperLeftCol());
