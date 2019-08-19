@@ -17,8 +17,8 @@ namespace egt {
     class FeatureBitmaskLoader : public fi::ATileLoader<UserType> {
     public:
 
-        explicit FeatureBitmaskLoader(const egt::Feature &feature, uint32_t tileSize, size_t numThreads = 1) :
-        fi::ATileLoader<UserType>("gfdgfd", numThreads) {
+        explicit FeatureBitmaskLoader(const egt::Feature &feature, uint32_t tileSize, UserType foregroundValue,  size_t numThreads = 1) :
+        _foregroundValue(foregroundValue), fi::ATileLoader<UserType>("no/path/needed", numThreads) {
 
             _feature = feature;
 
@@ -36,7 +36,7 @@ namespace egt {
         }
 
         fi::ATileLoader<UserType> *copyTileLoader() override {
-            return new FeatureBitmaskLoader(_feature, _tileWidth);
+            return new FeatureBitmaskLoader(_feature, _tileWidth, _foregroundValue, this->getNumThreads());
         }
 
         uint32_t getImageHeight(uint32_t level) const override {
@@ -65,12 +65,17 @@ namespace egt {
 
 
         double loadTileFromFile(UserType *tile, uint32_t indexRowGlobalTile, uint32_t indexColGlobalTile) override {
-            auto tileRow = indexRowGlobalTile * _tileHeight;
-            auto tileCol = indexColGlobalTile * _tileWidth;
+            auto tileStartRow = indexRowGlobalTile * _tileHeight;
+            auto tileStartCol = indexColGlobalTile * _tileWidth;
 
-            for (uint32_t row = 0; row < _tileHeight; row++) {
-                for (uint32_t col = 0; col < _tileWidth; col++) {
-                    if (_feature.isBitSet(tileRow + row, tileCol + col)) {
+            //Tiles might have smaller dimensions at the edge of the image
+            auto tileHeight = std::min(_tileHeight, _imageHeight - tileStartRow);
+            auto tileWidth = std::min(_tileWidth, _imageWidth - tileStartCol);
+
+
+            for (uint32_t row = 0; row < tileHeight; row++) {
+                for (uint32_t col = 0; col < tileWidth; col++) {
+                    if (_feature.isBitSet(tileStartRow + row, tileStartCol + col)) {
                         tile[row * _tileWidth + col] = 1;
                     }
                     else {
@@ -87,6 +92,8 @@ namespace egt {
                 _imageWidth,
                 _tileHeight,
                 _tileWidth;
+
+        UserType _foregroundValue;
 
         short _bitsPerSample;
 

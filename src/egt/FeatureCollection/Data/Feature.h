@@ -75,6 +75,7 @@ namespace egt {
                     boundingBox.getHeight() * boundingBox.getWidth() / 32.));
         }
 
+        //TODO CHECK WHY WE NEED THIS CONSTRUCTOR FOR FAST IMAGE TILE LOADER
         explicit Feature() :  _boundingBox(BoundingBox(0,0,0,0)) {
         };
 
@@ -309,6 +310,10 @@ namespace egt {
         bool operator!=(const Feature &rhs) const {
             return !(rhs == *this);
         }
+
+
+
+
 
     private:
         /// \brief Private constructor used by the deserialization method

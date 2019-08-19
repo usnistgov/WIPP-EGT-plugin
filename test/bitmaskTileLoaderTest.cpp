@@ -67,7 +67,7 @@ int main() {
 
 
     //TODO the loader needs an empty constructor for Feature??
-    auto loader = new egt::FeatureBitmaskLoader<uint8_t>(f, tileSize);
+    auto loader = new egt::FeatureBitmaskLoader<uint8_t>(f, tileSize, 1);
 
     auto fi = new fi::FastImage<uint8_t>(loader,0);
     fi->getFastImageOptions()->setNumberOfViewParallel(1);
@@ -101,6 +101,8 @@ int main() {
         }
 
     }
+
+    delete[] bitmask;
 
     fi->waitForGraphComplete();
 

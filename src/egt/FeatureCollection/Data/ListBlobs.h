@@ -81,7 +81,7 @@ struct ListBlobs : public IData {
                 bitMask = new uint32_t[(uint32_t) ceil((width * height) / 32.)]{0};
 
                 //TODO CHECK
-                auto loader = new FeatureBitmaskLoader<int>(*feature,1024);
+                auto loader = new FeatureBitmaskLoader<int>(*feature,1024, 1);
                 auto fi = new fi::FastImage<int>(loader,0);
                 fi->getFastImageOptions()->setNumberOfViewParallel(4);
                 fi->configureAndRun();
