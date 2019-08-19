@@ -170,7 +170,7 @@ class Blob {
 
 
   uint64_t getBoundingBoxArea() {
-      return (_colMax - _colMin) * (_rowMax - _rowMin);
+      return (uint64_t)(_colMax - _colMin) * (_rowMax - _rowMin);
   }
 
   /// \brief Minimum bounding box row setter
@@ -245,7 +245,7 @@ class Blob {
         std::max(destination->getColMax(), toDelete->getColMax()));
 
     // Merge sparse matrix
-    for (auto rowCol : toDelete->getRowCols()) {
+    for (auto &rowCol : toDelete->getRowCols()) {
       for (auto col : rowCol.second) {
         destination->addRowCol(rowCol.first, col);
       }
