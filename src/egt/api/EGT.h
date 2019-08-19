@@ -52,6 +52,9 @@ namespace egt {
         void run(EGTOptions *options, SegmentationOptions *segmentationOptions,
                  std::map<std::string, uint32_t> &expertModeOptions) {
 
+            auto begin = std::chrono::high_resolution_clock::now();
+
+            //Reading from configuration extra parameters for the algorithm execution.
             options->nbLoaderThreads = (expertModeOptions.find("loader") != expertModeOptions.end())
                                        ? expertModeOptions.at("loader") : 1;
             options->concurrentTiles = (expertModeOptions.find("tile") != expertModeOptions.end())
@@ -74,7 +77,6 @@ namespace egt {
             options->erode = (expertModeOptions.find("erode") != expertModeOptions.end())
                                       ? expertModeOptions.at("erode") == 1 : true;
 
-
             VLOG(1) << "Execution model : ";
             VLOG(1) << "loader threads : " << options->nbLoaderThreads;
             VLOG(1) << "concurrent tiles : " << options->concurrentTiles;
@@ -91,29 +93,26 @@ namespace egt {
             }
             VLOG(1) << "min and max intensity are calculated at pyramid level: " << options->pixelIntensityBoundsLevelUp;
             VLOG(1) << "performing erosion: " << std::boolalpha << options->erode;
-            auto begin = std::chrono::high_resolution_clock::now();
 
 
+            //We need to derive the segmentations params from the user defined parameters
+            //Finding intensity bounds.
             auto segmentationParams = DerivedSegmentationParams<T>();
-
             if(! segmentationOptions->disableIntensityFilter) {
                 runPixelIntensityBounds(options, segmentationOptions, segmentationParams);
             }
-
-            //determining threshold
+            //Finding gradient threshold pixel value.
             auto beginThreshold = std::chrono::high_resolution_clock::now();
             T threshold{};
-
             if (options->threshold == -1) {
                 threshold = runThresholdFinder(options);
             } else {
                 threshold = options->threshold;
             }
             auto endThreshold = std::chrono::high_resolution_clock::now();
-
             segmentationParams.threshold = threshold;
 
-            //segment
+            //Segmentation
             std::shared_ptr<ListBlobs> blobs = nullptr;
             auto beginSegmentation = std::chrono::high_resolution_clock::now();
             if (segmentationOptions->MASK_ONLY) {
@@ -123,13 +122,11 @@ namespace egt {
             }
             auto endSegmentation = std::chrono::high_resolution_clock::now();
 
+            //Mask generation
             auto beginFC = std::chrono::high_resolution_clock::now();
-            //postprocessing of features
             if (!segmentationOptions->MASK_ONLY) {
-                // TODO remove. It was just an example of feature extraction.
-                // computeMeanIntensities(blobs, options);
                 if(options->erode) {
-                    blobs->erode(segmentationOptions);
+                    blobs->erode(options, segmentationOptions);
                 }
                 runMaskGeneration(blobs, options, segmentationOptions);
             }
@@ -137,6 +134,7 @@ namespace egt {
 
             auto end = std::chrono::high_resolution_clock::now();
 
+            //print out summary
             VLOG(1) << "Execution time: ";
             VLOG(1) << "    Threshold Detection: "
                     << std::chrono::duration_cast<std::chrono::milliseconds>(endThreshold - beginThreshold).count()
@@ -158,7 +156,7 @@ namespace egt {
             fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
             fi->configureAndRun();
 
-            //we try to figure at which resolution we could calculate the intensity (max at 2).
+            //we try to figure at which resolution we could calculate the intensity.
             uint32_t pyramidLevelToRequestforPixelIntensityBounds = options->pyramidLevel;
             auto levelUp = options->pixelIntensityBoundsLevelUp;
             while (pyramidLevelToRequestforPixelIntensityBounds + levelUp > fi->getNbPyramidLevels() - 1){
@@ -172,7 +170,6 @@ namespace egt {
             uint32_t numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforPixelIntensityBounds);
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforPixelIntensityBounds) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestforPixelIntensityBounds);
-
 
 
             auto randomExperiments = true;
@@ -487,7 +484,7 @@ namespace egt {
             return blobs;
         }
 
-        void runMaskGeneration(std::shared_ptr<ListBlobs> blob, EGTOptions *options,
+        void runMaskGeneration(std::shared_ptr<ListBlobs> &blob, EGTOptions *options,
                                SegmentationOptions *segmentationOptions) {
             VLOG(1) << "generating a segmentation mask";
             auto fc = new FeatureCollection();
@@ -532,7 +529,6 @@ namespace egt {
                 }
             }
             else {
-
                 outputFilenamePrefix = "bw-mask-";
                 auto outputFilename = outputFilenamePrefix + inputFilename;
                 auto outputFilepath =  (fs::path(options->outputPath) / outputFilename).string();

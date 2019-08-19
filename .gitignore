@@ -14,6 +14,7 @@ VagrantFile
 
 # output directory
 outputs
+outputs2
 
 # benchmark results
 benchmarks/results

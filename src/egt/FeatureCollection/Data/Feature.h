@@ -45,6 +45,7 @@
 #include "BoundingBox.h"
 #include <FastImage/FeatureCollection/tools/Vector2.h>
 #include <glog/logging.h>
+#include <egt/FeatureCollection/algorithms/bitmaskAlgorithms.h>
 
 namespace egt {
 /// \namespace fc FeatureCollection namespace
@@ -187,28 +188,15 @@ namespace egt {
 
 
         bool isBitSet(uint32_t localRow, uint32_t localCol) const {
-            bool answer = false;
-                uint32_t
-                // Find the position in the bounding box
-                        absolutePosition = localRow * this->getBoundingBox().getWidth() + localCol,
-                // Find the good "word" (uint32_t)
-                        wordPosition = absolutePosition >> (uint32_t) 5,
-                // Find the good bit in the word
-                        bitPosition =
-                        (uint32_t) abs((int32_t) 32 - ((int32_t) absolutePosition
-                                                       - (int32_t) (wordPosition << (uint32_t) 5)));
-                // Test if the bit is one
-                answer = (((((uint32_t) 1 << (bitPosition - (uint32_t) 1))
-                            & this->_bitMask[wordPosition])
-                        >> (bitPosition - (uint32_t) 1)) & (uint32_t) 1) == (uint32_t) 1;
-            return answer;
+            auto pos = localRow * this->getBoundingBox().getWidth() + localCol;
+            return BitmaskAlgorithms::isBitSet(_bitMask, pos);
         }
 
-        void printBitMask() const {
+        void printBitmask() const {
             std::ostringstream oss;
             oss << std::endl;
-            for (size_t i = 0; i < _boundingBox.getHeight(); ++i) {
-                for (size_t j = 0; j < _boundingBox.getWidth(); ++j) {
+            for (uint32_t i = 0; i < _boundingBox.getHeight(); ++i) {
+                for (uint32_t j = 0; j < _boundingBox.getWidth(); ++j) {
                     oss << std::setw(1) << this->isBitSet(i,j) << " ";
                 }
                 oss << std::endl;

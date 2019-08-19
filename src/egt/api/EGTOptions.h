@@ -29,7 +29,7 @@ namespace egt {
 
         bool label{};
 
-        int rank{};
+        uint8_t rank{};
 
         bool streamingWrite{};
 

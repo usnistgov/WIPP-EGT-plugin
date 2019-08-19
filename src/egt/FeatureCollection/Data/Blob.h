@@ -27,7 +27,7 @@
 // the United States.
 
 /// @file Blob.h
-/// @author Alexandre Bardakoff - Timothy Blattner
+/// @author Alexandre Bardakoff - Timothy Blattner - Antoine Gerardin
 /// @date  4/6/18
 /// @brief Blob object representing a part of a feature
 

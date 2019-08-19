@@ -63,7 +63,7 @@ int main() {
     auto bitmask = createBitmask(array, width, height);
     auto bb = egt::BoundingBox(0,0,width,height);
     auto f = egt::Feature(2,bb,bitmask);
-    f.printBitMask();
+    f.printBitmask();
 
 
     //TODO the loader needs an empty constructor for Feature??
