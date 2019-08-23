@@ -87,7 +87,6 @@ void run(egt::ImageDepth imageDepth, egt::EGTOptions* &options, egt::Segmentatio
             break;
         }
     }
-
 }
 
 int main(int argc, const char **argv) {
@@ -206,7 +205,7 @@ int main(int argc, const char **argv) {
         if (fs::is_directory(inputPath)) {
             VLOG(1) << "Processing folder : " <<  inputPath;
             for (const auto &entry : fs::directory_iterator(inputPath)) {
-                if (!hasEnding(entry.path(), ".tiff")) {
+                if (!hasEnding(entry.path(), ".tiff") || !hasEnding(entry.path(), ".tif")) {
                     options->inputPath = entry.path();
                     run(imageDepth, options, segmentationOptions, expertModeOptions);
                 }

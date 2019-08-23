@@ -4287,3 +4287,127 @@ I0819 16:51:32.659248 21450 EGT.h:150]     Feature Collection: 3817 mS
 I0819 16:51:32.659250 21450 EGT.h:152]     Total: 118193 mS
 
 Process finished with exit code 0
+
+
+
+
+WARNING: Logging before InitGoogleLogging() is written to STDERR
+I0823 12:52:54.181967 10488 CommandLineCli.cpp:167] (required)  input images directory: /home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif
+I0823 12:52:54.182049 10488 CommandLineCli.cpp:168] (required)  output directory: /home/gerardin/CLionProjects/newEgt/outputs/
+I0823 12:52:54.182061 10488 CommandLineCli.cpp:169] Pyramid Level: 0
+I0823 12:52:54.182070 10488 CommandLineCli.cpp:170] Minimum Hole Size: 100
+I0823 12:52:54.182077 10488 CommandLineCli.cpp:171] Maximum Hole Size: inf
+I0823 12:52:54.182085 10488 CommandLineCli.cpp:172] Minimum Object Size: 100
+I0823 12:52:54.182092 10488 CommandLineCli.cpp:173] Keep Holes Intensity Join Operator: and
+I0823 12:52:54.182101 10488 CommandLineCli.cpp:174] Min Pixel Intensity Percentile: 0
+I0823 12:52:54.182111 10488 CommandLineCli.cpp:175] Max Pixel Intensity Percentile: 100
+I0823 12:52:54.182121 10488 CommandLineCli.cpp:176] Mask only: 0:false
+I0823 12:52:54.182129 10488 CommandLineCli.cpp:177] Generate a labeled mask: false
+I0823 12:52:54.182139 10488 CommandLineCli.cpp:178] disable intensity filter: true
+I0823 12:52:54.182149 10488 CommandLineCli.cpp:179] Expert mode: loader=2;tile=10;threshold=108
+I0823 12:52:54.182181 10488 CommandLineCli.cpp:62] Processing image : /home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif
+I0823 12:52:54.182286 10490 EGT.h:106] Execution model :
+I0823 12:52:54.182292 10490 EGT.h:107] loader threads : 2
+I0823 12:52:54.182303 10490 EGT.h:108] concurrent tiles : 10
+I0823 12:52:54.182312 10490 EGT.h:109] fixed threshold : true
+I0823 12:52:54.182322 10490 EGT.h:111] fixed threshold value : 108
+I0823 12:52:54.182330 10490 EGT.h:113] threshold is calculated at pyramid level: 0
+I0823 12:52:54.182343 10490 EGT.h:120] min and max intensity are calculated at pyramid level: 0
+I0823 12:52:54.182355 10490 EGT.h:121] performing erosion: true
+I0823 12:52:54.196343 10494 EGTSobelFilter.h:59] Sobel Filter for tile (0 , 0) ...
+I0823 12:52:54.200245 10497 EGTSobelFilter.h:59] Sobel Filter for tile (0 , 1) ...
+I0823 12:52:54.200389 10496 EGTSobelFilter.h:59] Sobel Filter for tile (0 , 2) ...
+I0823 12:52:54.201323 10498 EGTSobelFilter.h:59] Sobel Filter for tile (1 , 2) ...
+I0823 12:52:54.201337 10502 EGTSobelFilter.h:59] Sobel Filter for tile (1 , 1) ...
+I0823 12:52:54.201512 10500 EGTSobelFilter.h:59] Sobel Filter for tile (1 , 0) ...
+I0823 12:52:54.210224 10499 EGTSobelFilter.h:59] Sobel Filter for tile (2 , 0) ...
+I0823 12:52:54.210938 10499 EGTSobelFilter.h:59] Sobel Filter for tile (2 , 1) ...
+I0823 12:52:54.212780 10492 EGTSobelFilter.h:59] Sobel Filter for tile (2 , 2) ...
+I0823 12:52:54.213834 10517 EGTGradientViewAnalyzer.h:137] segmenting tile (2 , 0) :
+I0823 12:52:54.213858 10517 EGTGradientViewAnalyzer.h:138] holes turned to foreground : 3
+I0823 12:52:54.213862 10517 EGTGradientViewAnalyzer.h:139] objects removed because too small: 46
+I0823 12:52:54.213866 10517 EGTGradientViewAnalyzer.h:140] holes we keep track of in the merge: 1
+I0823 12:52:54.213869 10517 EGTGradientViewAnalyzer.h:141] holes to merge: 1
+I0823 12:52:54.213872 10517 EGTGradientViewAnalyzer.h:142] objects found: 3
+I0823 12:52:54.213876 10517 EGTGradientViewAnalyzer.h:143] objects to merge: 0
+I0823 12:52:54.214483 10511 EGTGradientViewAnalyzer.h:137] segmenting tile (2 , 2) :
+I0823 12:52:54.214527 10511 EGTGradientViewAnalyzer.h:138] holes turned to foreground : 7
+I0823 12:52:54.214532 10511 EGTGradientViewAnalyzer.h:139] objects removed because too small: 30
+I0823 12:52:54.214536 10511 EGTGradientViewAnalyzer.h:140] holes we keep track of in the merge: 4
+I0823 12:52:54.214541 10511 EGTGradientViewAnalyzer.h:141] holes to merge: 0
+I0823 12:52:54.214545 10511 EGTGradientViewAnalyzer.h:142] objects found: 2
+I0823 12:52:54.214550 10511 EGTGradientViewAnalyzer.h:143] objects to merge: 0
+I0823 12:52:54.214682 10509 EGTGradientViewAnalyzer.h:137] segmenting tile (2 , 1) :
+I0823 12:52:54.214692 10509 EGTGradientViewAnalyzer.h:138] holes turned to foreground : 2
+I0823 12:52:54.214704 10509 EGTGradientViewAnalyzer.h:139] objects removed because too small: 45
+I0823 12:52:54.214713 10509 EGTGradientViewAnalyzer.h:140] holes we keep track of in the merge: 1
+I0823 12:52:54.214721 10509 EGTGradientViewAnalyzer.h:141] holes to merge: 1
+I0823 12:52:54.214730 10509 EGTGradientViewAnalyzer.h:142] objects found: 0
+I0823 12:52:54.214740 10509 EGTGradientViewAnalyzer.h:143] objects to merge: 0
+I0823 12:52:54.241956 10507 EGTGradientViewAnalyzer.h:137] segmenting tile (1 , 2) :
+I0823 12:52:54.241986 10507 EGTGradientViewAnalyzer.h:138] holes turned to foreground : 179
+I0823 12:52:54.241995 10507 EGTGradientViewAnalyzer.h:139] objects removed because too small: 616
+I0823 12:52:54.242003 10507 EGTGradientViewAnalyzer.h:140] holes we keep track of in the merge: 2
+I0823 12:52:54.242010 10507 EGTGradientViewAnalyzer.h:141] holes to merge: 1
+I0823 12:52:54.242017 10507 EGTGradientViewAnalyzer.h:142] objects found: 7
+I0823 12:52:54.242022 10507 EGTGradientViewAnalyzer.h:143] objects to merge: 2
+I0823 12:52:54.270552 10506 EGTGradientViewAnalyzer.h:137] segmenting tile (0 , 0) :
+I0823 12:52:54.270573 10506 EGTGradientViewAnalyzer.h:138] holes turned to foreground : 37
+I0823 12:52:54.270581 10506 EGTGradientViewAnalyzer.h:139] objects removed because too small: 1044
+I0823 12:52:54.270584 10506 EGTGradientViewAnalyzer.h:140] holes we keep track of in the merge: 2
+I0823 12:52:54.270589 10506 EGTGradientViewAnalyzer.h:141] holes to merge: 2
+I0823 12:52:54.270593 10506 EGTGradientViewAnalyzer.h:142] objects found: 7
+I0823 12:52:54.270598 10506 EGTGradientViewAnalyzer.h:143] objects to merge: 7
+I0823 12:52:54.274242 10513 EGTGradientViewAnalyzer.h:137] segmenting tile (0 , 2) :
+I0823 12:52:54.274263 10513 EGTGradientViewAnalyzer.h:138] holes turned to foreground : 69
+I0823 12:52:54.274269 10513 EGTGradientViewAnalyzer.h:139] objects removed because too small: 614
+I0823 12:52:54.274273 10513 EGTGradientViewAnalyzer.h:140] holes we keep track of in the merge: 2
+I0823 12:52:54.274277 10513 EGTGradientViewAnalyzer.h:141] holes to merge: 1
+I0823 12:52:54.274281 10513 EGTGradientViewAnalyzer.h:142] objects found: 9
+I0823 12:52:54.274284 10513 EGTGradientViewAnalyzer.h:143] objects to merge: 2
+I0823 12:52:54.285034 10503 EGTGradientViewAnalyzer.h:137] segmenting tile (0 , 1) :
+I0823 12:52:54.285133 10503 EGTGradientViewAnalyzer.h:138] holes turned to foreground : 100
+I0823 12:52:54.285171 10503 EGTGradientViewAnalyzer.h:139] objects removed because too small: 962
+I0823 12:52:54.285202 10503 EGTGradientViewAnalyzer.h:140] holes we keep track of in the merge: 4
+I0823 12:52:54.285231 10503 EGTGradientViewAnalyzer.h:141] holes to merge: 3
+I0823 12:52:54.285261 10503 EGTGradientViewAnalyzer.h:142] objects found: 14
+I0823 12:52:54.285290 10503 EGTGradientViewAnalyzer.h:143] objects to merge: 8
+I0823 12:52:54.286017 10504 EGTGradientViewAnalyzer.h:137] segmenting tile (1 , 1) :
+I0823 12:52:54.286029 10504 EGTGradientViewAnalyzer.h:138] holes turned to foreground : 91
+I0823 12:52:54.286036 10504 EGTGradientViewAnalyzer.h:139] objects removed because too small: 860
+I0823 12:52:54.286046 10504 EGTGradientViewAnalyzer.h:140] holes we keep track of in the merge: 3
+I0823 12:52:54.286049 10504 EGTGradientViewAnalyzer.h:141] holes to merge: 2
+I0823 12:52:54.286054 10504 EGTGradientViewAnalyzer.h:142] objects found: 8
+I0823 12:52:54.286058 10504 EGTGradientViewAnalyzer.h:143] objects to merge: 2
+I0823 12:52:54.291189 10508 EGTGradientViewAnalyzer.h:137] segmenting tile (1 , 0) :
+I0823 12:52:54.291208 10508 EGTGradientViewAnalyzer.h:138] holes turned to foreground : 94
+I0823 12:52:54.291213 10508 EGTGradientViewAnalyzer.h:139] objects removed because too small: 999
+I0823 12:52:54.291219 10508 EGTGradientViewAnalyzer.h:140] holes we keep track of in the merge: 2
+I0823 12:52:54.291224 10508 EGTGradientViewAnalyzer.h:141] holes to merge: 2
+I0823 12:52:54.291227 10508 EGTGradientViewAnalyzer.h:142] objects found: 12
+I0823 12:52:54.291230 10508 EGTGradientViewAnalyzer.h:143] objects to merge: 4
+I0823 12:52:54.291290 10535 BlobMerger.h:107] detected 21 holes...13 to merge.
+I0823 12:52:54.291298 10535 BlobMerger.h:108] detected 62 objects...25 to merge.
+I0823 12:52:54.292709 10535 BlobMerger.h:156] filter holes...
+I0823 12:52:54.292721 10535 BlobMerger.h:216] original number of holes : 2
+I0823 12:52:54.292726 10535 BlobMerger.h:217] nb of holes filled : 0
+I0823 12:52:54.292937 10535 BlobMerger.h:226] filter objects...
+I0823 12:52:54.292944 10535 BlobMerger.h:246] original nb of objects : 37
+I0823 12:52:54.292948 10535 BlobMerger.h:247] nb of small objects that have been removed : 17
+I0823 12:52:54.292953 10535 BlobMerger.h:248] total nb of objects after filtering: 20
+I0823 12:52:54.292956 10535 BlobMerger.h:117] after last merge, we have : 20 blobs left
+I0823 12:52:54.292960 10535 BlobMerger.h:120]     Merge blobs: 1 mS
+I0823 12:52:54.293542 10490 ListBlobs.h:63] erode feature collection
+I0823 12:52:54.293766 10490 ListBlobs.h:163] delete eroded feature. Reason : feature size < 100
+I0823 12:52:54.293781 10490 ListBlobs.h:163] delete eroded feature. Reason : feature size < 100
+I0823 12:52:54.293807 10490 ListBlobs.h:163] delete eroded feature. Reason : feature size < 100
+I0823 12:52:54.293821 10490 ListBlobs.h:163] delete eroded feature. Reason : feature size < 100
+I0823 12:52:54.293839 10490 ListBlobs.h:163] delete eroded feature. Reason : feature size < 100
+I0823 12:52:54.294137 10490 ListBlobs.h:163] delete eroded feature. Reason : feature size < 100
+I0823 12:52:54.294169 10490 EGT.h:533] generating a segmentation mask
+I0823 12:52:54.295040 10490 EGT.h:167] Execution time:
+I0823 12:52:54.295048 10490 EGT.h:168]     Intensity Filter Bounds Detection: 0 mS
+I0823 12:52:54.295053 10490 EGT.h:171]     Threshold Detection: 0 mS
+I0823 12:52:54.295058 10490 EGT.h:174]     Segmentation: 111 mS
+I0823 12:52:54.295061 10490 EGT.h:176]     Feature Collection: 1 mS
+I0823 12:52:54.295065 10490 EGT.h:178]     Total: 112 mS

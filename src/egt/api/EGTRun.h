@@ -40,7 +40,6 @@ namespace egt {
     public:
 
         ~EGTRun() {
-            if(_runtime) _runtime->waitForRuntime();
             delete _runtime;
         }
 
@@ -51,6 +50,7 @@ namespace egt {
 
         void done(){
             _taskGraph->finishedProducingData();
+            _runtime->waitForRuntime();
         }
 
 
