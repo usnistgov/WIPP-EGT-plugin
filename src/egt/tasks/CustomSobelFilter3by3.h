@@ -40,6 +40,7 @@ namespace egt {
             auto view = data->get();
             auto viewWidth = view->getViewWidth();
             auto viewHeight = view->getViewHeight();
+            auto viewData = view->getData();
 
 //            printArray<T>("view",view->getData(),viewWidth,viewHeight);
 
@@ -50,6 +51,7 @@ namespace egt {
 
             VLOG(3) << "Custom Sobel Filter for tile (" << view->getRow() << " , " << view->getCol() << ") ..." ;
 
+//            printArray("thres", viewData, viewWidth, viewHeight);
 
             auto tileMemoryData = this-> template getDynamicMemory<T>("gradientTile", new ReleaseMemoryRule(1), (size_t)(tileWidth * tileHeight));
             T* tileOut = tileMemoryData->get();
@@ -58,8 +60,6 @@ namespace egt {
             //[description](https://imagejdocu.tudor.lu/faq/technical/what_is_the_algorithm_used_in_find_edges)
             for (auto row = startRow; row < tileHeight + startRow; ++row) {
                 for (auto col = startCol; col < tileWidth + startCol; ++col) {
-
-                    auto viewData = view->getData();
                     auto p1 = viewData[(row - 1)*viewWidth + (col - 1)];
                     auto p2 = viewData[(row - 1)*viewWidth + (col)];
                     auto p3 =  viewData[(row - 1)*viewWidth + (col + 1)];
@@ -83,9 +83,13 @@ namespace egt {
                 }
             }
 
+
+//            printArray("thres tielout", tileOut, tileWidth, tileHeight);
+
 // FOR DEBUGGING
 //            auto img5 = cv::Mat(tileHeight, tileWidth, convertToOpencvType(depth), tileOut);
-//            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tiff" , img5);
+//            cv::imwrite(outputPath + "tileoutThreshold" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tiff" , img5);
+//              img5.release();
 
             // Release the view
             data->releaseMemory();

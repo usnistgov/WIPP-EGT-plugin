@@ -3,10 +3,11 @@
 
 Different resolutions can be asked for.
 
-For a 16U image,
-Threshold computation is always the same if using 32F.
-With 16U, calculation of threshold loose precision and we might have small differences if numbers are rounded up or down.
-=> Done, but no clear gain?
+In the Java code, threshold computation is always using 32F.
+With 16U, calculation of threshold loose precision and we might have small differences\
+if numbers are rounded up or down but really it does not make a difference.
+=> We can choose the resolution as a parameter.
+No clear gain in exec time but definitely saving space.
 
 
 ========================
@@ -17,19 +18,38 @@ but we then we sort all the pixels to figure out the pixel intensity at which we
 since we need to sort billions of pixels in ascending order, and stored the result.
 
 => using an higher level of pyramid is not working since intensity is averaged. It is complicated to figure out exactly the loss.
-=> a sampling approach on a small subset of data seems to work well.
+=> a sampling approach on a small subset of data seems to work good enough but we loose determnism of course.
 
-DONE
+It has been suggested to use the histogram, which could work up to 16bits (we just store 65536 values), for 32bits, it becomes
+unpractical and we have to go back to the previous method (20000 * 20000 image 32bits is => 400M * 4 => 1.6GB vs 2^32=4GB)
+
+=====================
+EROSION ON FEATURE TILE RATHER THAN FULL FEATURES
+Two approach :
+- read from disk, rewrite each as a mask, apply erosion, write bitmask back => a lot of extra computation + IO
+- have a loader of feature bitmask in fast image. Unpack tile, erode, copy back the modified bitmask
+(but not necessarily a tight bounding box anymore + feature can be split in two).
+
+Better : rewrite custom erosion on feature.
+Any other treatment that would require only the bitmask? Probably not. Only feature extraction that has to do with shape.
+
+=> Solution : We now have a loader for feature bitmask. We apply openCV erosion and copy back.
+Two remaining problems :
+- the bound can be less tight (we cannot expect to find a feature pixel on each border)
+- the area is still valid but a feature can become split into several pieces if the erosion removes a tiny bridge between them.
+
+If we want to solve the second problem, we would need to run connected component again on it.
+And then decide what to do with each member. Do we need to create new feature from existing feature if it split, etc...
+That becomes much more involved for marginal gains (matching the global algorithm more closely) so for now we stick to this implementation.
 
 ====================
 Current Improvements
 
 Threshold finder
-    Sampling should gives good results and cut memory consumption even by keeping the current technique
+    Sampling should gives good results and cut memory consumption
 
 Blobs are now compacted into Feature before being sent to merge.
     It cuts down on memory consumption by a factor of 64. (2 32bits coord vs 1bit per pixel)
-
 
 
 ===================
@@ -51,32 +71,13 @@ Improvement : accelerate.
 
 Parameterize erosion with different erosion
 
-
-Connectivity 8 for analyser
 -------------------
 
-EROSION ON FEATURE TILE RATHER THAN FULL FEATURES
-Two approach :
-- read from disk, rewrite each as a mask, apply erosion, write bitmask back => a lot of extra computation + IO
-- have a loader of feature bitmask in fast image. Unpack tile, erode, copy back the modified bitmask
-(but not necessarily a tight bounding box anymore).
-
-Better : rewrite custom erosion on feature.
-Any other treatment that would require only the bitmask? Probably not. Only feature extraction that has to do with shape.
 
 
 
 =====================
 How this work transform the original workflow?
-
-We have to review the workflow if we want to be efficient.
-Example : in the original code we do an erosion step before generating the mask.
-We cannot do that anymore : we generate feature early on that we merge. They describe the number of pixels for each feature.
-If we do erosion, we need to:
- - 1/ generate the mask data from the feature
- - 2/generate apply erosion
- - 3/write the mask
- - 4/regenerate the feature collection if we need them (so the values can be updated).
 
 
 Optimization problem
@@ -93,13 +94,6 @@ with what seem one object but labeled as several objects.
 Things to look at
 
 For dataset test2, two background blobs are found not be linked even though it look like they are connected in the final mask
-
-
-=================
-DOMAIN : THINGS TO ASK
-
-can we take a percentile in the histogram rather than in the full pixel info?
-That would be huge perf improvment.
 
 
 ================================

@@ -10,7 +10,7 @@
 #include <tclap/CmdLine.h>
 #include <glog/logging.h>
 #include <egt/api/SegmentationOptions.h>
-#include <egt/api/EGT.h>
+#include <egt/api/EGTRun.h>
 #include <experimental/filesystem>
 
 namespace fs = std::experimental::filesystem;
@@ -63,20 +63,26 @@ void run(egt::ImageDepth imageDepth, egt::EGTOptions* &options, egt::Segmentatio
 
     switch (imageDepth) {
         case egt::ImageDepth::_32F: {
-            auto egt = new egt::EGT<float>();
-            egt->run(options, segmentationOptions, expertModeOptions);
+            auto input = new egt::EGTInput(options, segmentationOptions, expertModeOptions);
+            auto egt = new egt::EGTRun<float>();
+            egt->run(input);
+            egt->done();
             delete egt;
             break;
         }
         case egt::ImageDepth::_16U: {
-            auto egt = new egt::EGT<uint16_t>();
-            egt->run(options, segmentationOptions, expertModeOptions);
+            auto input = new egt::EGTInput(options, segmentationOptions, expertModeOptions);
+            auto egt = new egt::EGTRun<uint16_t>();
+            egt->run(input);
+            egt->done();
             delete egt;
             break;
         }
         case egt::ImageDepth::_8U: {
-            auto egt = new egt::EGT<uint16_t>();
-            egt->run(options, segmentationOptions, expertModeOptions);
+            auto input = new egt::EGTInput(options, segmentationOptions, expertModeOptions);
+            auto egt = new egt::EGTRun<uint8_t>();
+            egt->run(input);
+            egt->done();
             delete egt;
             break;
         }

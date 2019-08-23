@@ -35,13 +35,39 @@ namespace egt {
 
     namespace fs = std::experimental::filesystem;
 
+    class EGTInput : public htgs::IData {
+
+    public:
+        EGTInput(egt::EGTOptions *options, egt::SegmentationOptions *segmentationOptions,
+                 std::map <std::string, uint32_t> &expertModeOptions) : options(options),
+                                                                        segmentationOptions(segmentationOptions),
+                                                                        expertModeOptions(expertModeOptions) {}
+
+    public:
+        EGTOptions *options;
+        SegmentationOptions *segmentationOptions;
+        std::map <std::string, uint32_t> &expertModeOptions;
+    };
+
+
+    class EGTOutput : public IData {
+    };
+
+
     template<class T>
-    class EGT {
+    class EGT  : public ITask<EGTInput,EGTOutput> {
 
     public:
 
     private:
+        void executeTask(std::shared_ptr<EGTInput> data) override {
+            run(data->options, data->segmentationOptions, data->expertModeOptions);
+            this->addResult(new EGTOutput);
+        }
 
+        ITask<EGTInput, EGTOutput> *copy() override {
+            return this;
+        }
 
     public:
 
@@ -667,6 +693,7 @@ namespace egt {
 
 
         std::map<Blob*, T> meanIntensities{};
+
 
     };
 

@@ -61,6 +61,8 @@ namespace egt {
 
             T* tileOut = new T[viewWidth * viewHeight]();
 
+//            printArray("seg", viewData, viewWidth, viewHeight);
+
             //copy the original view
             T* original = new T[tileWidth * tileHeight]();
             for(auto row = 0; row < view->getTileHeight(); row++){
@@ -101,11 +103,15 @@ namespace egt {
             }
 
              std::copy_n(tileOut, viewHeight * viewWidth, view->getData());
-             delete[] tileOut;
+
+//            printArray("seg tileout", tileOut, viewWidth, viewHeight);
+
 
 //            auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
-//            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".png" , img5);
+//            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tif" , img5);
 //            img5.release();
+
+            delete[] tileOut;
 
             auto gradientView = new GradientView<T>(data,original);
 
