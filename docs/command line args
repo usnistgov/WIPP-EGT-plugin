@@ -14,3 +14,5 @@
 
 
 -i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs2/" -d "8U" --level "2" --minhole "50" --maxhole "inf" --minobject "250" -x "0" -e "loader=2;tile=10;intensitylevel=2"
+
+-i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs2/" -d "8U" --level "2" --minhole "50" --maxhole "inf" --minobject "250" -x "0" -e "loader=2;tile=10;intensitylevel=2"
