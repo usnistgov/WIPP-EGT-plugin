@@ -72,38 +72,21 @@ namespace egt {
                 VLOG(4) << "max : " << maxValue;
 
 
-                //cast to double so we can handle integer values in gradient
-                uint32_t bucketSize = std::ceil((double)(maxValue - minValue) / NUM_HISTOGRAM_BINS);
-
                 double histSum = 0;
-                double totalSum = 0;
-                for(auto k = 0; k < NUM_HISTOGRAM_BINS; k++ ){
-                    auto binsCount = bucketSize;
-                    if(k == NUM_HISTOGRAM_BINS - 1){
-                        binsCount = bins.size() - k * bucketSize;
-                    }
-
-                    double bucketValue = 0;
-                    for(auto i = 0; i < binsCount; i++) {
-                        auto binValue = bins[k * bucketSize + i];
-                        bucketValue += binValue;
-                        totalSum += (k * bucketSize + i) * binValue;
-                    }
-                    hist[k]= bucketValue;
-                    histSum += bucketValue;
+                VLOG(1) << NUM_HISTOGRAM_BINS;
+                VLOG(1) <<  (double)bins.size();
+                double rescale = NUM_HISTOGRAM_BINS / (double)(maxValue - minValue);
+                for(auto k = minValue; k < maxValue; k++){
+                    auto index = (uint32_t)(k - minValue) * rescale + 0.5;
+                    hist[index] += bins[k];
+                    histSum += bins[k];
                 }
 
-                assert(std::accumulate(hist.begin(), hist.end(),0) == histSum);
-
-                //normalize the histogram so that sum(histData)=1;
                 for(uint32_t k = 0; k < NUM_HISTOGRAM_BINS; k++) {
                     hist[k] /= histSum;
                 }
 
-                //TODO we dont need this info. remove both
-                assert(totalSum == sumPixelIntensity);
-
-//                printArray<double>("histogram normalized",&hist[0],20,50);
+                auto s = std::accumulate(hist.begin(), hist.end(),0.0);
 
                 //Get peak mode locations
                 std::vector<double> modes = {0}; //temp array to store histogram value. Default values to 0.
@@ -195,6 +178,7 @@ namespace egt {
                 VLOG(3) << "percentile of pixels threshold value : " << percentileThreshold;
 
                 double totalPixelThreshold = histSum * ( (double)percentileThreshold / 100);
+
 
                 //TODO we need to do the sum of bins[k] * k until == percentilePixelThreshold * bins.size()
                 auto val = bins.size() - 1;
