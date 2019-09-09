@@ -5,15 +5,18 @@ apt-get install -y libtiff5 ;\
 apt-get install -y libgoogle-glog-dev ;\
 apt-get install -y libpng16-16 ;\
 apt-get install -y libopenexr22 ;\
+apt-get install -y apt 3.2 ;\
+apt-get install -y unzip ;\
+apt-get install -y wget ;\
 
-# We will mount the host input dir in this directory.
 INPUTS=/tmp/inputs ;\
 OUTPUTS=/tmp/outputs ;\
 #make sure the user running the algorithm can read
 mkdir $INPUTS ;\
 #make sure the user running the algorithm can read and write
 mkdir $OUTPUTS ;
-
+ADD ./lib /usr/lib
+ADD ./include /usr/include
 ADD ./build/commandLineCli /tmp/commandLineCli
 
 CMD /tmp/commandLineCli

@@ -21,7 +21,8 @@ CONTAINER_DIR_INPUTS=/tmp/inputs
 CONTAINER_DIR_OUTPUTS=/tmp/outputs
 
 # image name
-CONTAINER_IMAGE=egt:1.0.1
+CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.0.3
+#CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.0.1
 
 # Full command
 docker run -v $INPUT_DIR_HOST:$CONTAINER_DIR_INPUTS  -v $OUTPUT_DIR_HOST:$CONTAINER_DIR_OUTPUTS \

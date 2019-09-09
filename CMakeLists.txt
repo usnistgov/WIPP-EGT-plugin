@@ -14,6 +14,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 
+#TODO REMOVE TRY TO BUILD STATICALLY THIS WAY
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 
 #TODO DOES NOT USEFUL. REMOVE
 # make_unique is not available on current OSX libc++
@@ -44,6 +46,8 @@ endif(APPLE)
 # if installed from sources, libtiff needs to be link manually.
 message(libTiff path :  ${TIFF_LIBRARIES} )
 
+set(OpenCV_SHARED ON)
+
 #TODO Set only in debug mode
 find_package(NVTX QUIET)
 #if(NVTX_FOUND)
@@ -58,10 +62,24 @@ find_package(FastImage REQUIRED)
 include_directories(${HTGS_INCLUDE_DIR})
 include_directories(${FastImage_INCLUDE_DIR})
 link_libraries(${FastImage_LIBRARIES})
+#set(OpenCV_INSTALL_PATH "/home/geradin")
+#find_package(OpenCV 3 REQUIRED)
 
-find_package(OpenCV 3 REQUIRED)
-link_libraries(${OpenCV_LIBRARIES} )
-message("OpenCV Version: ${OpenCV_VERSION}")
+message(FAST_IMAGE_LINK_LIBRAIRIES_ARG = ${FastImage_LIBRARIES})
+
+
+#include_directories(/home/gerardin/Downloads/opencv-3.4.6/include)
+#include_directories(/home/gerardin/Downloads/opencv-3.4.6-static/build/include)
+#link_directories(/home/gerardin/Downloads/opencv-3.4.6/lib)
+link_libraries(opencv_core opencv_imgproc)
+#link_directories(/home/gerardin/Downloads/opencv-3.4.6-static/build/lib)
+#link_directories(/home/gerardin/Downloads/opencv-3.4.6-static/build/3rdparty/lib)
+#link_directories(/home/gerardin/Downloads/opencv-3.4.6-static/build/3rdparty/lib)
+
+        #message(opencv path :  ${OpenCV_LIBRARIES} )
+#message(OpenCV_INCLUDE_DIRS :  ${OpenCV_INCLUDE_DIRS} )
+#link_libraries(${OpenCV_LIBRARIES})
+#message("OpenCV Version: ${OpenCV_VERSION} ${OpenCV_SHARED}")
 
 # Necessary to use experimental filesystem lib
 if(APPLE)
@@ -73,7 +91,7 @@ endif(APPLE)
 
 link_libraries(glog)
 
-add_definitions(-DPROFILE)
+#add_definitions(-DPROFILE)
 #add_definitions(-DUSE_PRIORITY_QUEUE)
 
 include_directories(src)
@@ -84,6 +102,19 @@ add_subdirectory(test)
 
 set(SRC_FILES src  src/egt/FeatureCollection/Data/Feature.h src/egt/FeatureCollection/Data/BoundingBox.h src/egt/tasks/ViewToConvOutDataConverter.h src/egt/tasks/FCCustomSobelFilter3by3.h src/egt/FeatureCollection/Tasks/EGTViewAnalyzer.h src/egt/api/SegmentationOptions.h src/egt/FeatureCollection/Data/ViewOrViewAnalyse.h  src/egt/FeatureCollection/Tasks/ViewAnalyseFilter.h src/egt/tasks/TiffTileWriter.h src/egt/FeatureCollection/Tasks/ViewFilter.h src/egt/FeatureCollection/Data/Feature.h)
 
-
 add_executable(commandLineCli CommandLineCli.cpp ${SRC_FILES})
 add_executable(main main.cpp ${SRC_FILES})
+
+#target_link_libraries(commandLineCli opencv_core opencv_imgcodecs zlib)
+
+
+#    find_package(OpenCV REQUIRED)
+#    include_directories(${OpenCV_INCLUDE_DIRS}) # Not needed for CMake >= 2.8.11
+#    target_link_libraries(MY_TARGET_NAME ${OpenCV_LIBS})
+#
+#if(DOCKER)
+#    find_library(opencv_core /usr/local/share/)
+#    target_link_libraries(commandLineCli glog "-static")
+#    target_link_libraries(commandLineCli ${TIFF_LIBRARIES} "-static")
+#    target_link_libraries(commandLineCli opencv_core "-static")
+#endif(DOCKER)

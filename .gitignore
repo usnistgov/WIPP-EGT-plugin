@@ -27,6 +27,11 @@ benchmarks/heaptrack.*
 # container files
 dist/deps
 dist/build
+dist/lib
+dist/include
+dist/CMakeCache.txt
+CMakeFiles
+
 
 **/*.xdot
 

@@ -14,5 +14,9 @@
 
 
 -i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs2/" -d "8U" --level "2" --minhole "50" --maxhole "inf" --minobject "250" -x "0" -e "loader=2;tile=10;intensitylevel=2"
-
 -i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs2/" -d "8U" --level "2" --minhole "50" --maxhole "inf" --minobject "250" -x "0" -e "loader=2;tile=10;intensitylevel=2"
+
+
+
+
+-i  "/home/gerardin/Documents/images/egt-test-images/egt_test/KB_2010_12_01_1hDryCol_IR/tiled/"  -o "/home/gerardin/CLionProjects/newEgt/outputs/KB_2010_12_01_1hDryCol_IR/" -d "16U" --level "0" --minhole "20" --maxhole "inf" --minobject "100" -x "0" --disableIntensityFilter -e "loader=2;tile=10;intensitylevel=0;erode=0"

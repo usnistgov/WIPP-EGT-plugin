@@ -14,7 +14,7 @@
 #include <egt/FeatureCollection/Tasks/FeatureCollection.h>
 #include <egt/FeatureCollection/Tasks/ViewAnalyseFilter.h>
 #include "DataTypes.h"
-#include <egt/tasks/ThresholdFinder.h>
+#include <egt/tasks/FastThresholdFinder.h>
 #include <egt/tasks/SobelFilterOpenCV.h>
 #include <egt/tasks/FCSobelFilterOpenCV.h>
 #include <htgs/log/TaskGraphSignalHandler.hpp>
@@ -319,7 +319,7 @@ namespace egt {
             auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Threshold<T>>();
             auto sobelFilter = new CustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
 
-            auto thresholdFinder = new ThresholdFinder<T>(nbOfSamplingExperiment, tileHeight * tileWidth, nbOfSamples,
+            auto thresholdFinder = new FastThresholdFinder<T>(nbOfSamplingExperiment, tileHeight * tileWidth, nbOfSamples,
                                                           options->imageDepth);
             graph->addEdge(fastImage, sobelFilter);
             graph->addEdge(sobelFilter, thresholdFinder);

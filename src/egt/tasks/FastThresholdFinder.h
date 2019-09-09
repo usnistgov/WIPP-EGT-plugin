@@ -1,9 +1,9 @@
 //
-// Created by gerardin on 5/7/19.
+// Created by gerardin on 9/5/19.
 //
 
-#ifndef EGT_THRESHOLDFINDER_H
-#define EGT_THRESHOLDFINDER_H
+#ifndef NEWEGT_FASTTHRESHOLDFINDER_H
+#define NEWEGT_FASTTHRESHOLDFINDER_H
 
 #include <egt/data/Threshold.h>
 #include <egt/data/ConvOutMemoryData.h>
@@ -22,24 +22,38 @@ namespace egt {
 //    std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
     template <class T>
-    class ThresholdFinder : public htgs::ITask<ConvOutMemoryData<T>, Threshold<T>> {
+    class FastThresholdFinder : public htgs::ITask<ConvOutMemoryData<T>, Threshold<T>> {
 
 
     public:
-        ThresholdFinder(size_t numThreads, uint32_t sampleSize, uint32_t numberOfSamples, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(numThreads),
-                                                                                           sampleSize(sampleSize),
-                                                                                           nbOfSamples(numberOfSamples),
-                                                                                           imageDepth(imageDepth) {
+        FastThresholdFinder(size_t numThreads, uint32_t sampleSize, uint32_t numberOfSamples, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(numThreads),
+                                                                                                                   sampleSize(sampleSize),
+                                                                                                                   nbOfSamples(numberOfSamples),
+                                                                                                                   imageDepth(imageDepth) {
 //        gradient = std::vector<T>(nbOfSamples * sampleSize, 0);
-  //          gradient.reserve(nbOfSamples * sampleSize);
+            //          gradient.reserve(nbOfSamples * sampleSize);
             hist= std::vector<double>(NUM_HISTOGRAM_BINS + 1, 0);
 
             hist.reserve(NUM_HISTOGRAM_BINS + 1);
+
+            //TODO only works for 16bits images
+            size_t size = 0;
+            switch(imageDepth){
+                case (ImageDepth::_8U) :
+                    size = 256;
+                    break;
+                case (ImageDepth::_16U) :
+                    size = 256 * 256;
+                    break;
+                default:
+                    throw "Image Depth is too large for this approach.";
+            }
+            bins = std::vector<double>(size);
         }
 
         void executeTask(std::shared_ptr<ConvOutMemoryData<T>> data) override {
 
-            copySample(data);
+            binSample(data);
             data->getOutputdata()->releaseMemory();
 
             counter++;
@@ -59,24 +73,35 @@ namespace egt {
 
 
                 //cast to double so we can handle integer values in gradient
-                double rescale = (double)NUM_HISTOGRAM_BINS / (maxValue - minValue);
-                double sum = 0;
-                for(auto k = 0; k < gradient.size(); k++ ){
-                        //we round to closest integer
-                        //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.
-//                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
-                        auto index = (uint32_t)((gradient[k] - minValue) * rescale + 0.5);
+                uint32_t bucketSize = std::ceil((double)(maxValue - minValue) / NUM_HISTOGRAM_BINS);
 
-                        assert(index >= 0 && index < NUM_HISTOGRAM_BINS + 1);
+                double histSum = 0;
+                double totalSum = 0;
+                for(auto k = 0; k < NUM_HISTOGRAM_BINS; k++ ){
+                    auto binsCount = bucketSize;
+                    if(k == NUM_HISTOGRAM_BINS - 1){
+                        binsCount = bins.size() - k * bucketSize;
+                    }
 
-                        hist[index]++;
-                        sum++;
+                    double bucketValue = 0;
+                    for(auto i = 0; i < binsCount; i++) {
+                        auto binValue = bins[k * bucketSize + i];
+                        bucketValue += binValue;
+                        totalSum += (k * bucketSize + i) * binValue;
+                    }
+                    hist[k]= bucketValue;
+                    histSum += bucketValue;
                 }
+
+                assert(std::accumulate(hist.begin(), hist.end(),0) == histSum);
 
                 //normalize the histogram so that sum(histData)=1;
                 for(uint32_t k = 0; k < NUM_HISTOGRAM_BINS; k++) {
-                    hist[k] /= gradient.size();
+                    hist[k] /= histSum;
                 }
+
+                //TODO we dont need this info. remove both
+                assert(totalSum == sumPixelIntensity);
 
 //                printArray<double>("histogram normalized",&hist[0],20,50);
 
@@ -129,7 +154,7 @@ namespace egt {
                 for(uint32_t k = modeLoc; k < NUM_HISTOGRAM_BINS; k++) {
                     if(hist[k] <= cutoff && hist[k] > upperBound){
                         upperBound = (uint64_t)hist[k];
-                    break;
+                        break;
                     }
                 }
                 VLOG(1) << "lower bound : " << (uint32_t)lowerBound;
@@ -152,7 +177,6 @@ namespace egt {
                 assert(area < (double)1.0);
 
                 //compute percentile threshold from the empirical model : Y = aX + b
-                //TODO CHECK - taken from the book - in java code we have other values
                 double saturation1 = 3;
                 double saturation2 = 42;
                 double a = (95.0 - 40.0) / (saturation1 - saturation2);
@@ -170,32 +194,35 @@ namespace egt {
 
                 VLOG(3) << "percentile of pixels threshold value : " << percentileThreshold;
 
-                //find the threshold pixel value.
-                //we get all non zero pixels and sort them in ascending order, the percentilePixelThreshold'th pixel has the
-                //intensity we will use for thresholding.
-                //TODO this is slow.
-                VLOG(3) << "sorting all pixel values... ";
-                sort(gradient.begin(), gradient.end());
+                double totalPixelThreshold = histSum * ( (double)percentileThreshold / 100);
 
-                auto percentilePixelThreshold = percentileThreshold / 100 * gradient.size();
+                //TODO we need to do the sum of bins[k] * k until == percentilePixelThreshold * bins.size()
+                auto val = bins.size() - 1;
+                auto sumPixels = 0;
+                for(auto k = 0; k < bins.size(); k++){
+                    if(sumPixels >= totalPixelThreshold){
+                        val = k;
+                        break;
+                    }
+                    sumPixels += bins[k];
+                }
 
-                assert(0 <= percentilePixelThreshold <= gradient.size());
+                T threshold = val;
 
-                T threshold = gradient[percentilePixelThreshold];
 
                 VLOG(3) << "threshold pixel gradient intensity value : " << (T)threshold;
 
                 this->addResult(new Threshold<T>(threshold));
 
                 hist.clear();
-                gradient.clear();
+                bins.clear();
             }
 
 
         }
 
         htgs::ITask <ConvOutMemoryData<T>, Threshold<T>> *copy() override {
-            return new ThresholdFinder(this->getNumThreads(), sampleSize, nbOfSamples,  imageDepth);
+            return new FastThresholdFinder(this->getNumThreads(), sampleSize, nbOfSamples,  imageDepth);
         }
 
         std::string getName() override { return "Threshold Finder"; }
@@ -203,7 +230,7 @@ namespace egt {
 
     private:
 
-        void copySample(std::shared_ptr<ConvOutMemoryData<T>> data){
+        void binSample(std::shared_ptr<ConvOutMemoryData<T>> data){
             auto tile = data->getOutputdata()->get();
             auto sampleSize = data->getTileWidth() * data->getTileHeight();
             for(auto k = 0; k < sampleSize; k++ ){
@@ -211,7 +238,8 @@ namespace egt {
                     //we also compute min max while at it
                     minValue = tile[k] < minValue ? tile[k] : minValue;
                     maxValue = tile[k] > maxValue ? tile[k] : maxValue;
-                    gradient.push_back(tile[k]);
+                    bins[tile[k]]++;
+                    sumPixelIntensity += tile[k];
                 }
             }
         }
@@ -219,13 +247,12 @@ namespace egt {
         uint32_t nbOfSamples{}, sampleSize{};
 
         T minValue = std::numeric_limits<T>::max(),
-          maxValue = std::numeric_limits<T>::min();
+                maxValue = std::numeric_limits<T>::min();
+
+        double sumPixelIntensity = 0;
 
         uint32_t greedy = 0; //TODO add to constructor
         ImageDepth imageDepth = ImageDepth::_8U;
-
-
-        std::vector<T> gradient{};
 
         uint32_t counter = 0;
 
@@ -233,8 +260,9 @@ namespace egt {
         const uint32_t NUM_HISTOGRAM_BINS = 1000;
 
         std::vector<double> hist = {};
+        std::vector<double> bins = {};
 
     };
 }
 
-#endif //EGT_THRESHOLDFINDER_H
+#endif //NEWEGT_FASTTHRESHOLDFINDER_H

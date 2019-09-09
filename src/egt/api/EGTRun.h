@@ -13,7 +13,6 @@
 #include <egt/FeatureCollection/Tasks/FeatureCollection.h>
 #include <egt/FeatureCollection/Tasks/ViewAnalyseFilter.h>
 #include "DataTypes.h"
-#include <egt/tasks/ThresholdFinder.h>
 #include <egt/tasks/SobelFilterOpenCV.h>
 #include <egt/tasks/FCSobelFilterOpenCV.h>
 #include <htgs/log/TaskGraphSignalHandler.hpp>

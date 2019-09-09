@@ -73,7 +73,7 @@ namespace egt {
     template <class T>
     bool computeKeepHoleAreaOnlyCriteria(uint64_t area, SegmentationOptions *segmentationOptions,
                                  DerivedSegmentationParams<T> &segmentationParams) {
-        return (area >= segmentationOptions->MIN_HOLE_SIZE && area <= segmentationOptions->MAX_HOLE_SIZE);
+        return (area >= segmentationOptions->MIN_HOLE_SIZE);
 
     }
 

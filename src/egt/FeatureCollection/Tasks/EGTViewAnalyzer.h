@@ -223,7 +223,7 @@ namespace egt {
 
                     //IF WE HAVE A SMALL BLOB THAT IS NOT TO BE MERGED, WE CONSIDER IT IS A HOLE THAT NEEDS TO BE FILLED
                     //we reset all pixels as UNVISITED foreground.
-                    if ( (_currentBlob->getCount() < _options->MIN_HOLE_SIZE || _currentBlob->getCount() > _options->MAX_HOLE_SIZE ) && !_currentBlob->isToMerge()) {
+                    if ( (_currentBlob->getCount() < _options->MIN_HOLE_SIZE) && !_currentBlob->isToMerge()) {
 
                         for (auto it = _currentBlob->getRowCols().begin();
                              it != _currentBlob->getRowCols().end(); ++it) {
