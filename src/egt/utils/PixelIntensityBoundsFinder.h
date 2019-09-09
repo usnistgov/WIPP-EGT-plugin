@@ -19,7 +19,7 @@ namespace egt {
 
     public :
 
-        static void runPixelIntensityBounds(EGTOptions *options, SegmentationOptions* segmentationOptions, DerivedSegmentationParams<T> &segmentationParams) {
+        void runPixelIntensityBounds(EGTOptions *options, SegmentationOptions* segmentationOptions, DerivedSegmentationParams<T> &segmentationParams) {
 
             auto randomExperiments = true;
             if(options->nbTilePerSample == -1 && options->nbExperiments == -1) {
@@ -117,7 +117,145 @@ namespace egt {
             VLOG(1) << "max pixel intensity : " << segmentationParams.maxPixelIntensityValue;
 
             }
-    };
+
+
+    void runFastPixelIntensityBounds(EGTOptions *options, SegmentationOptions* segmentationOptions, DerivedSegmentationParams<T> &segmentationParams) {
+
+        auto randomExperiments = true;
+        if(options->nbTilePerSample == -1 && options->nbExperiments == -1) {
+            randomExperiments = false;
+        }
+
+        auto nbOfSamplingExperiment = (size_t)((options->nbExperiments != -1) ? options->nbExperiments : 1);
+
+        if(!randomExperiments) {
+            nbOfSamplingExperiment = 1;
+        }
+
+        auto minIntensity = minValue;
+        auto maxIntensity = maxValue;
+
+        auto expCount = 0;
+
+        while(expCount < nbOfSamplingExperiment) {
+
+            const uint32_t radiusForThreshold = 0;
+
+            auto tileLoader = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
+            auto *fi = new fi::FastImage<T>(tileLoader, radiusForThreshold);
+            fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
+            fi->configureAndRun();
+            //we try to figure at which resolution we could calculate the intensity.
+            uint32_t pyramidLevelToRequestforPixelIntensityBounds = options->pyramidLevel;
+            auto levelUp = options->pixelIntensityBoundsLevelUp;
+            while (pyramidLevelToRequestforPixelIntensityBounds + levelUp > fi->getNbPyramidLevels() - 1){
+                levelUp--;
+            }
+            pyramidLevelToRequestforPixelIntensityBounds += levelUp;
+            uint32_t imageHeight = fi->getImageHeight(pyramidLevelToRequestforPixelIntensityBounds);
+            uint32_t imageWidth = fi->getImageWidth(pyramidLevelToRequestforPixelIntensityBounds);
+            uint32_t numTileCol = fi->getNumberTilesWidth(pyramidLevelToRequestforPixelIntensityBounds);
+            uint32_t numTileRow = fi->getNumberTilesHeight(pyramidLevelToRequestforPixelIntensityBounds);
+            uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestforPixelIntensityBounds) *
+                               fi->getNumberTilesWidth(pyramidLevelToRequestforPixelIntensityBounds);
+
+            auto nbOfSamples = (options->nbTilePerSample != -1) ? std::min((int32_t)nbTiles, options->nbTilePerSample) : nbTiles;
+            VLOG(1) << "Pixel intensity bounds finder. Nb of tiles per sample: " << nbOfSamples << std::endl;
+            VLOG(1) << "Pixel intensity bounds finder. Nb of experiments: " << nbOfSamplingExperiment << std::endl;
+
+            //TODO size should not be hardcoded
+            auto intensities = std::vector<T>(256 * 256);
+
+            if(randomExperiments) {
+                auto seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+                std::default_random_engine generator(seed1);
+                std::uniform_int_distribution<uint32_t> distributionRowRange(0, numTileRow - 1);
+                std::uniform_int_distribution<uint32_t> distributionColRange(0, numTileCol - 1);
+                for (auto i = 0; i < nbOfSamples; i++) {
+                    uint32_t randomRow = distributionRowRange(generator);
+                    uint32_t randomCol = distributionColRange(generator);
+                    VLOG(3) << "Requesting tile : (" << randomRow << ", " << randomCol << ")";
+                    fi->requestTile(randomRow, randomCol, false, pyramidLevelToRequestforPixelIntensityBounds);
+                }
+                fi->finishedRequestingTiles();
+            } else {
+                fi->requestAllTiles(true,pyramidLevelToRequestforPixelIntensityBounds);
+            }
+
+            while(fi->isGraphProcessingTiles()) {
+                auto pview = fi->getAvailableViewBlocking();
+                if(pview != nullptr){
+                    auto view = pview->get();
+                    auto tileHeight = view->getTileHeight();
+                    auto tileWidth = view->getTileWidth();
+                    VLOG(3) << "intensity bounds : collecting pixel for tile (" << view->getRow() << "," << view->getCol() << ").";
+                    binSample(view, intensities);
+                    pview->releaseMemory();
+                }
+            }
+
+            double minVal = segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE * pixelCount / 100;
+            double maxVal = segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE * pixelCount / 100;
+
+            T lowerBound = minValue;
+            T higherBound = maxValue;
+
+            auto pixelCount = 0;
+            for(T k = lowerBound; k <= higherBound; k++){
+                if(pixelCount > minVal){
+                    minValue = k -1;
+                    break;
+                }
+                pixelCount += intensities[k];
+            }
+
+            pixelCount = 0;
+            for(T k = lowerBound; k <= higherBound; k++){
+                if(pixelCount < maxVal){
+                    maxValue = k;
+                }
+                pixelCount += intensities[k];
+            }
+
+
+            expCount++;
+
+            fi->waitForGraphComplete();
+            delete fi;
+        }
+
+        segmentationParams.minPixelIntensityValue = minValue;
+        segmentationParams.maxPixelIntensityValue = maxValue;
+
+        VLOG(1) << "min pixel intensity : " << segmentationParams.minPixelIntensityValue;
+        VLOG(1) << "max pixel intensity : " << segmentationParams.maxPixelIntensityValue;
+
+    }
+
+    void binSample(fi::View<T> *data, std::vector<T> &hist){
+        auto sampleSize = data->getTileWidth() * data->getTileHeight();
+        for(auto row = 0; row < data->getTileHeight(); row++){
+            for(auto col =0; col < data->getTileWidth(); col++){
+                auto index = data->getPixel(row,col);
+                hist[index]++;
+                if(index !=0) {
+                    if (index < minValue) {
+                        minValue = index;
+                    }
+                    if (index > maxValue) {
+                        maxValue = index;
+                    }
+                    pixelCount++;
+                }
+            }
+        }
+    }
+
+    private:
+        double pixelCount = 0;
+        T minValue = std::numeric_limits<T>::max();
+        T maxValue = std::numeric_limits<T>::min();
+};
 
 }
 

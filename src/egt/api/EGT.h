@@ -128,7 +128,9 @@ namespace egt {
             //Finding intensity bounds.
             auto segmentationParams = DerivedSegmentationParams<T>();
             if(! segmentationOptions->disableIntensityFilter) {
-                PixelIntensityBoundsFinder<T>::runPixelIntensityBounds(options, segmentationOptions, segmentationParams);
+               auto intensityFinder = new PixelIntensityBoundsFinder<T>();
+               intensityFinder->runFastPixelIntensityBounds(options, segmentationOptions, segmentationParams);
+               delete intensityFinder;
             }
             auto endIntensityFilter = std::chrono::high_resolution_clock::now();
 
