@@ -447,6 +447,10 @@ namespace egt {
             std::string inputFilename = path.filename();
             std::string outputFilenamePrefix = "";
 
+            if(! fs::create_directories(fs::path(options->outputPath))){
+                VLOG(4) << "Problem creating directory : " << options->outputPath;
+            }
+
             //generating a labeled mask. Let's try to find the appropriate resolution we need to correctly render each feature.
             if(options->label) {
                 auto nbBlobs = blob->_blobs.size();
@@ -454,7 +458,6 @@ namespace egt {
 
                 outputFilenamePrefix = "labeled-mask-";
                 auto outputFilename = outputFilenamePrefix + inputFilename;
-                fs::create_directories(fs::path(options->outputPath));
                 auto outputFilepath =  (fs::path(options->outputPath) / outputFilename).string();
 
 

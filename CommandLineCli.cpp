@@ -101,19 +101,19 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::string> outputFileArg("o", "output", "output directory", true, "", "filePath");
         cmd.add(outputFileArg);
 
-        TCLAP::ValueArg<std::string> imageDepthArg("d", "depth", "Image Depth", false, "16U", "string");
+        TCLAP::ValueArg<std::string> imageDepthArg("d", "depth", "Image Depth", true, "16U", "string");
         cmd.add(imageDepthArg);
 
         TCLAP::ValueArg<std::uint32_t> pyramidLevelArg("l", "level", "Pyramid Level", false, 0, "uint32_t");
         cmd.add(pyramidLevelArg);
 
-        TCLAP::ValueArg<std::uint32_t> MinHoleSizeArg("m", "minhole", "Minimum Hole Size", false, 1000, "uint32_t");
+        TCLAP::ValueArg<std::uint32_t> MinHoleSizeArg("m", "minhole", "Minimum Hole Size", true, 1000, "uint32_t");
         cmd.add(MinHoleSizeArg);
 
         TCLAP::ValueArg<std::string> MaxHoleSizeArg("M", "maxhole", "Maximum Hole Size", false, "inf", "uint32_t or inf");
         cmd.add(MaxHoleSizeArg);
 
-        TCLAP::ValueArg<std::uint32_t> MinObjectSizeArg("s", "minobject", "Minimum Object Size", false, 3000, "uint32_t");
+        TCLAP::ValueArg<std::uint32_t> MinObjectSizeArg("s", "minobject", "Minimum Object Size", true, 3000, "uint32_t");
         cmd.add(MinObjectSizeArg);
 
         TCLAP::ValueArg<bool> MaskOnlyArg("x", "maskonly", "Mask only", false, false, "bool");
