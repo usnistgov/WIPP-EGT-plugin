@@ -135,6 +135,8 @@ namespace egt {
         auto minIntensity = minValue;
         auto maxIntensity = maxValue;
 
+
+
         auto expCount = 0;
 
         while(expCount < nbOfSamplingExperiment) {
@@ -194,29 +196,36 @@ namespace egt {
                 }
             }
 
-            double minVal = segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE * pixelCount / 100;
-            double maxVal = segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE * pixelCount / 100;
+            const double minVal = segmentationOptions->MIN_PIXEL_INTENSITY_PERCENTILE * pixelCount / 100;
+            const double maxVal = segmentationOptions->MAX_PIXEL_INTENSITY_PERCENTILE * pixelCount / 100;
 
-            T lowerBound = minValue;
-            T higherBound = maxValue;
+            const T lowerBound = minValue;
+            const T higherBound = maxValue;
+
+            VLOG(3) << "Done. Finding lower and higher bounds between " << (double)lowerBound << " and "<< (double)higherBound << "...";
 
             auto pixelCount = 0;
-            for(T k = lowerBound; k <= higherBound; k++){
-                if(pixelCount > minVal){
-                    minValue = k -1;
+            for(auto k = lowerBound; k <= higherBound; k++){
+                if(pixelCount > minVal) {
+                    minValue = k - 1;
                     break;
                 }
                 pixelCount += intensities[k];
             }
 
+            VLOG(3) << "min intensity : " << (double)minValue;
+
             pixelCount = 0;
-            for(T k = lowerBound; k <= higherBound; k++){
-                if(pixelCount < maxVal){
-                    maxValue = k;
+            for(auto l = lowerBound; l <= higherBound; l++){
+                if(pixelCount < maxVal) {
+                    maxValue = l;
                 }
-                pixelCount += intensities[k];
+                pixelCount += intensities[l];
             }
 
+            VLOG(3) << "max intensity : " << (double)maxValue;
+
+            VLOG(3) << "Done.";
 
             expCount++;
 
@@ -224,11 +233,13 @@ namespace egt {
             delete fi;
         }
 
+        VLOG(3) << "Done with all sample experiments.";
+
         segmentationParams.minPixelIntensityValue = minValue;
         segmentationParams.maxPixelIntensityValue = maxValue;
 
-        VLOG(1) << "min pixel intensity : " << segmentationParams.minPixelIntensityValue;
-        VLOG(1) << "max pixel intensity : " << segmentationParams.maxPixelIntensityValue;
+        VLOG(1) << "min pixel intensity : " << (double)segmentationParams.minPixelIntensityValue;
+        VLOG(1) << "max pixel intensity : " << (double)segmentationParams.maxPixelIntensityValue;
 
     }
 

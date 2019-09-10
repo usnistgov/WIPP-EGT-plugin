@@ -17,10 +17,6 @@
 
 namespace egt {
 
-
-    std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
-//    std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
-
     template <class T>
     class FastThresholdFinder : public htgs::ITask<ConvOutMemoryData<T>, Threshold<T>> {
 
@@ -68,13 +64,11 @@ namespace egt {
                 //we also collect none zero values as we need them for the final step when applying the percentileThreshold.
 
                 VLOG(4) << "Nb of gradient pixels : " << nbOfSamples * sampleSize;
-                VLOG(4) << "min : " << minValue;
-                VLOG(4) << "max : " << maxValue;
+                VLOG(4) << "min value : " << (double)minValue;
+                VLOG(4) << "max value : " << (double)maxValue;
 
 
                 double histSum = 0;
-                VLOG(1) << NUM_HISTOGRAM_BINS;
-                VLOG(1) <<  (double)bins.size();
                 double rescale = NUM_HISTOGRAM_BINS / (double)(maxValue - minValue);
                 for(auto k = minValue; k < maxValue; k++){
                     auto index = (uint32_t)(k - minValue) * rescale + 0.5;
@@ -194,7 +188,7 @@ namespace egt {
                 T threshold = val;
 
 
-                VLOG(3) << "threshold pixel gradient intensity value : " << (T)threshold;
+                VLOG(3) << "threshold pixel gradient intensity value : " << (double)threshold;
 
                 this->addResult(new Threshold<T>(threshold));
 

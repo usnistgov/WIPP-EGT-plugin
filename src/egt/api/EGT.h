@@ -274,14 +274,14 @@ namespace egt {
                 sum += t;
             }
             threshold = sum / thresholdCandidates.size();
-            VLOG(3) << "Threshold value using average: " << threshold;
+            VLOG(3) << "Threshold value using average: " << (double)threshold;
 
             std::sort(thresholdCandidates.begin(), thresholdCandidates.end());
             auto medianIndex = std::ceil(thresholdCandidates.size() / 2);
             threshold = thresholdCandidates[medianIndex];
-            VLOG(3) << "Threshold value using median : " << threshold;
+            VLOG(3) << "Threshold value using median : " << (double)threshold;
 
-            VLOG(1) << "Threshold value : " << threshold;
+            VLOG(1) << "Threshold value : " << (double)threshold;
 
             runtime->waitForRuntime();
 //FOR DEBUGGING
@@ -345,7 +345,7 @@ namespace egt {
                     imageWidthAtSegmentationLevel,
                     (uint32_t) tileHeigthAtSegmentationLevel,
                     ImageDepth::_8U,
-                    outputPath + "mask.tif"
+                    (fs::path(options->outputPath) / "mask.tif").string()
             );
 
             localMaskGenerationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, VoidData>;
@@ -454,7 +454,9 @@ namespace egt {
 
                 outputFilenamePrefix = "labeled-mask-";
                 auto outputFilename = outputFilenamePrefix + inputFilename;
+                fs::create_directories(fs::path(options->outputPath));
                 auto outputFilepath =  (fs::path(options->outputPath) / outputFilename).string();
+
 
                 if(options->streamingWrite) {
                     if (nbBlobs < 256) {

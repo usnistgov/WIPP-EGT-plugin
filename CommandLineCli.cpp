@@ -122,10 +122,10 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::string> expertModeArg("e", "expertmode", "Expert mode", false, "", "string");
         cmd.add(expertModeArg);
 
-        TCLAP::SwitchArg labelFlag("","label","Generate a labeled mask", false);
+        TCLAP::ValueArg<bool> labelFlag("","label","Generate a labeled mask", false, false, "bool");
         cmd.add(labelFlag);
 
-        TCLAP::SwitchArg disableIntensityFilterArg("", "disableIntensityFilter", "disable intensity filter", false);
+        TCLAP::ValueArg<bool> disableIntensityFilterArg("", "disableIntensityFilter", "disable intensity filter", false, true, "bool");
         cmd.add(disableIntensityFilterArg);
 
         std::vector<std::string> joinOperatorsAllowed;
