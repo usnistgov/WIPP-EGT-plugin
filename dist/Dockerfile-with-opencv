@@ -19,4 +19,4 @@ ADD ./lib /usr/lib
 ADD ./include /usr/include
 ADD ./build/commandLineCli /tmp/commandLineCli
 
-CMD /tmp/commandLineCli
+ENTRYPOINT ["/tmp/commandLineCli"]

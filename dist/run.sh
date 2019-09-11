@@ -27,7 +27,7 @@ CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.0.3
 # Full command
 docker run -v $INPUT_DIR_HOST:$CONTAINER_DIR_INPUTS  -v $OUTPUT_DIR_HOST:$CONTAINER_DIR_OUTPUTS \
 -e GLOG_v=4 -e GLOG_logtostderr=1 $CONTAINER_IMAGE \
- /tmp/commandLineCli -i $CONTAINER_DIR_INPUTS/$IMAGE_RELATIVE_PATH -o $CONTAINER_DIR_OUTPUTS \
+  -i $CONTAINER_DIR_INPUTS/$IMAGE_RELATIVE_PATH -o $CONTAINER_DIR_OUTPUTS \
  -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "2" -x "0"   --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=2"
 
 # FOR DEBUGGING ONLY. Pop up a bash shell in the container.

@@ -16,18 +16,6 @@
       "description": "Images : Collections of partial Fields Of View (FOVs)."
     },
     {
-      "name": "output",
-      "type": "string",
-      "required": "true",
-      "description": "Output Path : where the binary masks should be created."
-    },
-    {
-      "name": "depth",
-      "type": "string",
-      "required": "false",
-      "description": "Image Depth : The format is which each pixel is encoded in the input."
-    },
-    {
       "name": "level",
       "type": "number",
       "required": "false",
@@ -40,59 +28,16 @@
       "description": "Minimum Hole Size"
     },
     {
-      "name": "maxhole",
-      "type": "number",
-      "required": "false",
-      "description": "Maximum Hole Size"
-    },
-    {
       "name": "minobject",
       "type": "number",
       "required": "false",
       "description": "Minimum Object Size"
     },
     {
-      "name": "op",
-      "type": "string",
-      "required": "false",
-      "description": "Keep Holes Intensity Join Operator"
-    },
-    {
-      "name": "minintensity",
-      "type": "string",
-      "required": "false",
-      "description": "Keep Holes Intensity Join Operator"
-    },
-    {
-      "name": "maxintensity",
-      "type": "string",
-      "required": "false",
-      "description": "Min Pixel Intensity Percentile"
-    },
-    {
-      "name": "maxintensity",
-      "type": "string",
-      "required": "false",
-      "description": "Max Pixel Intensity Percentile"
-    },
-    {
       "name": "label",
       "type": "boolean",
       "required": "false",
       "description": "Generate a Labeled Mask"
-    }
-    ,
-    {
-      "name": "disableIntensityFilter",
-      "type": "boolean",
-      "required": "false",
-      "description": "disable intensity filter"
-    },
-    {
-      "name": "expertmode",
-      "type": "string",
-      "required": "false",
-      "description": "Expert Mode configuration for tuning performance"
     }
   ],
   "outputs": [
@@ -107,32 +52,16 @@
   ],
   "ui": [
     {
-      "key": "inputs.name",
-      "title": "Pyramid Name"
-    },
-    {
       "key": "inputs.images",
-      "title": "Image Directory"
-    },
-    {
-      "key": "inputs.vector",
-      "title": "Stitching Vector"
+      "title": "Image Collections"
     },
     {
       "key": "inputs.output",
       "title": "Output Directory"
     },
     {
-      "key": "inputs.tilesize",
-      "title": "Tile Size"
-    },
-    {
       "key": "inputs.depth",
       "title": "Image Depth"
-    },
-    {
-      "key": "inputs.blending",
-      "title": "Blending Method"
     }
   ]
 }

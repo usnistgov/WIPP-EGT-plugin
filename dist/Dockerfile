@@ -16,4 +16,4 @@ mkdir $OUTPUTS ;
 
 ADD ./build/commandLineCli /tmp/commandLineCli
 
-CMD /tmp/commandLineCli
+ENTRYPOINT ["/tmp/commandLineCli"]
