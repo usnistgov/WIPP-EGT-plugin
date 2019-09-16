@@ -31,6 +31,8 @@
 #include "DerivedSegmentationParams.h"
 #include <experimental/filesystem>
 #include <egt/utils/PixelIntensityBoundsFinder.h>
+#include <egt/utils/pyramid/Pyramid.h>
+#include <egt/utils/pyramid/RecursiveBlockTraversal.h>
 
 
 namespace egt {
@@ -423,11 +425,22 @@ namespace egt {
             segmentationRuntime = new htgs::TaskGraphRuntime(segmentationGraph);
             segmentationRuntime->executeRuntime();
             fi->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
+
+            auto pyramid = pb::Pyramid(fi->getImageWidth(), fi->getImageHeight(), fi->getTileWidth());
+            auto traversal = new pb::RecursiveBlockTraversal(pyramid);
+            for(auto step : traversal->getTraversal()){
+                auto row = step.first;
+                auto col = step.second;
+                fi->requestTile(row,col,false,0);
+                VLOG(3) << "Requesting tile (" << row << "," << col << ")";
+            }
+
             segmentationGraph->finishedProducingData();
 
             //we only generate one output, the list of all objects
             std::shared_ptr<ListBlobs> blobs = segmentationGraph->consumeData();
             segmentationRuntime->waitForRuntime();
+            delete traversal;
             delete fi;
             delete segmentationRuntime;
             return blobs;
