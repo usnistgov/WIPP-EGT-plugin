@@ -4,7 +4,7 @@
 
 
 # only the central square
--i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset01/" -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "2" -x "0"   --op "and" --disableIntensityFilter --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=2"
+-i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset01/" -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "2" -x "false"   --op "and" --disableIntensityFilter "true" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=2"
 
 -i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "10000" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87"
 -i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;"

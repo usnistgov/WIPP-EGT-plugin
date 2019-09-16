@@ -201,6 +201,7 @@ namespace egt {
 
        /**
         * We have a queue of pixels to visit. Dequeue the first one and explore its neighbors.
+        * We use connectivity 4 for background and connectivity 8 for foreground.
         * @param blobColor
         */
         void expandBlob(Color blobColor){
@@ -294,9 +295,6 @@ namespace egt {
 
         /**
          * Create a new blob at a given position and try to expand it.
-         * @param row
-         * @param col
-         * @param blobColor
          */
         void createBlob(int32_t row, int32_t col, Color blobColor) {
             markAsVisited(row, col);
@@ -314,8 +312,6 @@ namespace egt {
         }
 
         /// \brief Analyse the neighbour of a pixel for a 4-connectivity
-        /// \param row Pixel's row
-        /// \param col Pixel's col
         void analyseNeighbour4(int32_t row, int32_t col, Color color) {
 
             auto globalRow = row + _view->getGlobalYOffset();
