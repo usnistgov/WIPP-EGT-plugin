@@ -100,7 +100,6 @@ namespace egt {
             _count++;
 
             //merge the blobs when all tiles have been received
-            if (_count == _nbTiles) {
 
                 auto startMerge = std::chrono::high_resolution_clock::now();
 
@@ -122,7 +121,6 @@ namespace egt {
                         << " mS";
 
                 this->addResult(_blobs);
-            }
         }
 
         /// \brief Get the name of the task

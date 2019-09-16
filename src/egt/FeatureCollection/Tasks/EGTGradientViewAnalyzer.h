@@ -106,7 +106,7 @@ namespace egt {
             _view = view->getGradientView()->get();
             _originalView = view->getOriginalView();
             //FOR EACH NEW TILE WE NEED TO RESET THE TASK STATE SINCE MANY TILES CAN BE PROCESSED BY ONE TASK
-            _vAnalyse = new ViewAnalyse(); //OUTPUT
+            _vAnalyse = new ViewAnalyse(_view->getRow(), _view->getCol(), _view->getPyramidLevel()); //OUTPUT
             _toVisit.clear(); //clear queue that keeps track of neighbors to visit when flooding
             _visited.assign(_visited.size(), false); //clear container that keeps track of all visited pixels in a pass through the image.
             _currentBlob = nullptr;

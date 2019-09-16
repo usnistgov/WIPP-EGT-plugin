@@ -57,13 +57,33 @@ namespace egt {
 class ViewAnalyse : public htgs::IData {
  public:
 
+    ViewAnalyse() = default;
+
+    ViewAnalyse(uint32_t row, uint32_t col, uint32_t level) : row(row), col(col), level(level){}
+
     void tidy(){
             //TODO we could remove from merge list if we have tiny amount of pixel
             VLOG(1) << "tidying up contiguous pixels";
     }
 
+    uint32_t getLevel() const {
+        return level;
+    }
 
-  /// \brief Getter to the merge map
+    uint32_t getRow() const {
+        return row;
+    }
+
+    uint32_t getCol() const {
+        return col;
+    }
+
+    void setLevel(uint32_t l) {
+        level = l;
+    }
+
+
+    /// \brief Getter to the merge map
   /// \return Merge map
   const std::unordered_map<Blob *, std::list<Coordinate>> &getToMerge() const {
     return _toMerge;
@@ -117,6 +137,11 @@ private:
 
   std::list<Blob *>
       _holes{};   ///< List of holes created
+
+  uint32_t level = 0;
+
+  uint32_t row = 0, col = 0;
+
 };
 }
 #endif //EGT_REGIONLABELING_VIEWANALYSE_H

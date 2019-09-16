@@ -33,6 +33,9 @@
 #include <egt/utils/PixelIntensityBoundsFinder.h>
 #include <egt/utils/pyramid/Pyramid.h>
 #include <egt/utils/pyramid/RecursiveBlockTraversal.h>
+#include <egt/rules/MergeRule.h>
+#include <egt/FeatureCollection/Tasks/MergeBlob.h>
+#include <egt/rules/MergeCompletedRule.h>
 
 
 namespace egt {
@@ -384,6 +387,7 @@ namespace egt {
             //and then check the ghost region for potential merges for each tile of size n.
             uint32_t segmentationRadius = 2;
 
+
             auto tileLoader2 = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
             auto *fi = new fi::FastImage<T>(tileLoader2, segmentationRadius);
             fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
@@ -394,6 +398,8 @@ namespace egt {
             tileWidthAtSegmentationLevel = fi->getTileWidth(pyramidLevelToRequestForSegmentation);
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
+            auto pyramid = pb::Pyramid(fi->getImageWidth(), fi->getImageHeight(), fi->getTileWidth());
+
             auto sobelFilter2 = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
 
             auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
@@ -406,7 +412,16 @@ namespace egt {
                                                            segmentationOptions,
                                                            segmentationParams);
             auto labelingFilter = new ViewAnalyseFilter<T>(options->concurrentTiles);
-            auto merge = new BlobMerger<T>(imageHeightAtSegmentationLevel,
+
+            auto bookkeeper = new htgs::Bookkeeper<ViewAnalyse>();
+
+            auto mergeRule = new MergeRule(pyramid);
+            auto mergeCompletedRule = new MergeCompletedRule(pyramid);
+
+
+
+
+            auto finalMerge = new BlobMerger<T>(imageHeightAtSegmentationLevel,
                                         imageWidthAtSegmentationLevel,
                                         nbTiles,
                                         options,
@@ -416,8 +431,17 @@ namespace egt {
             segmentationGraph->addEdge(fastImage2, sobelFilter2);
             segmentationGraph->addEdge(sobelFilter2, viewSegmentation);
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
-            segmentationGraph->addEdge(labelingFilter, merge);
-            segmentationGraph->addGraphProducerTask(merge);
+
+
+            auto mergeBlob = new MergeBlob(1);
+
+
+            segmentationGraph->addEdge(labelingFilter, bookkeeper);
+            segmentationGraph->addRuleEdge(bookkeeper,mergeRule, mergeBlob);
+            segmentationGraph->addEdge(mergeBlob,bookkeeper);
+            segmentationGraph->addRuleEdge(bookkeeper, mergeCompletedRule, finalMerge);
+
+            segmentationGraph->addGraphProducerTask(finalMerge);
 
             htgs::TaskGraphSignalHandler::registerTaskGraph(segmentationGraph);
             htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
@@ -426,7 +450,7 @@ namespace egt {
             segmentationRuntime->executeRuntime();
             fi->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
 
-            auto pyramid = pb::Pyramid(fi->getImageWidth(), fi->getImageHeight(), fi->getTileWidth());
+
             auto traversal = new pb::RecursiveBlockTraversal(pyramid);
             for(auto step : traversal->getTraversal()){
                 auto row = step.first;

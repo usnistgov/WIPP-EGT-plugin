@@ -67,6 +67,7 @@ struct ListBlobs : public IData {
         uint64_t largeFeatureCutoff = 2048 * 2048;
         uint32_t tilesize = 1024;
 
+
         for(auto &blob : _blobs) {
             auto feature = blob->getFeature();
 
