@@ -55,20 +55,26 @@ class MergeRule : public htgs::IRule<ViewAnalyse, ViewAnalyseBlock> {
 
             //bottom-right block special case
             if( splitCol && splitRow && isRightMostBlock && isBottomBlock ) {
-                VLOG(3) << "level " << level << ": (" << blockRow << ", " << blockCol <<  ")> " << "Bottom right block special case." << std::endl;
+                VLOG(3) << "level " << level + 1 << ": (" << blockRow << ", " << blockCol <<  ")> " << "Bottom right block special case." << std::endl;
                 this->addResult(block);
             }
             //right or bottom blocks special cases
-            else if ((splitCol && isRightMostBlock) || (splitRow && isBottomBlock)) {
+            else if ((splitCol && isRightMostBlock)) {
                 if(levels[level][{blockRow, blockCol}]->getViewAnalyses().size() == 2) {
-                    VLOG(3) << "level " << level << ": (" << blockRow << ", " << blockCol <<  "). " <<"Edge block special case." << std::endl;
+                    VLOG(3) << "level " << level + 1 << ": (" << blockRow << ", " << blockCol <<  "). " <<"Edge right block special case." << std::endl;
+                    this->addResult(block);
+                }
+            }
+            else if(splitRow && isBottomBlock) {
+                if(levels[level][{blockRow, blockCol}]->getViewAnalyses().size() == 2) {
+                    VLOG(3) << "level " << level + 1 << ": (" << blockRow << ", " << blockCol <<  "). " <<"Edge bottom block special case." << std::endl;
                     this->addResult(block);
                 }
             }
             //regular case block
             else {
                 if(levels[level][{blockRow, blockCol}]->getViewAnalyses().size() == 4) {
-                    VLOG(3) << "level " << level << ": (" << blockRow << ", " << blockCol <<  "). " << "Regular block." << std::endl;
+                    VLOG(3) << "level " << level + 1 << ": (" << blockRow << ", " << blockCol <<  "). " << "Regular block." << std::endl;
                     this->addResult(block);
                 }
             }

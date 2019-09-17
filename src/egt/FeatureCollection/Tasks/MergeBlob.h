@@ -44,23 +44,33 @@ public:
             else {
                 addToNextLevelMerge(view , {row + 1, col}, {data->getRow() + 1, data->getCol()});
             }
+
             if(views.find({row, col + 1}) != views.end()){
                 merge(view, views[{row, col + 1}]);
             }
             else {
                 addToNextLevelMerge(view , {row , col + 1}, {data->getRow(), data->getCol() + 1});
             }
+
             if(views.find({row + 1, col + 1}) != views.end()){
                 merge(view, views[{row + 1, col + 1}]);
             }
             else {
                 addToNextLevelMerge(view , {row + 1 , col + 1}, {data->getRow() + 1, data->getCol() + 1});
             }
-            if(views.find({row + 1, col + 1}) != views.end()){
-                merge(view, views[{row + 1, col + 1}]);
+
+            if(views.find({row - 1, col}) != views.end()){
+                merge(view, views[{row - 1, col}]);
             }
             else {
-                addToNextLevelMerge(view , {row + 1 , col + 1}, {data->getRow() - 1, data->getCol() - 1});
+                addToNextLevelMerge(view , {row - 1 , col}, {data->getRow() - 1, data->getCol()});
+            }
+
+            if(views.find({row, col - 1}) != views.end()){
+                merge(view, views[{row, col - 1}]);
+            }
+            else {
+                addToNextLevelMerge(view , {row , col - 1}, {data->getRow(), data->getCol() - 1});
             }
         }
 
@@ -76,27 +86,59 @@ public:
      * Merge blobs at the border of two contiguous tiles.
      */
     void merge(std::shared_ptr<ViewAnalyse> v1, std::shared_ptr<ViewAnalyse> v2){
-        VLOG(3) << "merge...";
-        for(auto entry : v1->getToMerge()) {
-            auto coordinates = entry.first;
-            auto candidates = v2->getToMerge()[coordinates];
-            //amongst candidates, find the correct blob and merge
-            //when we are done all blobs are merged on this side
+        VLOG(3) << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). " << "merging tile : " << "(" << v1->getRow() << "," << v1->getCol() << ") & (" << v2->getRow() << "," << v2->getCol() << ")"  << "merge...";
+
+        auto blobs = v1->getToMerge()[{v2->getRow(),v2->getCol()}];
+        auto blobsToMerge = v2->getToMerge()[{v1->getRow(),v1->getCol()}];
+
+        assert (blobs.size() == blobsToMerge.size());
+
+        if(blobs.size() == 0){
+            VLOG(3) << "Nothing to merge.";
+            return;
         }
+
+        // TODO iterate and remove entry from blobsToMerge as we perform merges
+        // also instead of a list of blob, we should maintain UnionFind and merge those as we go.
+        // when all mergesa are done, we create the final mask
+        for(auto &b : blobs) {
+                auto blob = b.first;
+                for(auto coordinates : b.second){
+                        for(auto other : blobsToMerge) {
+                            auto otherBlob = other.first;
+                            if (other.first->isPixelinFeature(coordinates.first, coordinates.second)) {
+                                createNewBlob(blob,otherBlob);
+                            }
+                        }
+                }
+        }
+    }
+
+    void createNewBlob(Blob* blob, Blob* otherBlob){
+        VLOG(3) << "Creating merged blob from blobs :" << blob->getTag() << "," << otherBlob->getTag();
     }
 
     /**
      * Record merges that needs to happen at the next level
      */
     void addToNextLevelMerge(std::shared_ptr<ViewAnalyse> v1, std::pair<uint32_t,uint32_t> coordinates, std::pair<uint32_t,uint32_t> contiguousBlockCoordinates){
-        //merge all entries of v1->getToMerge()[coordinates] into result->getToMerge()[contiguousBlockCoordinates]
-        //we will merge them at the next level
-        //empty if we are at the border
+        auto blobsToMerge = v1->getToMerge()[coordinates];
+        if(!(blobsToMerge).empty()){
+            VLOG(4) << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). " << "block : " << "(" << contiguousBlockCoordinates.first << "," << contiguousBlockCoordinates.second << ")" << "tile : " << "(" << coordinates.first << "," << coordinates.second << ")" << "need to merge " << blobsToMerge.size() << " at the next level";
+            for(auto blobToPixelEntry : v1->getToMerge()[coordinates]){
+                result->getToMerge()[contiguousBlockCoordinates].insert(blobToPixelEntry);
+            }
+            //merge all entries of v1->getToMerge()[coordinates] into result->getToMerge()[contiguousBlockCoordinates]
+            //we will merge them at the next level
+            //empty if we are at the border
+        }
+        else {
+            VLOG(4) << "nothing to merge at  the next level";
+        }
     }
 
     //Managed by HTGS, no need to delete
     ViewAnalyse* result{};
-
 
 };
 
