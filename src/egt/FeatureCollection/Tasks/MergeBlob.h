@@ -26,6 +26,7 @@ public:
 
     void executeTask(std::shared_ptr<ViewAnalyseBlock> data) override {
         auto result = new ViewAnalyse(data->getRow(), data->getCol(), data->getLevel() + 1);
+        VLOG(3) << "Merge produce ViewAnalyse for level " << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). ";
         this->addResult(result);
     }
 

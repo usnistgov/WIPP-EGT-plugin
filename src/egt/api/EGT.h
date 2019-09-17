@@ -484,8 +484,8 @@ namespace egt {
             std::string inputFilename = path.filename();
             std::string outputFilenamePrefix = "";
 
-            if(! fs::create_directories(fs::path(options->outputPath))){
-                VLOG(4) << "Problem creating directory : " << options->outputPath;
+            if(fs::create_directories(fs::path(options->outputPath))){
+                VLOG(4) << "Directory  created: " << options->outputPath;
             }
 
             //generating a labeled mask. Let's try to find the appropriate resolution we need to correctly render each feature.
