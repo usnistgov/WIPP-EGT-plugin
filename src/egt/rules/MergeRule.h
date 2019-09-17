@@ -7,7 +7,7 @@
 
 #include <egt/FeatureCollection/Data/ViewAnalyse.h>
 #include <egt/utils/pyramid/Pyramid.h>
-#include <egt/FeatureCollection/Tasks/ViewAnalyzeBlock.h>
+#include <egt/FeatureCollection/Data/ViewAnalyzeBlock.h>
 
 namespace egt {
 
@@ -33,11 +33,12 @@ class MergeRule : public htgs::IRule<ViewAnalyse, ViewAnalyseBlock> {
 
             //insert Vanalyse in its corresponding block
             if ( levels[level].find({blockRow, blockCol}) == levels[level].end() ) {
-                auto newBlock = new ViewAnalyseBlock();
+                auto newBlock = new ViewAnalyseBlock(blockRow,blockCol,level);
                 levels[level].insert( {{blockRow, blockCol}, newBlock} );
             }
+
             ViewAnalyseBlock* block = levels[level][{blockRow, blockCol}];
-            block->viewAnalyses.push_back(data);
+            block->getViewAnalyses().push_back(data);
 
             //generated all  levels. We are done.
             if(data->getLevel() == pyramid.getNumLevel() - 1) {
@@ -59,14 +60,14 @@ class MergeRule : public htgs::IRule<ViewAnalyse, ViewAnalyseBlock> {
             }
             //right or bottom blocks special cases
             else if ((splitCol && isRightMostBlock) || (splitRow && isBottomBlock)) {
-                if(levels[level][{blockRow, blockCol}]->viewAnalyses.size() == 2) {
+                if(levels[level][{blockRow, blockCol}]->getViewAnalyses().size() == 2) {
                     VLOG(3) << "Edge block special case." << std::endl;
                     this->addResult(block);
                 }
             }
             //regular case block
             else {
-                if(levels[level][{blockRow, blockCol}]->viewAnalyses.size() == 4) {
+                if(levels[level][{blockRow, blockCol}]->getViewAnalyses().size() == 4) {
                     VLOG(3) << "Regular block." << std::endl;
                     this->addResult(block);
                 }

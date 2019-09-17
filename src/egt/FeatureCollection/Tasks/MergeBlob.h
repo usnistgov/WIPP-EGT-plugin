@@ -14,7 +14,7 @@
 #include <egt/utils/FeatureExtraction.h>
 #include <egt/api/DerivedSegmentationParams.h>
 #include <egt/FeatureCollection/Data/ViewAnalyse.h>
-#include "ViewAnalyzeBlock.h"
+#include "egt/FeatureCollection/Data/ViewAnalyzeBlock.h"
 
 namespace egt {
 
@@ -25,9 +25,7 @@ public:
     MergeBlob(size_t numThreads) : ITask(numThreads) {}
 
     void executeTask(std::shared_ptr<ViewAnalyseBlock> data) override {
-
-        auto result = new ViewAnalyse();
-        result->setLevel(1);
+        auto result = new ViewAnalyse(data->getRow(), data->getCol(), data->getLevel() + 1);
         this->addResult(result);
     }
 
