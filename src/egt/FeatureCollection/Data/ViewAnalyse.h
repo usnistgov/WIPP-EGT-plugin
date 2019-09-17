@@ -85,36 +85,36 @@ class ViewAnalyse : public htgs::IData {
 
     /// \brief Getter to the merge map
   /// \return Merge map
-  std::unordered_map<Blob *, std::list<Coordinate>> &getToMerge() {
+  std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>> &getToMerge() {
     return _toMerge;
   }
 
-  std::unordered_map<Blob *, std::list<Coordinate>> &getHolesToMerge() {
+  std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>> &getHolesToMerge() {
         return _holesToMerge;
   }
 
   /// \brief Getter to the blobs list
   /// \return The blobs list
-  const std::map<std::pair<uint32_t ,uint32_t >, std::list<Blob *>> &getBlobs() const { return _blobs; }
+  const std::list<Blob *> &getBlobs() const { return _blobs; }
 
-  const std::map<std::pair<uint32_t ,uint32_t >, std::list<Blob *>> &getHoles() const { return _holes; }
+  const std::list<Blob *> &getHoles() const { return _holes; }
 
   /// \brief Add an entry to the to merge structure
   /// \param b Blob to add
   /// \param c Coordinate links to this  blob
-  void addToMerge(Blob *b, Coordinate c) {
-      _toMerge[b].push_back(c);
+  void addToMerge(Coordinate tileCoordinate, Blob *b, Coordinate c) {
+      _toMerge[tileCoordinate][b].push_back(c);
   }
 
-    void addHolesToMerge(Blob *b, Coordinate c) {
-        _holesToMerge[b].push_back(c);
+    void addHolesToMerge(Coordinate tileCoordinate, Blob *b, Coordinate c) {
+        _holesToMerge[tileCoordinate][b].push_back(c);
     }
 
   /// \brief Insert a blob to the list of blobs
   /// \param b blob to add
-  void insertBlob(Blob *b) { _blobs[{b->getTileRow(), b->getTileCol()}].push_back(b); }
+  void insertBlob(Blob *b) { _blobs.push_back(b); }
 
-  void insertHole(Blob *b) { _holes[{b->getTileRow(), b->getTileCol()}].push_back(b); }
+  void insertHole(Blob *b) { _holes.push_back(b); }
 
   virtual ~ViewAnalyse() {
         _toMerge.clear();
@@ -124,18 +124,18 @@ class ViewAnalyse : public htgs::IData {
   }
 
 private:
-  std::unordered_map<egt::Blob *, std::list<Coordinate>>
+  std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>
       _toMerge{};   ///< Map of blob which will need to be merged to a list of
                   ///< coordinates
 
-  std::unordered_map<egt::Blob *, std::list<Coordinate>>
+  std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>
             _holesToMerge{};   ///< Map of holes which will need to be merged to a list of
     ///< coordinates
 
-  std::map<std::pair<uint32_t ,uint32_t >, std::list<Blob *>>
+  std::list<Blob *>
       _blobs{};   ///< List of blobs created
 
-  std::map<std::pair<uint32_t ,uint32_t >, std::list<Blob *>>
+  std::list<Blob *>
       _holes{};   ///< List of holes created
 
   uint32_t level = 0;

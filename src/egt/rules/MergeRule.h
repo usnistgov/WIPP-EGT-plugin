@@ -38,7 +38,7 @@ class MergeRule : public htgs::IRule<ViewAnalyse, ViewAnalyseBlock> {
             }
 
             ViewAnalyseBlock* block = levels[level][{blockRow, blockCol}];
-            block->getViewAnalyses().push_back(data);
+            block->getViewAnalyses().insert( {{data->getRow(), data->getCol()},data} );
 
             //generated all  levels. We are done.
             if(data->getLevel() == pyramid.getNumLevel() - 1) {
@@ -54,7 +54,7 @@ class MergeRule : public htgs::IRule<ViewAnalyse, ViewAnalyseBlock> {
 
 
             //bottom-right block special case
-            if( splitCol && splitRow && isRightMostBlock && isBottomBlock ){
+            if( splitCol && splitRow && isRightMostBlock && isBottomBlock ) {
                 VLOG(3) << "level " << level << ": (" << blockRow << ", " << blockCol <<  ")> " << "Bottom right block special case." << std::endl;
                 this->addResult(block);
             }

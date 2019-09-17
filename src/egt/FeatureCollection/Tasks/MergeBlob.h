@@ -25,12 +25,38 @@ public:
     explicit MergeBlob(size_t numThreads) : ITask(numThreads) {}
 
     void executeTask(std::shared_ptr<ViewAnalyseBlock> data) override {
-        auto result = new ViewAnalyse(data->getRow(), data->getCol(), data->getLevel() + 1);
+
+        result = new ViewAnalyse(data->getRow(), data->getCol(), data->getLevel() + 1);
+
 
         auto views = data->getViewAnalyses();
-        std::sort(views.begin(), views.end(), compareCoordinates);
 
-        switch
+        //Check BOTTOM, RIGHT and BOTTOM-RIGHT TILE FOR POTENTIAL MERGES
+        //merge within this block are performed
+        //others are scheduled for the next level
+        for(auto &entry : views) {
+            auto coordinates = entry.first;
+            auto row = coordinates.first, col = coordinates.second;
+            auto view = entry.second;
+            if(views.find({row + 1, col}) != views.end()){
+                merge(view, views[{row + 1, col}]);
+            }
+            else {
+                addToNextLevelMerge(view , {row + 1, col}, {data->getRow() + 1, data->getCol()});
+            }
+            if(views.find({row, col + 1}) != views.end()){
+                merge(view, views[{row, col + 1}]);
+            }
+            else {
+                addToNextLevelMerge(view , {row , col + 1}, {data->getRow(), data->getCol() + 1});
+            }
+            if(views.find({row + 1, col + 1}) != views.end()){
+                merge(view, views[{row + 1, col + 1}]);
+            }
+            else {
+                addToNextLevelMerge(view , {row + 1 , col + 1}, {data->getRow() + 1, data->getCol() + 1});
+            }
+        }
 
         VLOG(3) << "Merge produce ViewAnalyse for level " << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). ";
         this->addResult(result);
@@ -40,13 +66,30 @@ public:
         return new MergeBlob(this->getNumThreads());
     }
 
-
-private:
-
-    static bool compareCoordinates (std::shared_ptr<ViewAnalyse> v1, std::shared_ptr<ViewAnalyse> v2) {
-        return (v1->getRow() < v2->getRow() || v1->getCol() < v2->getCol());
+    /**
+     * Merge blobs at the border of two contiguous tiles.
+     */
+    void merge(std::shared_ptr<ViewAnalyse> v1, std::shared_ptr<ViewAnalyse> v2){
+        VLOG(3) << "merge...";
+        for(auto entry : v1->getToMerge()) {
+            auto coordinates = entry.first;
+            auto candidates = v2->getToMerge()[coordinates];
+            //amongst candidates, find the correct blob and merge
+            //when we are done all blobs are merged on this side
+        }
     }
 
+    /**
+     * Record merges that needs to happen at the next level
+     */
+    void addToNextLevelMerge(std::shared_ptr<ViewAnalyse> v1, std::pair<uint32_t,uint32_t> coordinates, std::pair<uint32_t,uint32_t> contiguousBlockCoordinates){
+        //merge all entries of v1->getToMerge()[coordinates] into result->getToMerge()[contiguousBlockCoordinates]
+        //we will merge them at the next level
+        //empty if we are at the border
+    }
+
+    //Managed by HTGS, no need to delete
+    ViewAnalyse* result{};
 
 
 };

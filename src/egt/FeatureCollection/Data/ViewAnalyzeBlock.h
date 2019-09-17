@@ -21,7 +21,7 @@ namespace egt {
         ViewAnalyseBlock(uint32_t row, uint32_t col, uint32_t level) : row(row), col(col), level(level){}
 
 
-        std::vector<std::shared_ptr<ViewAnalyse>> &getViewAnalyses() {
+        std::map<std::pair<uint32_t,uint32_t >, std::shared_ptr < ViewAnalyse>> &getViewAnalyses() {
             return viewAnalyses;
         }
 
@@ -39,7 +39,7 @@ namespace egt {
 
     private:
 
-        std::vector<std::shared_ptr < ViewAnalyse>> viewAnalyses{};
+        std::map<std::pair<uint32_t,uint32_t >, std::shared_ptr < ViewAnalyse>> viewAnalyses{};
 
         uint32_t row;
 
