@@ -296,7 +296,7 @@ namespace egt {
         void createBlob(int32_t row, int32_t col, Color blobColor){
             markAsVisited(row, col);
             //add pixel to a new blob
-            _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
+            _currentBlob =  new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col, _view->getRow(), _view->getCol());
             _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
             //make sure we don't look at it again
 

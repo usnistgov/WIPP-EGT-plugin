@@ -85,7 +85,7 @@ class ViewAnalyse : public htgs::IData {
 
     /// \brief Getter to the merge map
   /// \return Merge map
-  const std::unordered_map<Blob *, std::list<Coordinate>> &getToMerge() const {
+  std::unordered_map<Blob *, std::list<Coordinate>> &getToMerge() {
     return _toMerge;
   }
 
@@ -95,9 +95,9 @@ class ViewAnalyse : public htgs::IData {
 
   /// \brief Getter to the blobs list
   /// \return The blobs list
-  const std::list<Blob *> &getBlobs() const { return _blobs; }
+  const std::map<std::pair<uint32_t ,uint32_t >, std::list<Blob *>> &getBlobs() const { return _blobs; }
 
-  const std::list<Blob *> &getHoles() const { return _holes; }
+  const std::map<std::pair<uint32_t ,uint32_t >, std::list<Blob *>> &getHoles() const { return _holes; }
 
   /// \brief Add an entry to the to merge structure
   /// \param b Blob to add
@@ -112,9 +112,9 @@ class ViewAnalyse : public htgs::IData {
 
   /// \brief Insert a blob to the list of blobs
   /// \param b blob to add
-  void insertBlob(Blob *b) { _blobs.push_back(b); }
+  void insertBlob(Blob *b) { _blobs[{b->getTileRow(), b->getTileCol()}].push_back(b); }
 
-  void insertHole(Blob *b) { _holes.push_back(b); }
+  void insertHole(Blob *b) { _holes[{b->getTileRow(), b->getTileCol()}].push_back(b); }
 
   virtual ~ViewAnalyse() {
         _toMerge.clear();
@@ -128,14 +128,14 @@ private:
       _toMerge{};   ///< Map of blob which will need to be merged to a list of
                   ///< coordinates
 
-    std::unordered_map<egt::Blob *, std::list<Coordinate>>
+  std::unordered_map<egt::Blob *, std::list<Coordinate>>
             _holesToMerge{};   ///< Map of holes which will need to be merged to a list of
     ///< coordinates
 
-  std::list<Blob *>
+  std::map<std::pair<uint32_t ,uint32_t >, std::list<Blob *>>
       _blobs{};   ///< List of blobs created
 
-  std::list<Blob *>
+  std::map<std::pair<uint32_t ,uint32_t >, std::list<Blob *>>
       _holes{};   ///< List of holes created
 
   uint32_t level = 0;

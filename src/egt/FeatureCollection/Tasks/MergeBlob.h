@@ -22,10 +22,16 @@ class MergeBlob : public htgs::ITask<ViewAnalyseBlock, ViewAnalyse> {
 
 public:
 
-    MergeBlob(size_t numThreads) : ITask(numThreads) {}
+    explicit MergeBlob(size_t numThreads) : ITask(numThreads) {}
 
     void executeTask(std::shared_ptr<ViewAnalyseBlock> data) override {
         auto result = new ViewAnalyse(data->getRow(), data->getCol(), data->getLevel() + 1);
+
+        auto views = data->getViewAnalyses();
+        std::sort(views.begin(), views.end(), compareCoordinates);
+
+        switch
+
         VLOG(3) << "Merge produce ViewAnalyse for level " << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). ";
         this->addResult(result);
     }
@@ -33,6 +39,14 @@ public:
     ITask<ViewAnalyseBlock, ViewAnalyse> *copy() override {
         return new MergeBlob(this->getNumThreads());
     }
+
+
+private:
+
+    static bool compareCoordinates (std::shared_ptr<ViewAnalyse> v1, std::shared_ptr<ViewAnalyse> v2) {
+        return (v1->getRow() < v2->getRow() || v1->getCol() < v2->getCol());
+    }
+
 
 
 };

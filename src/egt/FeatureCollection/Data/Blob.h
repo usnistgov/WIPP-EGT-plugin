@@ -65,7 +65,7 @@ using Coordinate = std::pair<int32_t, int32_t>;
 class Blob {
  public:
   /// \brief Blob construction and initialisation
-  Blob(uint32_t row, uint32_t col)
+  Blob(uint32_t row, uint32_t col, uint32_t tileRow, uint32_t tileCol)
       : _parent(this),
         _rank(0),
         _rowMin(std::numeric_limits<int32_t>::max()),
@@ -73,7 +73,10 @@ class Blob {
         _colMin(std::numeric_limits<int32_t>::max()),
         _colMax(0),
         _startRow(row),
-        _startCol(col) {
+        _startCol(col),
+        _tileRow(tileRow),
+        _tileCol(tileCol)
+        {
     static uint32_t
         currentTag = 0;
     std::mutex
@@ -173,7 +176,16 @@ class Blob {
       return (uint64_t)(_colMax - _colMin) * (_rowMax - _rowMin);
   }
 
-  /// \brief Minimum bounding box row setter
+
+  uint32_t getTileRow() const {
+    return _tileRow;
+  }
+
+  uint32_t getTileCol() const {
+    return _tileCol;
+  }
+
+    /// \brief Minimum bounding box row setter
   /// \param rowMin Minimum bounding box row
   void setRowMin(int32_t rowMin) { _rowMin = rowMin; }
 
@@ -403,6 +415,9 @@ class Blob {
   uint32_t _startCol = 0;
 
   Feature *_feature = nullptr;
+
+  uint32_t _tileRow = 0,
+           _tileCol = 0;
 };
 
 }
