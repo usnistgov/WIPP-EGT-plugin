@@ -43,6 +43,7 @@
 #include <egt/FeatureCollection/Data/ListBlobs.h>
 #include <egt/utils/FeatureExtraction.h>
 #include <egt/api/DerivedSegmentationParams.h>
+#include <egt/FeatureCollection/Data/ViewAnalyse.h>
 
 namespace egt {
 /// \namespace egt EGT namespace
@@ -81,36 +82,36 @@ namespace egt {
         /// \param data View analyse
         void executeTask(std::shared_ptr<ViewAnalyse> data) override {
 
-            // for each new tile, collect blobs
-            for (auto blobListCoordToMerge : data->getToMerge()) {
-                this->_toMerge[blobListCoordToMerge.first]
-                        .merge(blobListCoordToMerge.second);
-            }
-            auto viewBlob = data->getBlobs();
-            this->_blobs->_blobs.merge(viewBlob);
-
-            //collect holes
-            for (auto blobListCoordToMerge : data->getHolesToMerge()) {
-                this->_holesToMerge[blobListCoordToMerge.first]
-                        .merge(blobListCoordToMerge.second);
-            }
-            auto holes = data->getHoles();
-            this->_holes->_blobs.merge(holes);
-
-            _count++;
-
-            //merge the blobs when all tiles have been received
-
+//            // for each new tile, collect blobs
+//            for (auto blobListCoordToMerge : data->getToMerge()) {
+//                this->_toMerge[blobListCoordToMerge.first]
+//                        .merge(blobListCoordToMerge.second);
+//            }
+//            auto viewBlob = data->getBlobs();
+//            this->_blobs->_blobs.merge(viewBlob);
+//
+//            //collect holes
+//            for (auto blobListCoordToMerge : data->getHolesToMerge()) {
+//                this->_holesToMerge[blobListCoordToMerge.first]
+//                        .merge(blobListCoordToMerge.second);
+//            }
+//            auto holes = data->getHoles();
+//            this->_holes->_blobs.merge(holes);
+//
+//            _count++;
+//
+//            //merge the blobs when all tiles have been received
+//
                 auto startMerge = std::chrono::high_resolution_clock::now();
-
-                VLOG(1) << "detected " << this->_holes->_blobs.size() << " holes..." << this->_holesToMerge.size() << " to merge.";
-                VLOG(1) << "detected " << this->_blobs->_blobs.size() << " objects..." << this->_toMerge.size() << " to merge.";
-
-                _count = 0;
-                merge(_holesToMerge,_holes, true);
-                filterHoles();
-                merge(_toMerge,_blobs, false);
-                filterObjects();
+//
+//                VLOG(1) << "detected " << this->_holes->_blobs.size() << " holes..." << this->_holesToMerge.size() << " to merge.";
+//                VLOG(1) << "detected " << this->_blobs->_blobs.size() << " objects..." << this->_toMerge.size() << " to merge.";
+//
+//                _count = 0;
+//                merge(_holesToMerge,_holes, true);
+//                filterHoles();
+//                merge(_toMerge,_blobs, false);
+//                filterObjects();
 
 
                 VLOG(1) << "after last merge, we have : " << _blobs->_blobs.size() << " blobs left";

@@ -31,7 +31,7 @@ public:
 
         auto views = data->getViewAnalyses();
 
-        //Check BOTTOM, RIGHT and BOTTOM-RIGHT TILE FOR POTENTIAL MERGES
+        //For each view, check BOTTOM, RIGHT, BOTTOM-RIGHT and TOP-RIGHT view FOR POTENTIAL MERGES
         //merge within this block are performed
         //others are scheduled for the next level
         for(auto &entry : views) {
@@ -55,6 +55,12 @@ public:
             }
             else {
                 addToNextLevelMerge(view , {row + 1 , col + 1}, {data->getRow() + 1, data->getCol() + 1});
+            }
+            if(views.find({row + 1, col + 1}) != views.end()){
+                merge(view, views[{row + 1, col + 1}]);
+            }
+            else {
+                addToNextLevelMerge(view , {row + 1 , col + 1}, {data->getRow() - 1, data->getCol() - 1});
             }
         }
 

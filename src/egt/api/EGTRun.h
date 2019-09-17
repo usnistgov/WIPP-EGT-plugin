@@ -8,7 +8,6 @@
 #include <string>
 #include <egt/loaders/PyramidTiledTiffLoader.h>
 #include <FastImage/api/FastImage.h>
-#include <egt/FeatureCollection/Tasks/EGTViewAnalyzer.h>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
 #include <egt/FeatureCollection/Tasks/FeatureCollection.h>
 #include <egt/FeatureCollection/Tasks/ViewAnalyseFilter.h>

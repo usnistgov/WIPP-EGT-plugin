@@ -358,12 +358,11 @@ namespace egt {
                     auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol);
 
                     if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                        _vAnalyse->addHolesToMerge({_view->getRow() + 1, _view->getCol()}, _currentBlob, coords);
                     }
                     else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
+                        _vAnalyse->addToMerge({_view->getRow() + 1, _view->getCol()}, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
                 }
             }
             // Add blob to merge list if tile right pixel has the same value than the view pixel on its right (continuity)
@@ -374,26 +373,39 @@ namespace egt {
                     auto coords =std::pair<int32_t, int32_t>(globalRow,globalCol + 1);
 
                     if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                        _vAnalyse->addHolesToMerge({_view->getRow(), _view->getCol() + 1}, _currentBlob, coords);
                     }
                     else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
+                        _vAnalyse->addToMerge({_view->getRow(), _view->getCol() + 1}, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
                 }
             }
 
             //look at the pixel on the left. We need to set a flag so we know how to filter this blob.
             if (col == 0 && col + _view->getGlobalXOffset() != 0) {
                 if (getColor(row, col - 1) == color) {
-                    _currentBlob->setToMerge(true);
+                    auto coords =std::pair<int32_t, int32_t>(globalRow,globalCol - 1);
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge({_view->getRow(), _view->getCol() - 1}, _currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge({_view->getRow(), _view->getCol() - 1}, _currentBlob, coords);
+                    }
                 }
             }
 
             //look at the pixel above. We need to set a flag so we know how to filter this blob.
             if (row == 0 && row + _view->getGlobalYOffset() != 0) {
                 if (getColor(row - 1, col) == color) {
-                    _currentBlob->setToMerge(true);
+                    auto coords =std::pair<int32_t, int32_t>(globalRow - 1,globalCol);
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge({_view->getRow() - 1, _view->getCol()}, _currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge({_view->getRow() - 1, _view->getCol()}, _currentBlob, coords);
+                    }
                 }
             }
         }
@@ -420,7 +432,6 @@ namespace egt {
                 return;
             }
 
-
             auto globalRow = row + _view->getGlobalYOffset();
             auto globalCol = col + _view->getGlobalXOffset();
 
@@ -436,14 +447,14 @@ namespace egt {
             if (onTileBottomBorder) {
                 if (getColor(row + 1, col) == color) {
                     auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol());
 
                     if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
                     }
                     else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -451,14 +462,14 @@ namespace egt {
                 if (getColor(row, col + 1) == color) {
 
                     auto coords =std::pair<int32_t, int32_t>(globalRow,globalCol + 1);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow(), _view->getCol() + 1);
 
                     if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                        _vAnalyse->addHolesToMerge(tileCoords,_currentBlob, coords);
                     }
                     else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
+                        _vAnalyse->addToMerge(tileCoords,_currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -467,14 +478,14 @@ namespace egt {
                 if (getColor(row + 1, col + 1) == color) {
 
                     auto coords =std::pair<int32_t, int32_t>(globalRow + 1,globalCol + 1);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol() + 1);
 
                     if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
                     }
                     else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -483,14 +494,14 @@ namespace egt {
                 if (getColor(row - 1, col + 1) == color) {
 
                     auto coords =std::pair<int32_t, int32_t>(globalRow - 1,globalCol + 1);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol() + 1);
 
                     if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
                     }
                     else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -499,25 +510,61 @@ namespace egt {
 
             if (onTileTopBorder) {
                 if (getColor(row - 1, col) == color) {
-                    _currentBlob->setToMerge(true);
+
+                    auto coords =std::pair<int32_t, int32_t>(globalRow - 1,globalCol);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol());
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+                    }
                 }
             }
 
             if (onTileLeftBorder) {
                 if (getColor(row, col - 1) == color) {
-                    _currentBlob->setToMerge(true);
+
+                    auto coords =std::pair<int32_t, int32_t>(globalRow,globalCol - 1);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow(), _view->getCol() - 1);
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+                    }
                 }
             }
 
             if (onTileLeftBorder && onTileTopBorder) {
                 if (getColor(row - 1, col - 1) == color) {
-                    _currentBlob->setToMerge(true);
+
+                    auto coords =std::pair<int32_t, int32_t>(globalRow - 1,globalCol - 1);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol() - 1);
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+                    }
                 }
             }
 
             if (onTileLeftBorder && onTileBottomBorder) {
                 if (getColor(row + 1, col - 1) == color) {
-                    _currentBlob->setToMerge(true);
+
+                    auto coords =std::pair<int32_t, int32_t>(globalRow + 1,globalCol - 1);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol() - 1);
+
+                    if(color == BACKGROUND){
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+                    }
+                    else {
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+                    }
                 }
             }
 
