@@ -31,6 +31,13 @@ public:
 
         auto views = data->getViewAnalyses();
 
+        for(auto &entry : views) {
+            auto view = entry.second;
+            for(auto parentSon : view->getBlobsParentSons()) {
+                result->getBlobsParentSons().insert(parentSon);
+            }
+        }
+
         //For each view, check BOTTOM, RIGHT, BOTTOM-RIGHT and TOP-RIGHT view FOR POTENTIAL MERGES
         //merges within this block are performed
         //others are scheduled for the next level
@@ -100,7 +107,7 @@ public:
         //for each blob to merge, find the corresponding blob in the adjacent tile
         for(auto &blobPixelPair : blobsToMerge) {
                 auto blob = blobPixelPair.first;
-                for(auto coordinates : blobPixelPair.second){
+                for(auto coordinates : blobPixelPair.second) {
                         for(auto otherBlobPixelPair : otherBlobsToMerge) {
                             auto otherBlob = otherBlobPixelPair.first;
                             if (otherBlobPixelPair.first->isPixelinFeature(coordinates.first, coordinates.second)) {
@@ -109,11 +116,20 @@ public:
                                 UnionFind<Blob> uf{};
                                 auto root1 = uf.find(blob);
                                 auto root2 = uf.find(otherBlob);
+                                if(root1 == root2){
+                                    //TODO after pixel flattening, this should never happen. For now we just ignore
+                                    continue;
+                                }
                                 auto root = uf.unionElements(blob, otherBlob); //pick one root as the new root
                                 auto blobGroup1 = v1->getBlobsParentSons()[root1];
                                 auto blobGroup2 = v2->getBlobsParentSons()[root2];
                                 blobGroup1.insert(blobGroup2.begin(), blobGroup2.end()); //merge sons
-                                result->getBlobsParentSons().insert( {root, blobGroup1} );
+                                result->getBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
+                                if(root == root2){
+                                    result->getBlobsParentSons().erase(root1);
+                                } else {
+                                    result->getBlobsParentSons().erase(root2);
+                                }
                             }
                         }
                 }

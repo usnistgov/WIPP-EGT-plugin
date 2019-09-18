@@ -104,7 +104,7 @@ namespace egt {
 
              std::copy_n(tileOut, viewHeight * viewWidth, view->getData());
 
-//            printArray("seg tileout", tileOut, viewWidth, viewHeight);
+            printBoolArray("seg tileout", tileOut, viewWidth, viewHeight);
 
 
 //            auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
