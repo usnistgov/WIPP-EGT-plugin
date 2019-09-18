@@ -3,7 +3,7 @@
 
 
 # Dataset 1
-## minHole =500 means the whole image is foreground!
+## minHole =500 means the whole square is filled. Convenient for testing
 -i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset01/" -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "2" -x "false"   --op "and" --disableIntensityFilter "true" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=2"
 ## regular case
 -i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset01/" -d "8U"  --level "0" --minhole "2" --maxhole "inf" --minobject "2" -x "false"   --op "and" --disableIntensityFilter "true" --minintensity "0" --maxintensity "100" -e "loader=1;tile=1;threshold=2"

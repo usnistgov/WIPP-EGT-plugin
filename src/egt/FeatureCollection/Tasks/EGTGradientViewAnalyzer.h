@@ -363,6 +363,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge({_view->getRow() + 1, _view->getCol()}, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
             // Add blob to merge list if tile right pixel has the same value than the view pixel on its right (continuity)
@@ -378,6 +379,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge({_view->getRow(), _view->getCol() + 1}, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -392,6 +394,8 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge({_view->getRow(), _view->getCol() - 1}, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
+
                 }
             }
 
@@ -406,6 +410,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge({_view->getRow() - 1, _view->getCol()}, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
         }
@@ -455,6 +460,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -470,6 +476,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords,_currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -486,6 +493,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -502,6 +510,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -520,6 +529,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -535,6 +545,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -550,6 +561,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
 
@@ -565,6 +577,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
+                    _currentBlob->setToMerge(true);
                 }
             }
 
