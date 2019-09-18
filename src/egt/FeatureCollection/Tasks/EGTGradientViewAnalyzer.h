@@ -125,22 +125,22 @@ namespace egt {
             //if MASK_ONLY, we return the view with all pixel set to 0 (background) or 255 (foreground).
             //Let's not forget to delete the viewAnalyse since we are done with it.
             if(_segmentationOptions->MASK_ONLY) {
-                VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
-                VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
-                VLOG(3) << "objects removed because too small: " << objectRemovedCount;
+                VLOG(5) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
+                VLOG(5) << "holes turned to foreground : " << holeRemovedCount;
+                VLOG(5) << "objects removed because too small: " << objectRemovedCount;
                 delete _vAnalyse;
                 delete view->getOriginalView();
                 this->addResult(new ViewOrViewAnalyse<UserType>(view->getGradientView()));
             }
             //we return a ViewAnalyse to be merged. Let's not forget to release the view since we are done with it.
             else {
-                VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
-                VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
-                VLOG(3) << "objects removed because too small: " << objectRemovedCount;
-                VLOG(3) << "holes we keep track of in the merge: " << _vAnalyse->getHoles().size();
-                VLOG(3) << "holes to merge: " << _vAnalyse->getHolesToMerge().size();
-                VLOG(3) << "objects found: " << _vAnalyse->getBlobs().size();
-                VLOG(3) << "objects to merge: " << _vAnalyse->getToMerge().size();
+                VLOG(5) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
+                VLOG(5) << "holes turned to foreground : " << holeRemovedCount;
+                VLOG(5) << "objects removed because too small: " << objectRemovedCount;
+                VLOG(5) << "holes we keep track of in the merge: " << _vAnalyse->getHoles().size();
+                VLOG(5) << "holes to merge: " << _vAnalyse->getHolesToMerge().size();
+                VLOG(5) << "objects found: " << _vAnalyse->getBlobs().size();
+                VLOG(5) << "objects to merge: " << _vAnalyse->getToMerge().size();
                 view->getGradientView()->releaseMemory();
                 this->addResult(new ViewOrViewAnalyse<UserType>(_vAnalyse));
             }

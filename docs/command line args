@@ -9,7 +9,6 @@
 
 -i  "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset02/" -d "8U"  --level "0" --minhole "1" --maxhole "inf" --minobject "1" --disableIntensityFilter "true" -e "loader=1;tile=1;threshold=1"
 
-
 -i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "10000" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87"
 -i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;"
 -i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87"

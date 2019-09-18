@@ -56,7 +56,7 @@ namespace egt {
             auto tileWidth = view->getTileWidth();
             auto tileHeight = view->getTileHeight();
 
-            VLOG(3) << "Sobel Filter for tile (" << view->getRow() << " , " << view->getCol() << ") ..." ;
+            VLOG(5) << "Sobel Filter for tile (" << view->getRow() << " , " << view->getCol() << ") ..." ;
 
 
             T* tileOut = new T[viewWidth * viewHeight]();
