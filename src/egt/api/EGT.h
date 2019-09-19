@@ -429,8 +429,9 @@ namespace egt {
 
             auto bookkeeper = new htgs::Bookkeeper<ViewAnalyse>();
 
-            auto mergeRule = new MergeRule(pyramid);
             auto mergeCompletedRule = new MergeCompletedRule(pyramid);
+            auto mergeRule = new MergeRule(pyramid);
+
 
             auto featureBuilder = new FeatureBuilder(10);
 
@@ -444,9 +445,10 @@ namespace egt {
 
 
             segmentationGraph->addEdge(labelingFilter, bookkeeper);
+            segmentationGraph->addRuleEdge(bookkeeper, mergeCompletedRule, featureBuilder);
             segmentationGraph->addRuleEdge(bookkeeper,mergeRule, mergeBlob);
             segmentationGraph->addEdge(mergeBlob,bookkeeper);
-            segmentationGraph->addRuleEdge(bookkeeper, mergeCompletedRule, featureBuilder);
+
 
             segmentationGraph->addGraphProducerTask(featureBuilder);
 

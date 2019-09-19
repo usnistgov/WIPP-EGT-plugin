@@ -106,6 +106,10 @@ class Blob {
         return mergeCount > 0;
     }
 
+    bool setMergeCount(uint32_t newCount){
+      mergeCount = newCount;
+    }
+
     void increaseMergeCount() {
       mergeCount++;
    }
@@ -423,8 +427,6 @@ class Blob {
   std::unordered_map<int32_t, std::unordered_set<int32_t>>
       _rowCols
       {};         ///< Sparse matrix of unique coordinates composing the blob
-
-  bool _toMerge = false;
 
   uint32_t _startRow = 0;
   uint32_t _startCol = 0;

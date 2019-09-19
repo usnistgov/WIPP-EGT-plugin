@@ -235,7 +235,7 @@ namespace egt {
         void blobCompleted(Color blobColor) {
 
                 if(_currentBlob->isToMerge()){
-//                    flattenPixelToMerge(_currentBlob, blobColor);
+                    flattenPixelToMerge(_currentBlob, blobColor);
                 }
 
                 //background and foreground blobs are not handled the same way
@@ -300,25 +300,29 @@ namespace egt {
 
         void flattenPixelToMerge(Blob* blob, Color blobColor) {
 
-            std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>* collection{};
+            std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>::iterator mergeIterator, endIterator;
             if(blobColor == BACKGROUND) {
-                collection = &_vAnalyse->getHolesToMerge();
+                mergeIterator = _vAnalyse->getHolesToMerge().begin();
+                endIterator = _vAnalyse->getHolesToMerge().end();
             }
             else {
-                collection = &_vAnalyse->getToMerge();
+                mergeIterator = _vAnalyse->getToMerge().begin();
+                endIterator = _vAnalyse->getToMerge().end();
             }
 
-            for(auto entry : *collection) {
-                auto it = entry.second.find(blob);
-                if(it != entry.second.end()){
-                    std::list<Coordinate>* coords = &(*it).second;
-                    if(coords->front().first == coords->back().first){
-                        auto prev = coords->front();
-                        auto it2 = coords->begin()++;
-                        while (it2 != coords->end()) {
+            while(mergeIterator != endIterator) {
+
+                auto it = (*mergeIterator).second.find(blob);
+
+                if(it != (*mergeIterator).second.end()){
+                    auto originalSize = (*it).second.size();
+                    if((*it).second.front().first == (*it).second.back().first){
+                        auto prev = (*it).second.front();
+                        auto it2 = (*it).second.begin()++;
+                        while (it2 != (*it).second.end()) {
                             if (prev.second + 1 == (*it2).second) {
                                 prev = (*it2);
-                                it2 = coords->erase(it2);
+                                it2 = (*it).second.erase(it2);
                             } else {
                                 prev = (*it2);
                                 it2++;
@@ -326,20 +330,27 @@ namespace egt {
                         }
                     }
                     else {
-                        auto prev = coords->front();
-                        auto it2 = coords->begin()++;
-                        while (it2 != coords->end()) {
+                        auto prev = (*it).second.front();
+                        auto it2 = (*it).second.begin()++;
+                        while (it2 != (*it).second.end()) {
                             if (prev.first + 1 == (*it2).first) {
                                 prev = (*it2);
-                                it2 = coords->erase(it2);
+                                it2 = (*it).second.erase(it2);
                             } else {
                                 prev = (*it2);
                                 it2++;
                             }
                         }
                     }
+
+                    blob->setMergeCount((*it).second.size());
+
+                    VLOG(3) << "Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
                 }
+
+                mergeIterator++;
             }
+
         }
 
 

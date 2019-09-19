@@ -132,7 +132,7 @@ namespace egt {
         }
 
         void insertHole(Blob *b) {
-            _blobs.push_back(b);
+            _holes.push_back(b);
         }
 
         virtual ~ViewAnalyse() {
