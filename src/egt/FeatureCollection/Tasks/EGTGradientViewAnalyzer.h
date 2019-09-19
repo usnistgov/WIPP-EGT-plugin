@@ -233,13 +233,9 @@ namespace egt {
          * @param blobColor
          */
         void blobCompleted(Color blobColor) {
-//
-//                if(_currentBlob->isToMerge()){
-//                    flattenPixelToMerge(_currentBlob);
-//                }
 
                 if(_currentBlob->isToMerge()){
-                    flattenPixelToMerge(_currentBlob, blobColor);
+//                    flattenPixelToMerge(_currentBlob, blobColor);
                 }
 
                 //background and foreground blobs are not handled the same way

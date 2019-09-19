@@ -68,7 +68,7 @@ namespace egt {
             return BoundingBox(upperLeftRow, upperLeftCol, bottomRightRow, bottomRightCol);
         }
 
-        ITask<BlobSet, Feature> *copy() {
+        ITask<BlobSet, Feature> *copy() override {
             return new FeatureBuilder(this->getNumThreads());
         }
     };

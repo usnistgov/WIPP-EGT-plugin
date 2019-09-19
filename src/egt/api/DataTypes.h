@@ -4,7 +4,7 @@
 
 #ifndef EGT_DATATYPES_H
 #define EGT_DATATYPES_H
-#include <opencv2/core/mat.hpp>
+
 #include <opencv2/core.hpp>
 #include <opencv/cv.hpp>
 

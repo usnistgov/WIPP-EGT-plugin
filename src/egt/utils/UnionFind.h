@@ -44,9 +44,9 @@ namespace egt {
                     if (root1->getRank() == root2->getRank()) {
                         root1->setRank(root1->getRank() + 1);
                     }
-                    return root1;
                 }
             }
+            return root1;
         }
 
     };

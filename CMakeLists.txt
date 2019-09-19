@@ -37,8 +37,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-mo
 # TODO CHECK On OSX we use Homebrew and need to additional paths or we need to symlink package files.
 if(APPLE)
     set(TIFF_INCLUDE_DIR /usr/lib)
-    set(CMAKE_PREFIX_PATH /usr/local/opt/opencv@3/)
+    set(CMAKE_PREFIX_PATH /usr/local/Cellar/opencv\@3/3.4.5/)
+    link_directories(/usr/local/Cellar/opencv\@3/3.4.5/lib/)
+    include_directories(/usr/local/Cellar/opencv\@3/3.4.5/include/)
 endif(APPLE)
+message(Apple : ${APPLE})
 
 # if installed through package manager a FindTIFF.cmake is available on the path
 # (ex : /usr/share/cmake-3.10/Modules/FindTIFF.cmake)
@@ -46,7 +49,7 @@ endif(APPLE)
 # if installed from sources, libtiff needs to be link manually.
 message(libTiff path :  ${TIFF_LIBRARIES} )
 
-set(OpenCV_SHARED ON)
+#set(OpenCV_SHARED ON)
 
 #TODO Set only in debug mode
 find_package(NVTX QUIET)

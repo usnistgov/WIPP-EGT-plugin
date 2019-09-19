@@ -95,6 +95,14 @@ void run(egt::ImageDepth imageDepth, egt::EGTOptions* &options, egt::Segmentatio
             delete egt;
             break;
         }
+        case egt::ImageDepth::_32U: {
+            auto input = new egt::EGTInput(options, segmentationOptions, expertModeOptions);
+            auto egt = new egt::EGTRun<uint32_t>();
+            egt->run(input);
+            egt->done();
+            delete egt;
+            break;
+        }
     }
 }
 
