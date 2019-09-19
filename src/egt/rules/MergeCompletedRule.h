@@ -7,15 +7,16 @@
 
 #include <egt/FeatureCollection/Data/ViewAnalyse.h>
 #include <egt/utils/pyramid/Pyramid.h>
+#include <egt/FeatureCollection/Data/BlobSet.h>
 
 
 namespace egt {
 
-    class MergeCompletedRule : public htgs::IRule<ViewAnalyse, ViewAnalyse> {
+    class MergeCompletedRule : public htgs::IRule<ViewAnalyse, BlobSet> {
 
     public:
 
-        MergeCompletedRule(pb::Pyramid &pyramid) : pyramid(pyramid) {
+        explicit MergeCompletedRule(pb::Pyramid &pyramid) : pyramid(pyramid) {
         }
 
         void applyRule(std::shared_ptr<ViewAnalyse> data, size_t pipelineId) override {
@@ -23,11 +24,10 @@ namespace egt {
             //generated all  levels. We are done.
             if(data->getLevel() == pyramid.getNumLevel() - 1) {
                 VLOG(3) << "done generating last level." << std::endl;
-                this->addResult(data);
+                for(auto parentSon : data->getBlobsParentSons()) {
+                    this->addResult(new BlobSet(parentSon.second));
+                }
             }
-
-
-
 
         }
 

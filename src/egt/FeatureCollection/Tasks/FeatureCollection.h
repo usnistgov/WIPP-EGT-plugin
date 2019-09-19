@@ -802,6 +802,27 @@ class FeatureCollection {
     }
 
 
+    void createFCFromFeatures(const std::list<std::shared_ptr<Feature>> &features,
+                                      uint32_t imageHeight,
+                                      uint32_t imageWidth) {
+
+      this->setImageHeight(imageHeight);
+      this->setImageWidth(imageWidth);
+      uint32_t
+              idFeature = 0;
+
+      for (auto feature : features) {
+        //feature->printBitMask();
+        _vectorFeatures.push_back(*feature.get());
+        ++idFeature;
+      }
+
+
+
+      // Preprocess the FC
+      this->preProcessing();
+    }
+
 
     FeatureCollection(std::vector<Feature> &features,
                                       uint32_t imageHeight,

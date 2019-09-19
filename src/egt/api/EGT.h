@@ -35,6 +35,7 @@
 #include <egt/rules/MergeRule.h>
 #include <egt/FeatureCollection/Tasks/MergeBlob.h>
 #include <egt/rules/MergeCompletedRule.h>
+#include <egt/FeatureCollection/Tasks/FeatureBuilder.h>
 
 
 namespace egt {
@@ -150,23 +151,37 @@ namespace egt {
             segmentationParams.threshold = threshold;
 
             //Segmentation
-            std::shared_ptr<ListBlobs> blobs = nullptr;
+            std::list<std::shared_ptr<Feature>> features{};
             auto beginSegmentation = std::chrono::high_resolution_clock::now();
             if (segmentationOptions->MASK_ONLY) {
                 runLocalMaskGenerator(threshold, options, segmentationOptions, segmentationParams);
             } else {
-                blobs = runSegmentation(threshold, options, segmentationOptions, segmentationParams);
+                features = runSegmentation(threshold, options, segmentationOptions, segmentationParams);
             }
             auto endSegmentation = std::chrono::high_resolution_clock::now();
 
             //Mask generation
             auto beginFC = std::chrono::high_resolution_clock::now();
-            if (!segmentationOptions->MASK_ONLY) {
-                if(options->erode) {
-                    blobs->erode(options, segmentationOptions);
-                }
-                runMaskGeneration(blobs, options, segmentationOptions);
-            }
+            auto fc = new FeatureCollection();
+            fc->createFCFromFeatures(features, imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
+
+            fs::path path = options->inputPath;
+            std::string inputFilename = path.filename();
+            std::string outputFilenamePrefix = "";
+            outputFilenamePrefix = "bw-mask-";
+            auto outputFilename = outputFilenamePrefix + inputFilename;
+            auto outputFilepath =  (fs::path(options->outputPath) / outputFilename).string();
+
+            fc->createBlackWhiteMask(outputFilepath, (uint32_t) tileWidthAtSegmentationLevel);
+//            if (!segmentationOptions->MASK_ONLY) {
+//                if(options->erode) {
+//                    blobs->erode(options, segmentationOptions);
+//                }
+//                runMaskGeneration(blobs, options, segmentationOptions);
+//            }
+
+            VLOG(4) << "image written to : " << outputFilepath;
+
             auto endFC = std::chrono::high_resolution_clock::now();
 
             auto end = std::chrono::high_resolution_clock::now();
@@ -376,9 +391,9 @@ namespace egt {
          * @param options - Options for configuring EGT execution.
          * @param segmentationOptions - Parameters used for the segmentation.
          */
-        std::shared_ptr<ListBlobs>
+        std::list<std::shared_ptr<Feature>>
         runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions, DerivedSegmentationParams<T> segmentationParams) {
-            htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
+            htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Feature> *segmentationGraph;
             htgs::TaskGraphRuntime *segmentationRuntime;
 
             uint32_t pyramidLevelToRequestForSegmentation = options->pyramidLevel;
@@ -417,30 +432,23 @@ namespace egt {
             auto mergeRule = new MergeRule(pyramid);
             auto mergeCompletedRule = new MergeCompletedRule(pyramid);
 
+            auto featureBuilder = new FeatureBuilder(10);
 
-
-
-            auto finalMerge = new BlobMerger<T>(imageHeightAtSegmentationLevel,
-                                        imageWidthAtSegmentationLevel,
-                                        nbTiles,
-                                        options,
-                                        segmentationOptions,
-                                        segmentationParams);
-            segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
+            segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Feature>;
             segmentationGraph->addEdge(fastImage2, sobelFilter2);
             segmentationGraph->addEdge(sobelFilter2, viewSegmentation);
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
 
 
-            auto mergeBlob = new MergeBlob(1);
+            auto mergeBlob = new MergeBlob(10);
 
 
             segmentationGraph->addEdge(labelingFilter, bookkeeper);
             segmentationGraph->addRuleEdge(bookkeeper,mergeRule, mergeBlob);
             segmentationGraph->addEdge(mergeBlob,bookkeeper);
-            segmentationGraph->addRuleEdge(bookkeeper, mergeCompletedRule, finalMerge);
+            segmentationGraph->addRuleEdge(bookkeeper, mergeCompletedRule, featureBuilder);
 
-            segmentationGraph->addGraphProducerTask(finalMerge);
+            segmentationGraph->addGraphProducerTask(featureBuilder);
 
             htgs::TaskGraphSignalHandler::registerTaskGraph(segmentationGraph);
             htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
@@ -455,18 +463,26 @@ namespace egt {
                 auto row = step.first;
                 auto col = step.second;
                 fi->requestTile(row,col,false,0);
-                VLOG(3) << "Requesting tile (" << row << "," << col << ")";
+                VLOG(4) << "Requesting tile (" << row << "," << col << ")";
             }
 
             segmentationGraph->finishedProducingData();
 
+            std::list<std::shared_ptr<Feature>> features{};
             //we only generate one output, the list of all objects
-            std::shared_ptr<ListBlobs> blobs = segmentationGraph->consumeData();
+            while(! segmentationGraph->isOutputTerminated()) {
+                auto feature = segmentationGraph->consumeData();
+                if(feature != nullptr){
+                    features.push_back(feature);
+                }
+            }
+
+//            std::shared_ptr<ListBlobs> blobs = segmentationGraph->consumeData();
             segmentationRuntime->waitForRuntime();
             delete traversal;
             delete fi;
             delete segmentationRuntime;
-            return blobs;
+          return features;
         }
 
         void runMaskGeneration(std::shared_ptr<ListBlobs> &blob, EGTOptions *options,
