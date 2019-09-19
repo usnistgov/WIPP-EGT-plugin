@@ -21,14 +21,20 @@ namespace egt {
 
         void applyRule(std::shared_ptr<ViewAnalyse> data, size_t pipelineId) override {
 
+            for(auto parentSon : data->getFinalBlobsParentSons()) {
+                VLOG(3) << "level : " << data->getLevel() << " - blobset is finalized. Root : " << parentSon.first << ", Size : " << parentSon.second.size();
+                this->addResult(new BlobSet(parentSon.second));
+            }
+
+
             //generated all  levels. We are done.
             if(data->getLevel() == pyramid.getNumLevel() - 1) {
                 VLOG(3) << "done generating last level." << std::endl;
+
                 for(auto parentSon : data->getBlobsParentSons()) {
                     this->addResult(new BlobSet(parentSon.second));
                 }
             }
-
         }
 
         pb::Pyramid pyramid;

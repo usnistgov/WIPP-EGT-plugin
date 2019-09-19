@@ -114,6 +114,8 @@ public:
                                 //merge the blob groups
                                 VLOG(3) << "Creating merged blob from blobsToMerge :" << blob->getTag() << "," << otherBlob->getTag();
                                 UnionFind<Blob> uf{};
+                                blob->decreaseMergeCount();
+                                otherBlob->decreaseMergeCount();
                                 auto root1 = uf.find(blob);
                                 auto root2 = uf.find(otherBlob);
                                 if(root1 == root2){
@@ -124,11 +126,22 @@ public:
                                 auto blobGroup1 = v1->getBlobsParentSons()[root1];
                                 auto blobGroup2 = v2->getBlobsParentSons()[root2];
                                 blobGroup1.insert(blobGroup2.begin(), blobGroup2.end()); //merge sons
-                                result->getBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
-                                if(root == root2){
+
+                                //are we done merging the whole blob?
+                                auto mergeLeftCount = std::accumulate(blobGroup1.begin(), blobGroup1.end(), 0,
+                                                [](uint32_t i, const Blob* b){ return b->getMergeCount() + i; });
+                                if(mergeLeftCount == 0){
+                                    result->getFinalBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
                                     result->getBlobsParentSons().erase(root1);
-                                } else {
                                     result->getBlobsParentSons().erase(root2);
+                                }
+                                else {
+                                    result->getBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
+                                    if(root == root2){
+                                        result->getBlobsParentSons().erase(root1);
+                                    } else {
+                                        result->getBlobsParentSons().erase(root2);
+                                    }
                                 }
                             }
                         }

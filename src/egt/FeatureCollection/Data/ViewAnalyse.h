@@ -103,6 +103,10 @@ namespace egt {
             return _blobsParentSons;
         }
 
+        std::map<Blob *, std::set<Blob *>> &getFinalBlobsParentSons() {
+            return _finalBlobsParentSons;
+        }
+
 
         /// \brief Add an entry to the to merge structure
         /// \param b Blob to add
@@ -119,10 +123,17 @@ namespace egt {
         /// \param b blob to add
         void insertBlob(Blob *b) {
             _blobs.push_back(b);
-            _blobsParentSons[b].insert(b);
+            if(b->isToMerge()) {
+                _blobsParentSons[b].insert(b);
+            }
+            else {
+                _finalBlobsParentSons[b].insert(b);
+            }
         }
 
-        void insertHole(Blob *b) { _holes.push_back(b); }
+        void insertHole(Blob *b) {
+            _blobs.push_back(b);
+        }
 
         virtual ~ViewAnalyse() {
             _toMerge.clear();
@@ -140,15 +151,19 @@ namespace egt {
                 _holesToMerge{};   ///< Map of holes which will need to be merged to a list of
         ///< coordinates
 
+
+        //TODO REMOVE
         std::list<Blob *>
                 _blobs{};   ///< List of blobs created
-
+        //TODO REMOVE
         std::list<Blob *>
                 _holes{};   ///< List of holes created
 
         uint32_t level = 0;
 
         uint32_t row = 0, col = 0;
+
+        std::map<Blob *, std::set<Blob *>> _finalBlobsParentSons{};
 
         std::map<Blob *, std::set<Blob *>> _blobsParentSons{};
 

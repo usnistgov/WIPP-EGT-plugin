@@ -102,14 +102,26 @@ class Blob {
   /// \return Blob tag
   uint32_t getTag() const { return _tag; }
 
-    bool isToMerge() const {
-        return _toMerge;
+    bool isToMerge() {
+        return mergeCount > 0;
     }
 
-    void setToMerge(bool toMerge) {
-        _toMerge = toMerge;
-    }
+    void increaseMergeCount() {
+      mergeCount++;
+   }
 
+   void decreaseMergeCount() {
+     if (mergeCount == 0) {
+       VLOG(3) << "TODO - Merge count already at zero. Need to flatten contiguous border pixels";
+     }
+     else {
+       mergeCount--;
+     }
+   }
+
+    uint32_t getMergeCount() const {
+      return mergeCount;
+    }
 
     uint32_t getStartRow() const {
         return _startRow;
@@ -421,6 +433,8 @@ class Blob {
 
   uint32_t _tileRow = 0,
            _tileCol = 0;
+
+  uint32_t mergeCount = 0;
 };
 
 }

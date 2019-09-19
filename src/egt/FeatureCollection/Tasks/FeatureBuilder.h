@@ -20,7 +20,7 @@ namespace egt {
 
             auto blobs = data->_blobs;
 
-            VLOG(5) << "nb of blobs to merge: " << blobs.size();
+            VLOG(4) << "Building feature from blob group of size : " << blobs.size();
 
             uint32_t id = (*blobs.begin())->getTag();
 

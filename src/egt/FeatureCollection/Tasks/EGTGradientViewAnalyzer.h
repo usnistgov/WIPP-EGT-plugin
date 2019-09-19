@@ -233,8 +233,18 @@ namespace egt {
          * @param blobColor
          */
         void blobCompleted(Color blobColor) {
+//
+//                if(_currentBlob->isToMerge()){
+//                    flattenPixelToMerge(_currentBlob);
+//                }
+
+                if(_currentBlob->isToMerge()){
+                    flattenPixelToMerge(_currentBlob, blobColor);
+                }
+
                 //background and foreground blobs are not handled the same way
                 if(blobColor == BACKGROUND) {
+
                     //we know this hole is on the border, so we keep track of it for the merge.
                     if (_currentBlob->isToMerge()) {
                         if(!_segmentationOptions->MASK_ONLY) {
@@ -292,8 +302,59 @@ namespace egt {
             _currentBlob = nullptr;
         }
 
+        void flattenPixelToMerge(Blob* blob, Color blobColor) {
 
-        /**
+            std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>* collection{};
+            if(blobColor == BACKGROUND) {
+                collection = &_vAnalyse->getHolesToMerge();
+            }
+            else {
+                collection = &_vAnalyse->getToMerge();
+            }
+
+            for(auto entry : *collection) {
+                auto it = entry.second.find(blob);
+                if(it != entry.second.end()){
+                    std::list<Coordinate>* coords = &(*it).second;
+                    if(coords->front().first == coords->back().first){
+                        auto prev = coords->front();
+                        auto it2 = coords->begin()++;
+                        while (it2 != coords->end()) {
+                            if (prev.second + 1 == (*it2).second) {
+                                prev = (*it2);
+                                it2 = coords->erase(it2);
+                            } else {
+                                prev = (*it2);
+                                it2++;
+                            }
+                        }
+                    }
+                    else {
+                        auto prev = coords->front();
+                        auto it2 = coords->begin()++;
+                        while (it2 != coords->end()) {
+                            if (prev.first + 1 == (*it2).first) {
+                                prev = (*it2);
+                                it2 = coords->erase(it2);
+                            } else {
+                                prev = (*it2);
+                                it2++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        bool sortbyCol(const std::pair<int,int> &a,
+                       const std::pair<int,int> &b)
+        {
+            return (a.second < b.second);
+        }
+
+
+/**
          * Create a new blob at a given position and try to expand it.
          */
         void createBlob(int32_t row, int32_t col, Color blobColor) {
@@ -363,7 +424,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge({_view->getRow() + 1, _view->getCol()}, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
             // Add blob to merge list if tile right pixel has the same value than the view pixel on its right (continuity)
@@ -379,7 +440,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge({_view->getRow(), _view->getCol() + 1}, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
@@ -394,7 +455,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge({_view->getRow(), _view->getCol() - 1}, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
 
                 }
             }
@@ -410,7 +471,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge({_view->getRow() - 1, _view->getCol()}, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
         }
@@ -460,7 +521,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
@@ -476,7 +537,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords,_currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
@@ -493,7 +554,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
@@ -510,7 +571,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
@@ -529,7 +590,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
@@ -545,7 +606,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
@@ -561,7 +622,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
@@ -577,7 +638,7 @@ namespace egt {
                     else {
                         _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
