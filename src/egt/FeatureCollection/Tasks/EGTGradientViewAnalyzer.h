@@ -369,7 +369,7 @@ namespace egt {
                     //add the number of merge to perform in one direction to the total number of merges to perform
                     blob->setMergeCount(blob->getMergeCount() + (uint32_t)listToFlat.size());
 
-                    VLOG(3) << "blob : " << blob->getTag() << " - Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
+//                    VLOG(3) << "blob : " << blob->getTag() << " - Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
                 }
 
                 mergeIterator++;

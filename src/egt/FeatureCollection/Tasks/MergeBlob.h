@@ -121,8 +121,7 @@ public:
                                 auto root1 = uf.find(blob);
                                 auto root2 = uf.find(otherBlob);
                                 if(root1 == root2){
-                                    VLOG(3) << "We have discrepancy due the 'hole filled at the border' corner case";
-                                    continue;
+                                    VLOG(3) << "blob: " << blob->getTag() << "& blob: " << otherBlob->getTag() << " are already connected through another path";
                                 }
                                 auto root = uf.unionElements(blob, otherBlob); //pick one root as the new root
                                 auto blobGroup1 = v1->getBlobsParentSons()[root1];

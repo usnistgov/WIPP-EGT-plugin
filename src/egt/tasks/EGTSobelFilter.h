@@ -28,7 +28,7 @@ namespace egt {
         uint32_t startRow = 1; //row at which the convolution starts
         uint32_t startCol = 1; //col at which the convolution starts
 
-        std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/";
+        std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/debug/";
 //        std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
     public:
@@ -107,9 +107,9 @@ namespace egt {
 //            printBoolArray("seg tileout", tileOut, viewWidth, viewHeight);
 
 
-//            auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
-//            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tif" , img5);
-//            img5.release();
+            auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
+            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tif" , img5);
+            img5.release();
 
             delete[] tileOut;
 

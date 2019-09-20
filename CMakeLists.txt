@@ -74,7 +74,11 @@ message(FAST_IMAGE_LINK_LIBRAIRIES_ARG = ${FastImage_LIBRARIES})
 #include_directories(/home/gerardin/Downloads/opencv-3.4.6/include)
 #include_directories(/home/gerardin/Downloads/opencv-3.4.6-static/build/include)
 #link_directories(/home/gerardin/Downloads/opencv-3.4.6/lib)
-link_libraries(opencv_core opencv_imgproc)
+
+#TODO REMOVE for PROD. highgui and imgcodecs are useful for debugging (provide cv::imwrite)
+link_libraries(opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
+#link_libraries(opencv_core opencv_imgproc)
+
 #link_directories(/home/gerardin/Downloads/opencv-3.4.6-static/build/lib)
 #link_directories(/home/gerardin/Downloads/opencv-3.4.6-static/build/3rdparty/lib)
 #link_directories(/home/gerardin/Downloads/opencv-3.4.6-static/build/3rdparty/lib)
