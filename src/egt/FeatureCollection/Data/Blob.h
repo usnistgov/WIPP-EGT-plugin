@@ -116,7 +116,8 @@ class Blob {
 
    void decreaseMergeCount() {
      if (mergeCount == 0) {
-       VLOG(3) << "TODO - Merge count already at zero. Need to flatten contiguous border pixels";
+       VLOG(3) << "TODO - Merge count already at zero. This should never happen!";
+       assert(false);
      }
      else {
        mergeCount--;

@@ -52,6 +52,7 @@
 
 namespace egt {
 
+
 /**
   * @class EGTGradientViewAnalyser EGTGradientViewAnalyser.h <egt/FeatureCollection/Tasks/EGTGradientViewAnalyser.h>
   *
@@ -224,7 +225,7 @@ namespace egt {
                 analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, blobColor);
             }
             else {
-                analyseNeighbour8(neighbourCoord.first, neighbourCoord.second, blobColor);
+                analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, blobColor);
             }
         }
 
@@ -298,6 +299,13 @@ namespace egt {
             _currentBlob = nullptr;
         }
 
+
+//        static bool sortByCol(const std::pair<uint32_t,uint32_t > &a,
+//                       const std::pair<uint32_t,uint32_t > &b)
+//        {
+//            return (a.second < b.second);
+//        }
+
         void flattenPixelToMerge(Blob* blob, Color blobColor) {
 
             std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>::iterator mergeIterator, endIterator;
@@ -312,30 +320,37 @@ namespace egt {
 
             while(mergeIterator != endIterator) {
 
-                auto it = (*mergeIterator).second.find(blob);
+                std::unordered_map<Blob *, std::list<Coordinate>>::iterator it = mergeIterator->second.find(blob); //iterator on the entry (blob => list of pixel coordinates)
 
-                if(it != (*mergeIterator).second.end()){
-                    auto originalSize = (*it).second.size();
-                    if((*it).second.front().first == (*it).second.back().first){
-                        auto prev = (*it).second.front();
-                        auto it2 = (*it).second.begin()++;
-                        while (it2 != (*it).second.end()) {
+                if(it != mergeIterator->second.end()){
+                    std::list<Coordinate> & listToFlat =  it->second;
+                    auto originalSize = listToFlat.size();
+
+                    //we are flattening a row of pixels
+                    if(listToFlat.front().first == listToFlat.back().first){
+                        listToFlat.sort();
+
+                        auto prev = listToFlat.front();
+                        auto it2 = listToFlat.begin()++;
+                        while (it2 != listToFlat.end()) {
                             if (prev.second + 1 == (*it2).second) {
                                 prev = (*it2);
-                                it2 = (*it).second.erase(it2);
+                                it2 = listToFlat.erase(it2);
                             } else {
                                 prev = (*it2);
                                 it2++;
                             }
                         }
                     }
+                    //we are flattening a column of pixels
                     else {
-                        auto prev = (*it).second.front();
-                        auto it2 = (*it).second.begin()++;
-                        while (it2 != (*it).second.end()) {
+//                        std::sort(listToFlat.begin(), listToFlat.end(), sortbyCol);
+                        auto prev = listToFlat.front();
+                        auto it2 = listToFlat.begin()++;
+                        while (it2 != listToFlat.end()) {
                             if (prev.first + 1 == (*it2).first) {
                                 prev = (*it2);
-                                it2 = (*it).second.erase(it2);
+                                it2 = listToFlat.erase(it2);
                             } else {
                                 prev = (*it2);
                                 it2++;
@@ -343,7 +358,7 @@ namespace egt {
                         }
                     }
 
-                    blob->setMergeCount((*it).second.size());
+                    blob->setMergeCount(listToFlat.size());
 
                     VLOG(3) << "Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
                 }
@@ -351,13 +366,6 @@ namespace egt {
                 mergeIterator++;
             }
 
-        }
-
-
-        bool sortbyCol(const std::pair<int,int> &a,
-                       const std::pair<int,int> &b)
-        {
-            return (a.second < b.second);
         }
 
 
