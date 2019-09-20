@@ -65,8 +65,6 @@ using Coordinate = std::pair<int32_t, int32_t>;
 class Blob {
  public:
 
-    Blob() = default;
-
     /// \brief Blob construction and initialisation
   Blob(uint32_t row, uint32_t col, uint32_t tileRow, uint32_t tileCol)
       : _parent(this),

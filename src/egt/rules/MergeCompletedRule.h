@@ -21,10 +21,10 @@ namespace egt {
 
         void applyRule(std::shared_ptr<ViewAnalyse> data, size_t pipelineId) override {
 
-            for(auto parentSon : data->getFinalBlobsParentSons()) {
-                VLOG(3) << "level : " << data->getLevel() << " - blobset is finalized. Root : " << parentSon.first << ", Size : " << parentSon.second.size();
-                this->addResult(new BlobSet(parentSon.second));
-            }
+//            for(auto parentSon : data->getFinalBlobsParentSons()) {
+//                VLOG(3) << "level : " << data->getLevel() << " - blobset is finalized. Root : " << parentSon.first << ", Size : " << parentSon.second.size();
+//                this->addResult(new BlobSet(parentSon.second));
+//            }
 
 
             //generated all  levels. We are done.

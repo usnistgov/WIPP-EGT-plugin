@@ -94,7 +94,9 @@ public:
         auto blobsToMerge = v1->getToMerge()[{v2->getRow(),v2->getCol()}];
         auto otherBlobsToMerge = v2->getToMerge()[{v1->getRow(),v1->getCol()}];
 
-        assert (blobsToMerge.size() == otherBlobsToMerge.size());
+        //TODO the assert below was false, because the merges between blobs are arbitrary
+        //Thus what we need to do is check that the sum of all merges for each blobs in both maps are equal.
+//        assert (blobsToMerge.size() == otherBlobsToMerge.size());
 
         if(blobsToMerge.empty()){
             VLOG(3) << "Nothing to merge in tile ."<< "(" << v1->getRow() << "," << v1->getCol() << ")";
@@ -119,7 +121,7 @@ public:
                                 auto root1 = uf.find(blob);
                                 auto root2 = uf.find(otherBlob);
                                 if(root1 == root2){
-                                    //TODO after pixel flattening, this should never happen. For now we just ignore
+                                    VLOG(3) << "We have discrepancy due the 'hole filled at the border' corner case";
                                     continue;
                                 }
                                 auto root = uf.unionElements(blob, otherBlob); //pick one root as the new root

@@ -263,10 +263,18 @@ namespace egt {
                         }
 
                         if(!keepHole) {
-                            fillUpHole();
+                            //TODO WE COULD ALSO FILL HOLE IF THE BOUNDING BOX IS NOT TOUCHING THE BORDER (THE BLOB IS FULLY CONTAINED INSIDE)
+                            //fillUpHole();
+                            _currentBlob->compactBlobDataIntoFeature();
+                            _vAnalyse->insertBlob(_currentBlob);
+                            holeRemovedCount++;
+                            //TODO now we need to merge it with (one of) the surrounding blob(s)
+
                         }
-                        delete _currentBlob;
-                        holeRemovedCount++;
+                        else {
+                            delete _currentBlob;
+
+                        }
                     }
                 }
                 else {
@@ -308,6 +316,8 @@ namespace egt {
 
         void flattenPixelToMerge(Blob* blob, Color blobColor) {
 
+            blob->setMergeCount(0); //we reset the counter
+
             std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>::iterator mergeIterator, endIterator;
             if(blobColor == BACKGROUND) {
                 mergeIterator = _vAnalyse->getHolesToMerge().begin();
@@ -320,47 +330,46 @@ namespace egt {
 
             while(mergeIterator != endIterator) {
 
-                std::unordered_map<Blob *, std::list<Coordinate>>::iterator it = mergeIterator->second.find(blob); //iterator on the entry (blob => list of pixel coordinates)
+                std::unordered_map<Blob *, std::list<Coordinate>>::iterator blobMapIt = mergeIterator->second.find(blob); //iterator on the entry (blob => list of pixel coordinates)
 
-                if(it != mergeIterator->second.end()){
-                    std::list<Coordinate> & listToFlat =  it->second;
+                if(blobMapIt != mergeIterator->second.end()){
+                    std::list<Coordinate> & listToFlat =  blobMapIt->second;
                     auto originalSize = listToFlat.size();
+                    listToFlat.sort();
+
+                    auto prev = listToFlat.front();
+                    auto it = listToFlat.begin()++;
 
                     //we are flattening a row of pixels
                     if(listToFlat.front().first == listToFlat.back().first){
-                        listToFlat.sort();
 
-                        auto prev = listToFlat.front();
-                        auto it2 = listToFlat.begin()++;
-                        while (it2 != listToFlat.end()) {
-                            if (prev.second + 1 == (*it2).second) {
-                                prev = (*it2);
-                                it2 = listToFlat.erase(it2);
+                        while (it != listToFlat.end()) {
+                            if (prev.second + 1 == (*it).second) {
+                                prev = (*it);
+                                it = listToFlat.erase(it);
                             } else {
-                                prev = (*it2);
-                                it2++;
+                                prev = (*it);
+                                it++;
                             }
                         }
                     }
                     //we are flattening a column of pixels
                     else {
-//                        std::sort(listToFlat.begin(), listToFlat.end(), sortbyCol);
-                        auto prev = listToFlat.front();
-                        auto it2 = listToFlat.begin()++;
-                        while (it2 != listToFlat.end()) {
-                            if (prev.first + 1 == (*it2).first) {
-                                prev = (*it2);
-                                it2 = listToFlat.erase(it2);
+                        while (it != listToFlat.end()) {
+                            if (prev.first + 1 == (*it).first) {
+                                prev = (*it);
+                                it = listToFlat.erase(it);
                             } else {
-                                prev = (*it2);
-                                it2++;
+                                prev = (*it);
+                                it++;
                             }
                         }
                     }
 
-                    blob->setMergeCount(listToFlat.size());
+                    //add the number of merge to perform in one direction to the total number of merges to perform
+                    blob->setMergeCount(blob->getMergeCount() + (uint32_t)listToFlat.size());
 
-                    VLOG(3) << "Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
+                    VLOG(3) << "blob : " << blob->getTag() << " - Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
                 }
 
                 mergeIterator++;
