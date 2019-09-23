@@ -25,7 +25,7 @@ namespace egt {
 
             for(auto parentSon : data->getFinalBlobsParentSons()) {
                 VLOG(5) << "level : " << data->getLevel() << "(" << data->getRow() << "," << data->getCol() << ")" << " - blobset is finalized. Root : blob_" << parentSon.first->getTag() << ", Size : " << parentSon.second.size();
-                this->addResult(new BlobSet(parentSon.second));t a
+                this->addResult(new BlobSet(parentSon.second));
             }
 
 

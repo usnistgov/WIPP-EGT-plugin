@@ -111,6 +111,9 @@ namespace egt {
             options->erode = (expertModeOptions.find("erode") != expertModeOptions.end())
                                       ? expertModeOptions.at("erode") == 1 : true;
 
+            options->testNoGradient = (expertModeOptions.find("testNoGradient") != expertModeOptions.end())
+                             ? expertModeOptions.at("testNoGradient") == 1 : false;
+
             VLOG(1) << "Execution model : ";
             VLOG(1) << "loader threads : " << options->nbLoaderThreads;
             VLOG(1) << "concurrent tiles : " << options->concurrentTiles;
@@ -127,6 +130,7 @@ namespace egt {
             }
             VLOG(1) << "min and max intensity are calculated at pyramid level: " << options->pixelIntensityBoundsLevelUp;
             VLOG(1) << "performing erosion: " << std::boolalpha << options->erode;
+            VLOG(1) << "test flag set - not applying gradient on views: " << std::boolalpha << options->testNoGradient;
 
 
             //We need to derive the segmentations params from the user defined parameters
@@ -415,8 +419,14 @@ namespace egt {
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
             auto pyramid = pb::Pyramid(fi->getImageWidth(), fi->getImageHeight(), fi->getTileWidth());
 
-            auto sobelFilter2 = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
-//            auto sobelFilter2 = new NoTransform<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+
+            htgs::ITask<htgs::MemoryData<fi::View<T>>, GradientView<T>>* sobelFilter = nullptr;
+            if(options->testNoGradient) {
+                sobelFilter = new NoTransform<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+            }
+            else {
+                sobelFilter = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+            }
 
             auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
                                                            imageHeightAtSegmentationLevel,
@@ -438,8 +448,8 @@ namespace egt {
             auto featureBuilder = new FeatureBuilder(options->concurrentTiles);
 
             segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Feature>;
-            segmentationGraph->addEdge(fastImage2, sobelFilter2);
-            segmentationGraph->addEdge(sobelFilter2, viewSegmentation);
+            segmentationGraph->addEdge(fastImage2, sobelFilter);
+            segmentationGraph->addEdge(sobelFilter, viewSegmentation);
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
 
 

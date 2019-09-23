@@ -34,6 +34,7 @@ namespace egt {
         bool streamingWrite{};
 
         bool erode{};
+        bool testNoGradient{};
 
     };
 }
