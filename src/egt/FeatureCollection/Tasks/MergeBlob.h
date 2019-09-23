@@ -70,10 +70,19 @@ public:
                 addToNextLevelMerge(view , {row + 1 , col + 1}, {data->getRow() + 1, data->getCol() + 1});
             }
 
+            //TOP RIGHT TILE
+            if(views.find({row - 1, col + 1}) != views.end()){
+                merge(view, views[{row - 1, col + 1}]);
+            }
+            else {
+                addToNextLevelMerge(view , {row - 1 , col + 1}, {data->getRow() - 1, data->getCol() + 1});
+            }
+
             //KEEP TRACK OF CORRESPONDING MERGES ON THE TOP, LEFT AND TOP-LEFT
             addToNextLevelMerge(view , {row - 1 , col}, {data->getRow() - 1, data->getCol()});
             addToNextLevelMerge(view , {row , col - 1}, {data->getRow(), data->getCol() - 1});
             addToNextLevelMerge(view , {row - 1 , col - 1}, {data->getRow() - 1, data->getCol() - 1});
+            addToNextLevelMerge(view , {row + 1 , col - 1}, {data->getRow() + 1, data->getCol() - 1});
         }
 
         VLOG(3) << "Merge produce ViewAnalyse for level " << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). ";
@@ -93,10 +102,6 @@ public:
         //find corresponding merge regions in each view
         auto blobsToMerge = v1->getToMerge()[{v2->getRow(),v2->getCol()}];
         auto otherBlobsToMerge = v2->getToMerge()[{v1->getRow(),v1->getCol()}];
-
-        //TODO the assert below was false, because the merges between blobs are arbitrary
-        //Thus what we need to do is check that the sum of all merges for each blobs in both maps are equal.
-//        assert (blobsToMerge.size() == otherBlobsToMerge.size());
 
         if(blobsToMerge.empty()){
             VLOG(5) << "Nothing to merge in tile ."<< "(" << v1->getRow() << "," << v1->getCol() << ")";

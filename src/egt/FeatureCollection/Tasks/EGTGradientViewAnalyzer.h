@@ -225,7 +225,7 @@ namespace egt {
                 analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, blobColor);
             }
             else {
-                analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, blobColor);
+                analyseNeighbour8(neighbourCoord.first, neighbourCoord.second, blobColor);
             }
         }
 
@@ -401,7 +401,7 @@ namespace egt {
                 analyseNeighbour4(row, col, blobColor);
             }
             else {
-                analyseNeighbour4(row, col, blobColor);
+                analyseNeighbour8(row, col, blobColor);
             }
         }
 
