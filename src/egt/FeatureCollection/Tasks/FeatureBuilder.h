@@ -20,7 +20,7 @@ namespace egt {
 
             auto blobs = data->_blobs;
 
-            VLOG(4) << "Building feature from blob group of size : " << blobs.size();
+            VLOG(5) << "Building feature from blob group of size : " << blobs.size();
 
             uint32_t id = (*blobs.begin())->getTag();
 
@@ -37,7 +37,7 @@ namespace egt {
             for (auto blob : blobs) {
                 blob->addToBitMask(bitMask, bb);
                 count += blob->getCount();
-                VLOG(4) << "deleting blob blob_" << blob->getTag();
+                VLOG(5) << "deleting blob blob_" << blob->getTag();
                 delete blob;
             }
 

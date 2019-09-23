@@ -415,8 +415,8 @@ namespace egt {
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
             auto pyramid = pb::Pyramid(fi->getImageWidth(), fi->getImageHeight(), fi->getTileWidth());
 
-//            auto sobelFilter2 = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
-            auto sobelFilter2 = new NoTransform<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+            auto sobelFilter2 = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+//            auto sobelFilter2 = new NoTransform<T>(options->concurrentTiles, options->imageDepth, 1, 1);
 
             auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
                                                            imageHeightAtSegmentationLevel,
@@ -467,13 +467,13 @@ namespace egt {
                 auto row = step.first;
                 auto col = step.second;
                 fi->requestTile(row,col,false,0);
-                VLOG(4) << "Requesting tile (" << row << "," << col << ")";
+                VLOG(5) << "Requesting tile (" << row << "," << col << ")";
             }
 
             segmentationGraph->finishedProducingData();
 
             std::list<std::shared_ptr<Feature>> features{};
-            //we only generate one output, the list of all objects
+
             while(! segmentationGraph->isOutputTerminated()) {
                 auto feature = segmentationGraph->consumeData();
                 if(feature != nullptr){
@@ -481,7 +481,8 @@ namespace egt {
                 }
             }
 
-//            std::shared_ptr<ListBlobs> blobs = segmentationGraph->consumeData();
+            VLOG(4) << " Total number of features produced: " << features.size();
+
             segmentationRuntime->waitForRuntime();
             delete traversal;
             delete fi;

@@ -99,7 +99,7 @@ public:
 //        assert (blobsToMerge.size() == otherBlobsToMerge.size());
 
         if(blobsToMerge.empty()){
-            VLOG(3) << "Nothing to merge in tile ."<< "(" << v1->getRow() << "," << v1->getCol() << ")";
+            VLOG(5) << "Nothing to merge in tile ."<< "(" << v1->getRow() << "," << v1->getCol() << ")";
             return;
         }
 
@@ -114,7 +114,7 @@ public:
                             auto otherBlob = otherBlobPixelPair.first;
                             if (otherBlobPixelPair.first->isPixelinFeature(coordinates.first, coordinates.second)) {
                                 //merge the blob groups
-                                VLOG(3) << "Creating merged blob from blobsToMerge : blob_" << blob->getTag()
+                                VLOG(5) << "Creating merged blob from blobsToMerge : blob_" << blob->getTag()
                                         << ", blob_" << otherBlob->getTag();
                                 UnionFind<Blob> uf{};
                                 blob->decreaseMergeCount();
@@ -126,7 +126,7 @@ public:
 
                                 //already connected through another pass
                                 if (root1 == root2) {
-                                    VLOG(3) << "blob_" << blob->getTag() << "& blob_" << otherBlob->getTag()
+                                    VLOG(5) << "blob_" << blob->getTag() << "& blob_" << otherBlob->getTag()
                                             << " are already connected through another path. Common root is : blob_"
                                             << root1->getTag();
 
@@ -190,16 +190,13 @@ public:
     void addToNextLevelMerge(std::shared_ptr<ViewAnalyse> currentView, std::pair<uint32_t,uint32_t> tileCoordinates, std::pair<uint32_t,uint32_t> contiguousBlockCoordinates){
         auto blobsToMerge = currentView->getToMerge()[tileCoordinates];
         if(!(blobsToMerge).empty()){
-            VLOG(4) << "level: " << result->getLevel() << " - block : (" << result->getRow() << ", " << result->getCol() <<  "). "  << " - add merge with block : " << "(" << contiguousBlockCoordinates.first << "," << contiguousBlockCoordinates.second << ")" << "- original tile : " << "(" << tileCoordinates.first << "," << tileCoordinates.second << ")" << "need to merge " << blobsToMerge.size() << " at the next level";
+            VLOG(5) << "level: " << result->getLevel() << " - block : (" << result->getRow() << ", " << result->getCol() <<  "). "  << " - add merge with block : " << "(" << contiguousBlockCoordinates.first << "," << contiguousBlockCoordinates.second << ")" << "- original tile : " << "(" << tileCoordinates.first << "," << tileCoordinates.second << ")" << "need to merge " << blobsToMerge.size() << " at the next level";
             for(auto blobToPixelEntry : currentView->getToMerge()[tileCoordinates]){
                 result->getToMerge()[contiguousBlockCoordinates].insert(blobToPixelEntry);
             }
             //merge all entries of currentView->getToMerge()[tileCoordinates] into result->getToMerge()[contiguousBlockCoordinates]
             //we will merge them at the next level
             //empty if we are at the border
-        }
-        else {
-            VLOG(4) << "nothing to merge at  the next level";
         }
     }
 

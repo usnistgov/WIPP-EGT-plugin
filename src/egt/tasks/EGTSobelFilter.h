@@ -107,11 +107,11 @@ namespace egt {
 //            printBoolArray("seg tileout", tileOut, viewWidth, viewHeight);
 
 
-            auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
-            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tif" , img5);
-            img5.release();
-
-            delete[] tileOut;
+//            auto img5 = cv::Mat(viewHeight, viewWidth, convertToOpencvType(depth), tileOut);
+//            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tif" , img5);
+//            img5.release();
+//
+//            delete[] tileOut;
 
             auto gradientView = new GradientView<T>(data,original);
 
