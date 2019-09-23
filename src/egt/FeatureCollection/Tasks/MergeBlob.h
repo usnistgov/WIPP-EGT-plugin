@@ -88,7 +88,7 @@ public:
      * Merge blobs at the border of two contiguous tiles.
      */
     void merge(std::shared_ptr<ViewAnalyse> v1, std::shared_ptr<ViewAnalyse> v2){
-        VLOG(3) << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). " << "merging tile : " << "(" << v1->getRow() << "," << v1->getCol() << ") & (" << v2->getRow() << "," << v2->getCol() << ")"  << " ...";
+        VLOG(3) << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). " << "merging tile at level " << result->getLevel() - 1 << " : " << "(" << v1->getRow() << "," << v1->getCol() << ") & (" << v2->getRow() << "," << v2->getCol() << ")"  << " ...";
 
         //find corresponding merge regions in each view
         auto blobsToMerge = v1->getToMerge()[{v2->getRow(),v2->getCol()}];
@@ -114,34 +114,65 @@ public:
                             auto otherBlob = otherBlobPixelPair.first;
                             if (otherBlobPixelPair.first->isPixelinFeature(coordinates.first, coordinates.second)) {
                                 //merge the blob groups
-                                VLOG(3) << "Creating merged blob from blobsToMerge :" << blob->getTag() << "," << otherBlob->getTag();
+                                VLOG(3) << "Creating merged blob from blobsToMerge : blob_" << blob->getTag()
+                                        << ", blob_" << otherBlob->getTag();
                                 UnionFind<Blob> uf{};
                                 blob->decreaseMergeCount();
                                 otherBlob->decreaseMergeCount();
                                 auto root1 = uf.find(blob);
                                 auto root2 = uf.find(otherBlob);
-                                if(root1 == root2){
-                                    VLOG(3) << "blob: " << blob->getTag() << "& blob: " << otherBlob->getTag() << " are already connected through another path";
-                                }
-                                auto root = uf.unionElements(blob, otherBlob); //pick one root as the new root
-                                auto blobGroup1 = v1->getBlobsParentSons()[root1];
-                                auto blobGroup2 = v2->getBlobsParentSons()[root2];
-                                blobGroup1.insert(blobGroup2.begin(), blobGroup2.end()); //merge sons
 
-                                //are we done merging the whole blob?
-                                auto mergeLeftCount = std::accumulate(blobGroup1.begin(), blobGroup1.end(), 0,
-                                                [](uint32_t i, const Blob* b){ return b->getMergeCount() + i; });
-                                if(mergeLeftCount == 0){
-                                    result->getFinalBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
-                                    result->getBlobsParentSons().erase(root1);
-                                    result->getBlobsParentSons().erase(root2);
-                                }
-                                else {
-                                    result->getBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
-                                    if(root == root2){
+                                auto blobGroup1 = v1->getBlobsParentSons()[root1];
+
+                                //already connected through another pass
+                                if (root1 == root2) {
+                                    VLOG(3) << "blob_" << blob->getTag() << "& blob_" << otherBlob->getTag()
+                                            << " are already connected through another path. Common root is : blob_"
+                                            << root1->getTag();
+
+                                    auto blobGroup2 = v2->getBlobsParentSons()[root2];
+                                    blobGroup1.insert(blobGroup2.begin(), blobGroup2.end()); //merge sons
+
+                                    //are we done merging the whole blob?
+                                    auto mergeLeftCount = std::accumulate(blobGroup1.begin(), blobGroup1.end(), 0,
+                                                                          [](uint32_t i, const Blob *b) {
+                                                                              return b->getMergeCount() + i;
+                                                                          });
+                                    if (mergeLeftCount == 0) {
+                                        result->getFinalBlobsParentSons()[root1].insert(blobGroup1.begin(),
+                                                                                       blobGroup1.end());
                                         result->getBlobsParentSons().erase(root1);
-                                    } else {
+                                    }
+                                    else {
+                                        v1->getBlobsParentSons()[root1].insert(blobGroup1.begin(), blobGroup1.end());
+                                        v2->getBlobsParentSons()[root1].insert(blobGroup1.begin(), blobGroup1.end());
+                                    }
+
+                                } else {
+                                    auto root = uf.unionElements(blob, otherBlob); //pick one root as the new root
+                                    auto blobGroup2 = v2->getBlobsParentSons()[root2];
+                                    blobGroup1.insert(blobGroup2.begin(), blobGroup2.end()); //merge sons
+
+
+                                    //are we done merging the whole blob?
+                                    auto mergeLeftCount = std::accumulate(blobGroup1.begin(), blobGroup1.end(), 0,
+                                                                          [](uint32_t i, const Blob *b) {
+                                                                              return b->getMergeCount() + i;
+                                                                          });
+                                    if (mergeLeftCount == 0) {
+                                        result->getFinalBlobsParentSons()[root].insert(blobGroup1.begin(),
+                                                                                       blobGroup1.end());
+                                        result->getBlobsParentSons().erase(root1);
                                         result->getBlobsParentSons().erase(root2);
+                                    } else {
+                                        result->getBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
+                                        v1->getBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
+                                        v2->getBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
+                                        if (root == root2) {
+                                            result->getBlobsParentSons().erase(root1);
+                                        } else {
+                                            result->getBlobsParentSons().erase(root2);
+                                        }
                                     }
                                 }
                             }
@@ -159,7 +190,7 @@ public:
     void addToNextLevelMerge(std::shared_ptr<ViewAnalyse> currentView, std::pair<uint32_t,uint32_t> tileCoordinates, std::pair<uint32_t,uint32_t> contiguousBlockCoordinates){
         auto blobsToMerge = currentView->getToMerge()[tileCoordinates];
         if(!(blobsToMerge).empty()){
-            VLOG(4) << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). " << "block : " << "(" << contiguousBlockCoordinates.first << "," << contiguousBlockCoordinates.second << ")" << "tile : " << "(" << tileCoordinates.first << "," << tileCoordinates.second << ")" << "need to merge " << blobsToMerge.size() << " at the next level";
+            VLOG(4) << "level: " << result->getLevel() << " - block : (" << result->getRow() << ", " << result->getCol() <<  "). "  << " - add merge with block : " << "(" << contiguousBlockCoordinates.first << "," << contiguousBlockCoordinates.second << ")" << "- original tile : " << "(" << tileCoordinates.first << "," << tileCoordinates.second << ")" << "need to merge " << blobsToMerge.size() << " at the next level";
             for(auto blobToPixelEntry : currentView->getToMerge()[tileCoordinates]){
                 result->getToMerge()[contiguousBlockCoordinates].insert(blobToPixelEntry);
             }

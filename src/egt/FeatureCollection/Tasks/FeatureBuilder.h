@@ -37,6 +37,7 @@ namespace egt {
             for (auto blob : blobs) {
                 blob->addToBitMask(bitMask, bb);
                 count += blob->getCount();
+                VLOG(4) << "deleting blob blob_" << blob->getTag();
                 delete blob;
             }
 

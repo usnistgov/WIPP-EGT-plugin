@@ -26,6 +26,7 @@
 #include <egt/api/EGTOptions.h>
 #include <random>
 #include <egt/tasks/EGTSobelFilter.h>
+#include <egt/tasks/NoTransform.h>
 #include <egt/FeatureCollection/Tasks/EGTGradientViewAnalyzer.h>
 #include "DerivedSegmentationParams.h"
 #include <experimental/filesystem>
@@ -414,7 +415,8 @@ namespace egt {
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
             auto pyramid = pb::Pyramid(fi->getImageWidth(), fi->getImageHeight(), fi->getTileWidth());
 
-            auto sobelFilter2 = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+//            auto sobelFilter2 = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+            auto sobelFilter2 = new NoTransform<T>(options->concurrentTiles, options->imageDepth, 1, 1);
 
             auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
                                                            imageHeightAtSegmentationLevel,

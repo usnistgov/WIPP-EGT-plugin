@@ -235,14 +235,17 @@ namespace egt {
          */
         void blobCompleted(Color blobColor) {
 
-                if(_currentBlob->isToMerge()){
-                    flattenPixelToMerge(_currentBlob, blobColor);
-                }
-
                 //background and foreground blobs are not handled the same way
                 if(blobColor == BACKGROUND) {
 
+
+                    if(_currentBlob->isToMerge()){
+                        flattenPixelToMerge(_currentBlob, blobColor);
+                    }
+
                     //we know this hole is on the border, so we keep track of it for the merge.
+
+                    //TODO - FOR OPTIMIZATION PURPOSE - WE SHOULD REVERT TO DELETING BIG HOLES AND THEN HAVING THE POSSIBILITY TO REMOVE HOLES THAT TRY TO MERGE WITH NOTHING
                     if (_currentBlob->isToMerge()) {
                         if(!_segmentationOptions->MASK_ONLY) {
                             _currentBlob->compactBlobDataIntoFeature();
@@ -278,6 +281,12 @@ namespace egt {
                     }
                 }
                 else {
+
+
+                    if(_currentBlob->isToMerge()){
+                        flattenPixelToMerge(_currentBlob, blobColor);
+                    }
+
                     //we delete small objects
                     if (!_currentBlob->isToMerge() && _currentBlob->getCount() < _segmentationOptions->MIN_OBJECT_SIZE) {
 
@@ -369,7 +378,7 @@ namespace egt {
                     //add the number of merge to perform in one direction to the total number of merges to perform
                     blob->setMergeCount(blob->getMergeCount() + (uint32_t)listToFlat.size());
 
-//                    VLOG(3) << "blob : " << blob->getTag() << " - Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
+//                    VLOG(3) << "blob : blob_" << blob->getTag() << " - Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
                 }
 
                 mergeIterator++;
@@ -392,7 +401,7 @@ namespace egt {
                 analyseNeighbour4(row, col, blobColor);
             }
             else {
-                analyseNeighbour8(row, col, blobColor);
+                analyseNeighbour4(row, col, blobColor);
             }
         }
 
