@@ -141,9 +141,8 @@ namespace egt {
     VLOG(5) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
     VLOG(5) << "holes turned to foreground : " << holeRemovedCount;
     VLOG(5) << "objects removed because too small: " << objectRemovedCount;
-    VLOG(5) << "holes we keep track of in the merge: " << _vAnalyse->getHoles().size();
     VLOG(5) << "holes to merge: " << _vAnalyse->getHolesToMerge().size();
-    VLOG(5) << "objects found: " << _vAnalyse->getBlobs().size();
+    VLOG(5) << "objects finalized: " << _vAnalyse->getFinalBlobsParentSons().size();
     VLOG(5) << "objects to merge: " << _vAnalyse->getToMerge().size();
 
     view->getGradientView()->releaseMemory();

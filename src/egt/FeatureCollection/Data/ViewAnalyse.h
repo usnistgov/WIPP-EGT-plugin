@@ -93,12 +93,6 @@ namespace egt {
             return _holesToMerge;
         }
 
-        /// \brief Getter to the blobs list
-        /// \return The blobs list
-        const std::list<Blob *> &getBlobs() const { return _blobs; }
-
-        const std::list<Blob *> &getHoles() const { return _holes; }
-
         std::map<Blob *, std::set<Blob *>> &getBlobsParentSons() {
             return _blobsParentSons;
         }
@@ -107,6 +101,13 @@ namespace egt {
             return _finalBlobsParentSons;
         }
 
+        std::map<Blob *, std::set<Blob *>> &getHolesParentSons() {
+            return _holesParentSons;
+        }
+
+        std::map<Blob *, std::set<Blob *>> &getFinalHolesParentSons() {
+            return _finalHolesParentSons;
+        }
 
         /// \brief Add an entry to the to merge structure
         /// \param b Blob to add
@@ -122,7 +123,6 @@ namespace egt {
         /// \brief Insert a blob to the list of blobs
         /// \param b blob to add
         void insertBlob(Blob *b) {
-            _blobs.push_back(b);
             if(b->isToMerge()) {
                 _blobsParentSons[b].insert(b);
             }
@@ -137,9 +137,7 @@ namespace egt {
 
         virtual ~ViewAnalyse() {
             _toMerge.clear();
-            _blobs.clear();
             _holesToMerge.clear();
-            _holes.clear();
         }
 
     private:
@@ -151,14 +149,6 @@ namespace egt {
                 _holesToMerge{};   ///< Map of holes which will need to be merged to a list of
         ///< coordinates
 
-
-        //TODO REMOVE
-        std::list<Blob *>
-                _blobs{};   ///< List of blobs created
-        //TODO REMOVE
-        std::list<Blob *>
-                _holes{};   ///< List of holes created
-
         uint32_t level = 0;
 
         uint32_t row = 0, col = 0;
@@ -168,6 +158,8 @@ namespace egt {
         std::map<Blob *, std::set<Blob *>> _blobsParentSons{};
 
         std::map<Blob *, std::set<Blob *>> _holesParentSons{};
+
+        std::map<Blob *, std::set<Blob *>> _finalHolesParentSons{};
 
     };
 }
