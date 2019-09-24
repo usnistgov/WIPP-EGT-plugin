@@ -103,15 +103,12 @@ public:
         auto blobsToMerge = v1->getToMerge()[{v2->getRow(),v2->getCol()}];
         auto otherBlobsToMerge = v2->getToMerge()[{v1->getRow(),v1->getCol()}];
 
-        if(blobsToMerge.empty()){
-            VLOG(5) << "Nothing to merge in tile ."<< "(" << v1->getRow() << "," << v1->getCol() << ")";
+        if(blobsToMerge.empty()) {
+            VLOG(5) << "Nothing to do in merge region for tiles : "<< "(" << v1->getRow() << "," << v1->getCol() << ") & " << "(" << v2->getRow() << "," << v2->getCol();
             return;
         }
 
-        //IMPORTANT : WE REMOVE ALL THE BLOBS MERGED IN THE OTHER TILE SO WE DO NOT CARRY IRRELEVANT MERGES TO THE NEXT LEVEL
-        v2->getToMerge().erase({v1->getRow(),v1->getCol()});
-
-        //for each blob to merge, find the corresponding blob in the adjacent tile
+        //for each blob to merge, find the corresponding blobs to merge in the adjacent tile
         for(auto &blobPixelPair : blobsToMerge) {
                 auto blob = blobPixelPair.first;
                 for(auto coordinates : blobPixelPair.second) {
@@ -119,8 +116,7 @@ public:
                             auto otherBlob = otherBlobPixelPair.first;
                             if (otherBlobPixelPair.first->isPixelinFeature(coordinates.first, coordinates.second)) {
                                 //merge the blob groups
-                                VLOG(5) << "Creating merged blob from blobsToMerge : blob_" << blob->getTag()
-                                        << ", blob_" << otherBlob->getTag();
+                                VLOG(5) << "Creating merged blob from blobsToMerge : blob_" << blob->getTag() << ", blob_" << otherBlob->getTag();
                                 UnionFind<Blob> uf{};
                                 blob->decreaseMergeCount();
                                 otherBlob->decreaseMergeCount();
@@ -129,7 +125,7 @@ public:
 
                                 auto blobGroup1 = v1->getBlobsParentSons()[root1];
 
-                                //already connected through another pass
+                                //already connected through another path
                                 if (root1 == root2) {
                                     VLOG(5) << "blob_" << blob->getTag() << "& blob_" << otherBlob->getTag()
                                             << " are already connected through another path. Common root is : blob_"
