@@ -16,6 +16,11 @@ namespace egt {
 
 
     public:
+
+        enum BLOCK_TYPE {
+            REGULAR4, VERTICAL2, HORIZONTAL2, SINGLE1
+        };
+
         ViewAnalyseBlock() = default;
 
         ViewAnalyseBlock(uint32_t row, uint32_t col, uint32_t level) : row(row), col(col), level(level){}
@@ -37,6 +42,28 @@ namespace egt {
             return level;
         }
 
+        BLOCK_TYPE getType() const {
+            return type;
+        }
+
+        void setType(BLOCK_TYPE type) {
+            ViewAnalyseBlock::type = type;
+        }
+
+        std::ostringstream printBlock(){
+
+            std::ostringstream oss;
+
+            oss << "block - level" << level <<": (" << row << ", " << col << "). ";
+
+            for(auto v : viewAnalyses){
+                oss <<  "(" << v.first.first << "," << v.first.second << ") ; ";
+            }
+
+            return oss;
+
+        }
+
     private:
 
         std::map<std::pair<uint32_t,uint32_t >, std::shared_ptr < ViewAnalyse>> viewAnalyses{};
@@ -46,6 +73,8 @@ namespace egt {
         uint32_t col;
 
         uint32_t level;
+
+        BLOCK_TYPE type;
 
 
     };
