@@ -51,11 +51,14 @@ public:
                 auto view = it->second;
                 merge(view, views[{row + 1, col}]); //BOTTOM
                 merge(view, views[{row, col + 1}]); //RIGHT
-//                merge(view, views[{row + 1, col + 1}]); //BOTTOM-RIGHT
+                merge(view, views[{row + 1, col + 1}]); //BOTTOM-RIGHT
 
                 addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
                 addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
-//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+
+//                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+//                addToNextLevelMerge(view, {row + 1, col - 1}, {data->getRow() + 1, data->getCol() - 1}); //BOTTOM-LEFT
 
                 //TOP RIGHT CORNER
                 it++;
@@ -63,11 +66,14 @@ public:
                 row = coordinates.first, col = coordinates.second;
                 view = it->second;
                 merge(view, views[{row + 1, col}]); //BOTTOM
-//                merge(view, views[{row + 1, col - 1}]); //BOTTOM-LEFT
+                merge(view, views[{row + 1, col - 1}]); //BOTTOM-LEFT
 
                 addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
                 addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
-//                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+
+//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+//                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
 
                 //BOTTOM-LEFT CORNER
                 it++;
@@ -78,7 +84,10 @@ public:
 
                 addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
                 addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
-//                addToNextLevelMerge(view, {row + 1, col - 1}, {data->getRow() + 1, data->getCol() - 1}); //BOTTOM-LEFT
+                addToNextLevelMerge(view, {row + 1, col - 1}, {data->getRow() + 1, data->getCol() - 1}); //BOTTOM-LEFT
+
+//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+//                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
 
                 //BOTTOM-RIGHT CORNER
                 it++;
@@ -87,7 +96,10 @@ public:
                 view = it->second;
                 addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
                 addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
-//                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
+                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
+
+//                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+//                addToNextLevelMerge(view, {row + 1, col - 1}, {data->getRow() + 1, data->getCol() - 1}); //BOTTOM-LEFT
                 break;
             }
             case ViewAnalyseBlock::VERTICAL2: {
@@ -102,9 +114,12 @@ public:
 
                 addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
                 addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
-//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
                 addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
-//                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+
+//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //BOTTOM-LEFT
+//                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
 
                 //BOTTOM
                 it++;
@@ -113,9 +128,12 @@ public:
                 view = it->second;
                 addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
                 addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
-//                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
+                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
                 addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
-//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //BOTTOM-LEFT
+                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //BOTTOM-LEFT
+
+//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+//                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
                 break;
             }
             case ViewAnalyseBlock::HORIZONTAL2: {
@@ -133,6 +151,10 @@ public:
                 addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
                 addToNextLevelMerge(view, {row + 1, col - 1}, {data->getRow() + 1, data->getCol() - 1}); //BOTTOM-LEFT
 
+//                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
+//                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+
+
                 //RIGHT
                 it++;
                 coordinates = it->first;
@@ -143,6 +165,9 @@ public:
                 addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
                 addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
                 addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
+
+//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //BOTTOM-LEFT
+//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
                 break;
             }
             case ViewAnalyseBlock::SINGLE1: {
@@ -152,10 +177,10 @@ public:
                 auto view = it->second;
                 addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
                 addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
-                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
                 addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
-                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
                 addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
+                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
                 addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
                 addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //BOTTOM-LEFT
             }

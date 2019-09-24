@@ -239,6 +239,7 @@ void expandBlob(Color blobColor) {
 void blobCompleted(Color blobColor) {
 
     if (blobColor == BACKGROUND) {
+
         if (_currentBlob->isToMerge()) {
             flattenPixelToMerge(_currentBlob, blobColor);
             //we know this hole is on the border, so we keep track of it for the merge.
@@ -258,11 +259,14 @@ void blobCompleted(Color blobColor) {
                                                              _segmentationParams);
             }
 
+            //We turn this hole into a foreground blob
             if (!keepHole) {
                 _currentBlob->compactBlobDataIntoFeature();
                 _vAnalyse->insertBlob(_currentBlob);
                 holeRemovedCount++;
                 //TODO now we need to merge it with (one of) the surrounding blob(s)
+
+            //It is an legit hole, remove
             } else {
                 delete _currentBlob;
             }

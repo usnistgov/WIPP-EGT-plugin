@@ -132,7 +132,7 @@ namespace egt {
         }
 
         void insertHole(Blob *b) {
-            _holes.push_back(b);
+            _holesParentSons[b].insert(b);
         }
 
         virtual ~ViewAnalyse() {
@@ -166,6 +166,8 @@ namespace egt {
         std::map<Blob *, std::set<Blob *>> _finalBlobsParentSons{};
 
         std::map<Blob *, std::set<Blob *>> _blobsParentSons{};
+
+        std::map<Blob *, std::set<Blob *>> _holesParentSons{};
 
     };
 }
