@@ -240,10 +240,18 @@ void blobCompleted(Color blobColor) {
     if (blobColor == BACKGROUND) {
 
         if (_currentBlob->isToMerge()) {
-            flattenPixelToMerge(_currentBlob, blobColor);
-            //we know this hole is on the border, so we keep track of it for the merge.
-            _currentBlob->compactBlobDataIntoFeature();
-            _vAnalyse->insertHole(_currentBlob);
+
+//            //A blob bigger than the cutoff is background, let's discard it
+//            if(_currentBlob->getCount() >= _segmentationOptions->MIN_HOLE_SIZE){
+//                delete _currentBlob;
+//            }
+//            //we cannot make a decision yet, hole needs to be merged.
+//            else {
+                flattenPixelToMerge(_currentBlob, blobColor);
+                //we know this hole is on the border, so we keep track of it for the merge.
+                _currentBlob->compactBlobDataIntoFeature();
+                _vAnalyse->insertHole(_currentBlob);
+//            }
         }
             //for local holes, decide if we fill them up or ignore them.
         else {

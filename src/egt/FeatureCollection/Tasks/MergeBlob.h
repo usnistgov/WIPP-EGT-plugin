@@ -32,16 +32,27 @@ public:
         VLOG(3) << "Merging block : " << data->printBlock().str();
 
         mergeAllHoles(data);
-        filterHoles(data);
+        filterHoles();
         mergeAllBlobs(data);
 
         this->addResult(result);
     }
 
 
-    void filterHoles(std::shared_ptr<ViewAnalyseBlock> data) {
-        return;
+    void filterHoles() {
+        for(auto parentHole : result->getFinalHolesParentSons()) {
+            auto holeGroup = parentHole.second;
+            //calculate size, if smaller than cutoff, turn to foreground
+            //else delete
+//            auto it = parentHole.second.begin();
+//            while(it != parentHole.second.end()){
+//                delete (*it);
+//            }
+//            parentHole.second.clear();
+        }
+        result->getFinalHolesParentSons().clear();
     }
+
 
     void mergeAllBlobs(std::shared_ptr<ViewAnalyseBlock> data) {
         auto views = data->getViewAnalyses();

@@ -445,7 +445,7 @@ namespace egt {
             auto mergeRule = new MergeRule(pyramid);
 
 
-            auto featureBuilder = new FeatureBuilder(options->concurrentTiles);
+            auto featureBuilder = new FeatureBuilder(options->concurrentTiles, segmentationOptions);
 
             segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Feature>;
             segmentationGraph->addEdge(fastImage2, sobelFilter);

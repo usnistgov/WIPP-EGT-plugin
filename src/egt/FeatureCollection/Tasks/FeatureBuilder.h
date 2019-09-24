@@ -13,7 +13,7 @@ namespace egt {
     class FeatureBuilder : public htgs::ITask<BlobSet, Feature> {
 
     public:
-        FeatureBuilder(size_t numThreads) : ITask(numThreads) {}
+        FeatureBuilder(size_t numThreads, SegmentationOptions *options) : ITask(numThreads), options(options) {}
 
     public:
         void executeTask(std::shared_ptr<BlobSet> data) override {
@@ -21,6 +21,18 @@ namespace egt {
             auto blobs = data->_blobs;
 
             VLOG(5) << "Building feature from blob group of size : " << blobs.size();
+            auto count = 0;
+
+            for (auto blob : blobs) {
+                count += blob->getCount();
+            }
+
+//            VLOG(5) << "Feature of size : " << count;
+//            if(count < options->MIN_OBJECT_SIZE){
+//                VLOG(5) << "Feature is too small. We delete it";
+//                return;
+//            }
+
 
             uint32_t id = (*blobs.begin())->getTag();
 
@@ -29,14 +41,12 @@ namespace egt {
             double size = ceil((bb.getHeight() * bb.getWidth()) / 32.);
             auto *bitMask = new uint32_t[(uint32_t) size]();
 
-            auto count = 0;
-
 
             //Merge connected blobs
             //One blob is considered the parent of all the others.
             for (auto blob : blobs) {
                 blob->addToBitMask(bitMask, bb);
-                count += blob->getCount();
+
                 VLOG(5) << "deleting blob blob_" << blob->getTag();
                 delete blob;
             }
@@ -70,8 +80,12 @@ namespace egt {
         }
 
         ITask<BlobSet, Feature> *copy() override {
-            return new FeatureBuilder(this->getNumThreads());
+            return new FeatureBuilder(this->getNumThreads(), this->options);
         }
+
+
+
+        SegmentationOptions *options;
     };
 
 
