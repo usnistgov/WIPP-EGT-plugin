@@ -530,36 +530,36 @@ void analyseNeighbour8(int32_t row, int32_t col, Color color) {
     }
 
     //Bottom right pixel
-    if (onTileRightBorder && onTileBottomBorder) {
-        if (getColor(row + 1, col + 1) == color) {
-
-            auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol + 1);
-            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol() + 1);
-
-            if (color == BACKGROUND) {
-                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
-            } else {
-                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
-            }
-            _currentBlob->increaseMergeCount();
-        }
-    }
+//    if (onTileRightBorder && onTileBottomBorder) {
+//        if (getColor(row + 1, col + 1) == color) {
+//
+//            auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol + 1);
+//            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol() + 1);
+//
+//            if (color == BACKGROUND) {
+//                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+//            } else {
+//                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+//            }
+//            _currentBlob->increaseMergeCount();
+//        }
+//    }
 
     //Top right pixel (we could have alternatively check the bottom left)
-    if (onTileRightBorder && onTileTopBorder) {
-        if (getColor(row - 1, col + 1) == color) {
-
-            auto coords = std::pair<int32_t, int32_t>(globalRow - 1, globalCol + 1);
-            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol() + 1);
-
-            if (color == BACKGROUND) {
-                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
-            } else {
-                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
-            }
-            _currentBlob->increaseMergeCount();
-        }
-    }
+//    if (onTileRightBorder && onTileTopBorder) {
+//        if (getColor(row - 1, col + 1) == color) {
+//
+//            auto coords = std::pair<int32_t, int32_t>(globalRow - 1, globalCol + 1);
+//            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol() + 1);
+//
+//            if (color == BACKGROUND) {
+//                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+//            } else {
+//                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+//            }
+//            _currentBlob->increaseMergeCount();
+//        }
+//    }
 
 
     // We need to set a flag so we know how to filter this blob.
@@ -594,35 +594,35 @@ void analyseNeighbour8(int32_t row, int32_t col, Color color) {
         }
     }
 
-    if (onTileLeftBorder && onTileTopBorder) {
-        if (getColor(row - 1, col - 1) == color) {
-
-            auto coords = std::pair<int32_t, int32_t>(globalRow - 1, globalCol - 1);
-            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol() - 1);
-
-            if (color == BACKGROUND) {
-                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
-            } else {
-                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
-            }
-            _currentBlob->increaseMergeCount();
-        }
-    }
-
-    if (onTileLeftBorder && onTileBottomBorder) {
-        if (getColor(row + 1, col - 1) == color) {
-
-            auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol - 1);
-            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol() - 1);
-
-            if (color == BACKGROUND) {
-                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
-            } else {
-                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
-            }
-            _currentBlob->increaseMergeCount();
-        }
-    }
+//    if (onTileLeftBorder && onTileTopBorder) {
+//        if (getColor(row - 1, col - 1) == color) {
+//
+//            auto coords = std::pair<int32_t, int32_t>(globalRow - 1, globalCol - 1);
+//            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol() - 1);
+//
+//            if (color == BACKGROUND) {
+//                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+//            } else {
+//                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+//            }
+//            _currentBlob->increaseMergeCount();
+//        }
+//    }
+//
+//    if (onTileLeftBorder && onTileBottomBorder) {
+//        if (getColor(row + 1, col - 1) == color) {
+//
+//            auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol - 1);
+//            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol() - 1);
+//
+//            if (color == BACKGROUND) {
+//                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+//            } else {
+//                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+//            }
+//            _currentBlob->increaseMergeCount();
+//        }
+//    }
 
 }
 

@@ -41,61 +41,123 @@ public:
             }
         }
 
-        //For each view, check BOTTOM, RIGHT, BOTTOM-RIGHT and TOP-RIGHT view FOR POTENTIAL MERGES
-        //merges within this block are performed
-        //others are scheduled for the next level
-        for(auto &entry : views) {
-            auto coordinates = entry.first;
-            auto row = coordinates.first, col = coordinates.second;
-            auto view = entry.second;
+        switch (data->getType()){
+            case ViewAnalyseBlock::REGULAR4: {
 
-            //BOTTOM TILE
-            if(views.find({row + 1, col}) != views.end()) {
-                merge(view, views[{row + 1, col}]);
-            }
-            else {
-                addToNextLevelMerge(view , {row + 1, col}, {data->getRow() + 1, data->getCol()});
-            }
+                //TOP LEFT CORNER
+                auto it = views.begin();
+                auto coordinates = it->first;
+                auto row = coordinates.first, col = coordinates.second;
+                auto view = it->second;
+                merge(view, views[{row + 1, col}]); //BOTTOM
+                merge(view, views[{row, col + 1}]); //RIGHT
+//                merge(view, views[{row + 1, col + 1}]); //BOTTOM-RIGHT
 
-            //RIGHT TILE
-            if(views.find({row, col + 1}) != views.end()) {
-                merge(view, views[{row, col + 1}]);
-            }
-            else {
-                addToNextLevelMerge(view , {row , col + 1}, {data->getRow(), data->getCol() + 1});
-            }
+                addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
+                addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
+//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
 
-            //BOTTOM RIGHT TILE
-            if(views.find({row + 1, col + 1}) != views.end()) {
-                merge(view, views[{row + 1, col + 1}]);
-            }
-            else {
-                addToNextLevelMerge(view , {row + 1 , col + 1}, {data->getRow() + 1, data->getCol() + 1});
-            }
+                //TOP RIGHT CORNER
+                it++;
+                coordinates = it->first;
+                row = coordinates.first, col = coordinates.second;
+                view = it->second;
+                merge(view, views[{row + 1, col}]); //BOTTOM
+//                merge(view, views[{row + 1, col - 1}]); //BOTTOM-LEFT
 
-            //TOP RIGHT TILE
-            if(views.find({row - 1, col + 1}) != views.end()){
-                merge(view, views[{row - 1, col + 1}]);
-            }
-            else {
-                addToNextLevelMerge(view , {row - 1 , col + 1}, {data->getRow() - 1, data->getCol() + 1});
-            }
+                addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
+                addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
+//                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
 
-            //KEEP TRACK OF CORRESPONDING MERGES ON THE TOP, LEFT AND TOP-LEFT
-            if(!(views.find({row - 1, col}) != views.end())) {
-                addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()});
-            }
+                //BOTTOM-LEFT CORNER
+                it++;
+                coordinates = it->first;
+                row = coordinates.first, col = coordinates.second;
+                view = it->second;
+                merge(view, views[{row, col + 1}]); // RIGHT
 
-            if(!(views.find({row, col - 1}) != views.end())) {
-                addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1});
-            }
+                addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
+                addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
+//                addToNextLevelMerge(view, {row + 1, col - 1}, {data->getRow() + 1, data->getCol() - 1}); //BOTTOM-LEFT
 
-            if(!(views.find({row - 1, col -1 }) != views.end())) {
-                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1});
+                //BOTTOM-RIGHT CORNER
+                it++;
+                coordinates = it->first;
+                row = coordinates.first, col = coordinates.second;
+                view = it->second;
+                addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
+                addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
+//                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
+                break;
             }
+            case ViewAnalyseBlock::VERTICAL2: {
 
-            if(!(views.find({row + 1, col - 1}) != views.end())) {
-                addToNextLevelMerge(view, {row + 1, col - 1}, {data->getRow() + 1, data->getCol() - 1});
+                //TOP
+                auto it = views.begin();
+                auto coordinates = it->first;
+                auto row = coordinates.first, col = coordinates.second;
+                auto view = it->second;
+
+                merge(view, views[{row + 1, col}]); //BOTTOM
+
+                addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
+                addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
+//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+                addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
+//                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+
+                //BOTTOM
+                it++;
+                coordinates = it->first;
+                row = coordinates.first, col = coordinates.second;
+                view = it->second;
+                addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
+                addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
+//                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
+                addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
+//                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //BOTTOM-LEFT
+                break;
+            }
+            case ViewAnalyseBlock::HORIZONTAL2: {
+                //LEFT
+                auto it = views.begin();
+                auto coordinates = it->first;
+                auto row = coordinates.first, col = coordinates.second;
+                auto view = it->second;
+
+                merge(view, views[{row, col + 1}]); //RIGHT
+
+                addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
+                addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); // LEFT
+                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+                addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
+                addToNextLevelMerge(view, {row + 1, col - 1}, {data->getRow() + 1, data->getCol() - 1}); //BOTTOM-LEFT
+
+                //RIGHT
+                it++;
+                coordinates = it->first;
+                row = coordinates.first, col = coordinates.second;
+                view = it->second;
+                addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
+                addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
+                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+                addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
+                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
+                break;
+            }
+            case ViewAnalyseBlock::SINGLE1: {
+                auto it = views.begin();
+                auto coordinates = it->first;
+                auto row = coordinates.first, col = coordinates.second;
+                auto view = it->second;
+                addToNextLevelMerge(view, {row - 1, col}, {data->getRow() - 1, data->getCol()}); //TOP
+                addToNextLevelMerge(view, {row, col - 1}, {data->getRow(), data->getCol() - 1}); //LEFT
+                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //TOP-LEFT
+                addToNextLevelMerge(view, {row, col + 1}, {data->getRow(), data->getCol() + 1}); //RIGHT
+                addToNextLevelMerge(view, {row - 1, col + 1}, {data->getRow() - 1, data->getCol() + 1}); //TOP-RIGHT
+                addToNextLevelMerge(view, {row + 1, col}, {data->getRow() + 1, data->getCol()}); //BOTTOM
+                addToNextLevelMerge(view, {row + 1, col + 1}, {data->getRow() + 1, data->getCol() + 1}); //BOTTOM-RIGHT
+                addToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //BOTTOM-LEFT
             }
         }
 
