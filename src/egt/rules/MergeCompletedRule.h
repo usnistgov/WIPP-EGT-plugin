@@ -24,7 +24,7 @@ namespace egt {
             VLOG(4) << "level : " << data->getLevel() << "(" << data->getRow() << "," << data->getCol() << ")" << " - merge completed " << ", producing : " << data->getFinalBlobsParentSons().size() << " features...";
 
             for(auto parentSon : data->getFinalBlobsParentSons()) {
-                VLOG(5) << "level : " << data->getLevel() << "(" << data->getRow() << "," << data->getCol() << ")" << " - blobset is finalized. Root : blob_" << parentSon.first->getTag() << ", Size : " << parentSon.second.size();
+                VLOG(5) << "level : " << data->getLevel() << "(" << data->getRow() << "," << data->getCol() << ")" << " - blobset is finalized. Root : blob_" << parentSon.first->getId() << ", Size : " << parentSon.second.size();
                 this->addResult(new BlobSet(parentSon.second));
             }
 

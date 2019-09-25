@@ -114,7 +114,7 @@ namespace egt {
     _view = view->getGradientView()->get();
     _originalView = view->getOriginalView();
     //FOR EACH NEW TILE WE NEED TO RESET THE TASK STATE SINCE MANY TILES CAN BE PROCESSED BY ONE TASK
-    _vAnalyse = new ViewAnalyse(_view->getRow(), _view->getCol(), _view->getPyramidLevel()); //OUTPUT
+    _vAnalyse = new ViewAnalyse(_view->getRow(), _view->getCol(), 0); //OUTPUT
     _toVisit.
 
     clear(); //clear queue that keeps track of neighbors to visit when flooding
@@ -138,7 +138,9 @@ namespace egt {
     auto foregroundPixelCount = visitedCount;
     assert(_imageSize == backgroundPixelCount + foregroundPixelCount);
 
-    VLOG(5) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
+    _vAnalyse->filterHoles(_segmentationOptions->MIN_HOLE_SIZE);
+
+    VLOG(4) << "Done analyzing tile (" << _view->getRow() << " , " << _view->getCol() << ").";
     VLOG(5) << "holes turned to foreground : " << holeRemovedCount;
     VLOG(5) << "objects removed because too small: " << objectRemovedCount;
     VLOG(5) << "holes to merge: " << _vAnalyse->getHolesToMerge().size();
@@ -250,7 +252,7 @@ void blobCompleted(Color blobColor) {
                 flattenPixelToMerge(_currentBlob, blobColor);
                 //we know this hole is on the border, so we keep track of it for the merge.
                 _currentBlob->compactBlobDataIntoFeature();
-                _vAnalyse->insertHole(_currentBlob);
+                _vAnalyse->getHolesParentSons()[_currentBlob].insert(_currentBlob);
 //            }
         }
             //for local holes, decide if we fill them up or ignore them.
@@ -269,10 +271,9 @@ void blobCompleted(Color blobColor) {
             //We turn this hole into a foreground blob
             if (!keepHole) {
                 _currentBlob->compactBlobDataIntoFeature();
-                _vAnalyse->insertBlob(_currentBlob);
+                //_vAnalyse->insertBlob(_currentBlob);
+                _vAnalyse->getFinalHolesParentSons()[_currentBlob].insert(_currentBlob);
                 holeRemovedCount++;
-                //TODO now we need to merge it with (one of) the surrounding blob(s)
-
             //It is an legit hole, remove
             } else {
                 delete _currentBlob;
@@ -282,24 +283,20 @@ void blobCompleted(Color blobColor) {
 
         //FOREGROUND OBJECT
     else {
+        _currentBlob->compactBlobDataIntoFeature();
+
         if (_currentBlob->isToMerge()) {
             flattenPixelToMerge(_currentBlob, blobColor);
+            _vAnalyse->getBlobsParentSons()[_currentBlob].insert(_currentBlob);
         }
-
-        //we delete small objects
-        if (!_currentBlob->isToMerge() && _currentBlob->getCount() < _segmentationOptions->MIN_OBJECT_SIZE) {
-            delete _currentBlob;
-            objectRemovedCount++;
-        }
-            // we keep track of the others
         else {
-            _currentBlob->compactBlobDataIntoFeature();
-            _vAnalyse->insertBlob(_currentBlob);
+            _vAnalyse->getFinalBlobsParentSons()[_currentBlob].insert(_currentBlob);
         }
     }
 
     _currentBlob = nullptr; //reset pointer in any case
 }
+
 
 void flattenPixelToMerge(Blob *blob, Color blobColor) {
 
@@ -357,7 +354,7 @@ void flattenPixelToMerge(Blob *blob, Color blobColor) {
             //add the number of merge to perform in one direction to the total number of merges to perform
             blob->setMergeCount(blob->getMergeCount() + (uint32_t) listToFlat.size());
 
-            VLOG(5) << "blob : blob_" << blob->getTag() << " - Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
+            VLOG(5) << "blob : blob_" << blob->getId() << " - Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
         }
 
         mergeIterator++;
@@ -655,7 +652,7 @@ UserType computeMeanIntensity() {
     }
     auto intensity = (UserType)(sum / count);
 
-    VLOG(5) << "hole (" << _currentBlob->getTag() << ") mean intensity " << intensity;
+    VLOG(5) << "hole (" << _currentBlob->getId() << ") mean intensity " << intensity;
 
     return intensity;
 }
@@ -681,7 +678,7 @@ void fillUpHole() {
         }
     }
 
-    VLOG(5) << "hole (" << _currentBlob->getTag() << ") filled up : " << _currentBlob->getCount()
+    VLOG(5) << "hole (" << _currentBlob->getId() << ") filled up : " << _currentBlob->getCount()
             << " pixels turned into foreground.";
 }
 

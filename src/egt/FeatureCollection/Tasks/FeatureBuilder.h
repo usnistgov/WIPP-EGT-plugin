@@ -20,21 +20,24 @@ namespace egt {
 
             auto blobs = data->_blobs;
 
-            VLOG(5) << "Building feature from blob group of size : " << blobs.size();
-            auto count = 0;
+            auto area = 0;
 
             for (auto blob : blobs) {
-                count += blob->getCount();
+                area += blob->getCount();
             }
 
-//            VLOG(5) << "Feature of size : " << count;
-//            if(count < options->MIN_OBJECT_SIZE){
-//                VLOG(5) << "Feature is too small. We delete it";
-//                return;
-//            }
+            if(area < options->MIN_OBJECT_SIZE) {
+                VLOG(4) << "Feature too small. Deleting feature from blob group of size : " << blobs.size() << " and of area : " << area;
+                for (auto blob : blobs) {
+                    delete blob;
+                }
+                return;
+            }
+
+            VLOG(4) << "Building feature from blob group of size : " << blobs.size() << " and of area : " << area;
 
 
-            uint32_t id = (*blobs.begin())->getTag();
+            uint32_t id = (*blobs.begin())->getId();
 
             //To merge several blobs, we calculate the resulting bounding box and fill a bitmask of the same dimensions.
             auto bb = calculateBoundingBox(blobs);
@@ -47,7 +50,7 @@ namespace egt {
             for (auto blob : blobs) {
                 blob->addToBitMask(bitMask, bb);
 
-                VLOG(5) << "deleting blob blob_" << blob->getTag();
+                VLOG(4) << "deleting blob blob_" << blob->getId();
                 delete blob;
             }
 

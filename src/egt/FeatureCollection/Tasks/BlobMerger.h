@@ -303,7 +303,7 @@ namespace egt {
 
                 delete[] parent->getFeature()->getBitMask();
                 delete parent->getFeature();
-                auto *feature = new Feature(parent->getTag(), bb, bitMask);
+                auto *feature = new Feature(parent->getId(), bb, bitMask);
 
                 //For consistency, let's update redundant info
                 parent->setRowMin(bb.getUpperLeftRow());

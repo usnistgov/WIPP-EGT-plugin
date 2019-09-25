@@ -54,7 +54,7 @@ namespace egt {
 
             std::ostringstream oss;
 
-            oss << "block - level" << level <<": (" << row << ", " << col << "). ";
+            oss << "block - level " << level <<": (" << row << ", " << col << "). ";
 
             for(auto v : viewAnalyses){
                 oss <<  "(" << v.first.first << "," << v.first.second << ") ; ";

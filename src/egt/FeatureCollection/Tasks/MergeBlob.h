@@ -22,35 +22,66 @@ class MergeBlob : public htgs::ITask<ViewAnalyseBlock, ViewAnalyse> {
 
 public:
 
-    explicit MergeBlob(size_t numThreads, pb::Pyramid &pyramid) : ITask(numThreads) , pyramid(pyramid) {}
+    explicit MergeBlob(size_t numThreads, pb::Pyramid &pyramid, SegmentationOptions* options) : ITask(numThreads) , pyramid(pyramid), options(options)  {}
 
     void executeTask(std::shared_ptr<ViewAnalyseBlock> data) override {
 
         result = new ViewAnalyse(data->getRow(), data->getCol(), data->getLevel() + 1);
+      //  tree = new AABBTree<Blob>();
 
-
-        VLOG(3) << "Merging block : " << data->printBlock().str();
-
+        VLOG(3) << data->printBlock().str() << " - Merging holes...";
         mergeAllHoles(data);
-        filterHoles();
+        VLOG(3) << data->printBlock().str() << " - Merging blobs...";
         mergeAllBlobs(data);
+        filterHoles();
+        filterFinalBlobs();
+
+
+        VLOG(3) << "ViewAnalyse produced after merging block " << "(" << result->getRow() << ", " << result->getCol() <<  ") " << " at level " << result->getLevel();
+
+   //     delete tree;
 
         this->addResult(result);
     }
 
 
-    void filterHoles() {
-        for(auto parentHole : result->getFinalHolesParentSons()) {
-            auto holeGroup = parentHole.second;
-            //calculate size, if smaller than cutoff, turn to foreground
-            //else delete
-//            auto it = parentHole.second.begin();
-//            while(it != parentHole.second.end()){
-//                delete (*it);
-//            }
-//            parentHole.second.clear();
+    void buildAABBTree() {
+
+        auto blobs = std::vector<Blob>();
+
+        for(auto parentHole : result->getBlobsParentSons()){
+            for(auto blob : parentHole.second) {
+                blobs.push_back(*blob);
+            }
         }
-        result->getFinalHolesParentSons().clear();
+        for(auto finalParentBlob : result->getFinalBlobsParentSons()){
+            for(auto blob : finalParentBlob.second) {
+                blobs.push_back(*blob);
+            }
+        }
+
+        tree->preprocess(&blobs);
+    }
+
+    void filterFinalBlobs() {
+
+    }
+
+
+//    Blob *getBlobFromPixel(uint32_t row, uint32_t col) {
+//        for (auto Blob : tree->objectsContain(Vector2<double>((double) col,
+//                                                                  (double) row))) {
+//            if (Blob->isPixelinFeature(row, col)) {
+//                return Blob;
+//            }
+//        }
+//        return nullptr;
+//    }
+
+
+
+    void filterHoles() {
+        result->filterHoles(options->MIN_HOLE_SIZE);
     }
 
 
@@ -209,17 +240,10 @@ public:
                 addBlobsToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //BOTTOM-LEFT
             }
         }
-
-        VLOG(3) << "Merge produce ViewAnalyse for level " << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). ";
-
-        auto mergeCount= 0;
-        for(auto blobCoordPair : result->getToMerge()) {
-            VLOG(3) << "(" << blobCoordPair.first.first << "," << blobCoordPair.first.second << "). size : " << blobCoordPair.second.size();
-        }
     }
 
     ITask<ViewAnalyseBlock, ViewAnalyse> *copy() override {
-        return new MergeBlob(this->getNumThreads(), this->pyramid);
+        return new MergeBlob(this->getNumThreads(), this->pyramid, this->options);
     }
 
     /**
@@ -260,7 +284,7 @@ public:
                             auto otherBlob = otherBlobPixelPair.first;
                             if (otherBlobPixelPair.first->isPixelinFeature(coordinates.first, coordinates.second)) {
                                 //merge the blob groups
-                                VLOG(5) << "Creating merged blob from blobsToMerge : blob_" << blob->getTag() << ", blob_" << otherBlob->getTag();
+                                VLOG(5) << "Creating merged blob from blobsToMerge : blob_" << blob->getId() << ", blob_" << otherBlob->getId();
                                 UnionFind<Blob> uf{};
                                 blob->decreaseMergeCount();
                                 otherBlob->decreaseMergeCount();
@@ -271,9 +295,9 @@ public:
 
                                 // blobs already connected through another path
                                 if (root1 == root2) {
-                                    VLOG(5) << "blob_" << blob->getTag() << "& blob_" << otherBlob->getTag()
+                                    VLOG(5) << "blob_" << blob->getId() << "& blob_" << otherBlob->getId()
                                             << " are already connected through another path. Common root is : blob_"
-                                            << root1->getTag();
+                                            << root1->getId();
 
                                     //are we done merging the whole blob?
                                     auto mergeLeftCount = std::accumulate(blobGroup1.begin(), blobGroup1.end(), 0,
@@ -504,13 +528,6 @@ public:
                 addHolesToNextLevelMerge(view, {row - 1, col - 1}, {data->getRow() - 1, data->getCol() - 1}); //BOTTOM-LEFT
             }
         }
-
-        VLOG(3) << "Merge produce ViewAnalyse for level " << result->getLevel() << ": (" << result->getRow() << ", " << result->getCol() <<  "). ";
-
-        auto mergeCount= 0;
-        for(auto blobCoordPair : result->getToMerge()) {
-            VLOG(3) << "(" << blobCoordPair.first.first << "," << blobCoordPair.first.second << "). size : " << blobCoordPair.second.size();
-        }
     }
 
     /**
@@ -551,7 +568,7 @@ public:
                     auto otherBlob = otherBlobPixelPair.first;
                     if (otherBlobPixelPair.first->isPixelinFeature(coordinates.first, coordinates.second)) {
                         //merge the blob groups
-                        VLOG(5) << "Creating merged blob from blobsToMerge : blob_" << blob->getTag() << ", blob_" << otherBlob->getTag();
+                        VLOG(5) << "Creating merged blob from blobsToMerge : blob_" << blob->getId() << ", blob_" << otherBlob->getId();
                         UnionFind<Blob> uf{};
                         blob->decreaseMergeCount();
                         otherBlob->decreaseMergeCount();
@@ -562,9 +579,9 @@ public:
 
                         // blobs already connected through another path
                         if (root1 == root2) {
-                            VLOG(5) << "blob_" << blob->getTag() << "& blob_" << otherBlob->getTag()
+                            VLOG(5) << "blob_" << blob->getId() << "& blob_" << otherBlob->getId()
                                     << " are already connected through another path. Common root is : blob_"
-                                    << root1->getTag();
+                                    << root1->getId();
 
                             //are we done merging the whole blob?
                             auto mergeLeftCount = std::accumulate(blobGroup1.begin(), blobGroup1.end(), 0,
@@ -581,7 +598,7 @@ public:
                             // we build a blob group from connected blob groups
                         else {
                             auto root = uf.unionElements(blob, otherBlob); //pick one root as the new root
-                            auto blobGroup2 = result->getBlobsParentSons()[root2];
+                            auto blobGroup2 = result->getHolesParentSons()[root2];
                             blobGroup1.insert(blobGroup2.begin(), blobGroup2.end()); //merge sons
 
 
@@ -644,6 +661,10 @@ public:
     ViewAnalyse* result{};
 
     pb::Pyramid pyramid;
+
+    SegmentationOptions *options;
+
+    AABBTree<Blob>* tree;
 
 };
 

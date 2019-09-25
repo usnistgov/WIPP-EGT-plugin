@@ -85,9 +85,32 @@ class Blob {
     std::lock_guard<std::mutex>
         lock(m);
 
-    _tag = currentTag++;
+    _id = currentTag++;
     _count = 0;
   }
+
+
+    double getMaxCoord(int dim) {
+      return _feature->getMaxCoord(dim);
+    };
+
+    double getMinCoord(int dim) {
+      return _feature->getMinCoord(dim);
+    };
+
+    double getDistanceSqrTo(fc::Vector2<double> const &point) {
+      return _feature->getDistanceSqrTo(point);
+    };
+
+    bool contains(uint32_t row, uint32_t col) const {
+      return _feature->contains(row, col);
+    };
+
+    bool contains(fc::Vector2<double> const &point) {
+      return _feature->contains(point);
+    };
+
+
 
     virtual ~Blob() {
       if(_feature != nullptr) {
@@ -98,7 +121,7 @@ class Blob {
 
     /// \brief Get Blob tag
   /// \return Blob tag
-  uint32_t getTag() const { return _tag; }
+  uint32_t getId() const { return _id; }
 
     bool isToMerge() {
         return mergeCount > 0;
@@ -340,7 +363,7 @@ class Blob {
       }
     }
 
-    _feature = new Feature(this->getTag(), boundingBox, bitMask);
+    _feature = new Feature(this->getId(), boundingBox, bitMask);
     _rowCols.clear();
   }
 
@@ -393,7 +416,7 @@ class Blob {
   /// \param blob Blob to print
   /// \return Output stream with the blob information
   friend std::ostream &operator<<(std::ostream &os, const Blob &blob) {
-    os << "Blob #" << blob._tag << std::endl;
+    os << "Blob #" << blob._id << std::endl;
     os << "    BB: ["
        << blob._rowMin << ", " << blob._colMin << "] -> ["
        << blob._rowMax << ", " << blob._colMax << "]" << std::endl;
@@ -412,7 +435,7 @@ class Blob {
 
   uint32_t
       _rank = 0,          ///< Blob rank, used by the Union find algorithm
-      _tag = 0;           ///< Tag, only used to print/debug purpose
+      _id = 0;           ///< Tag, only used to print/debug purpose
 
   int32_t
       _rowMin{},          ///< Minimum bounding box row (in the global coordinates of the image)

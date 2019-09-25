@@ -109,6 +109,81 @@ namespace egt {
             return _finalHolesParentSons;
         }
 
+
+        Blob *getBlobFromPixel(std::vector<Blob*> &blobs, uint32_t row, uint32_t col) {
+            for (auto b : blobs){
+                if(b->isPixelinFeature(row - 1, col)){
+                    return b;
+                }
+                if(b->isPixelinFeature(row, col - 1)){
+                    return b;
+                }
+            }
+            return nullptr;
+        }
+
+        void filterHoles(uint32_t cutoff){
+
+            //list of all blobs
+            auto blobs = std::vector<Blob*>();
+
+            for(auto parentBlob : this->getBlobsParentSons()){
+                for(auto blob : parentBlob.second) {
+                    blobs.push_back(blob);
+                }
+            }
+            for(auto finalParentBlob : this->getFinalBlobsParentSons()){
+                for(auto blob : finalParentBlob.second) {
+                    blobs.push_back(blob);
+                }
+            }
+
+            //for each final hole
+            for(auto parentHole : this->getFinalHolesParentSons()) {
+                auto holeGroup = parentHole.second;
+
+                uint64_t area = 0;
+                for (auto blob : holeGroup) {
+                    area += blob->getCount();
+                }
+
+                VLOG(4) << "Final hole group of size : " << holeGroup.size() << " and of area : " << area;
+
+                if(area < cutoff) {
+                    VLOG(4) << "Hole too small : delete.";
+                    auto blob = getBlobFromPixel(blobs, parentHole.first->getStartRow(), parentHole.first->getStartCol());
+
+                    if(blob == nullptr){
+                        VLOG(1) << "SPECIAL CASE" << " : hole at the border and not merging. We need a better way to find surrounding blobs";
+                        this->getFinalBlobsParentSons().insert(parentHole);
+                    }
+                    else {
+                        fc::UnionFind<Blob> uf{};
+                        auto parent = uf.find(blob);
+                        auto it = this->getFinalBlobsParentSons().find(parent);
+                        if (it != this->getFinalBlobsParentSons().end()) {
+                            it->second.insert(holeGroup.begin(), holeGroup.end());
+                        } else {
+                            auto it2 = this->getBlobsParentSons().find(parent);
+                            if (it2 != this->getBlobsParentSons().end()) {
+                                it2->second.insert(holeGroup.begin(), holeGroup.end());
+                            }
+                        }
+                    }
+                    //turn to foreground
+                }
+
+                //else delete
+//            auto it = parentHole.second.begin();
+//            while(it != parentHole.second.end()){
+//                delete (*it);
+//            }
+//            parentHole.second.clear();
+            }
+            this->getFinalHolesParentSons().clear();
+        }
+
+
         /// \brief Add an entry to the to merge structure
         /// \param b Blob to add
         /// \param c Coordinate links to this  blob

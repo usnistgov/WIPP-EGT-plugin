@@ -453,7 +453,7 @@ namespace egt {
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
 
 
-            auto mergeBlob = new MergeBlob(options->concurrentTiles, pyramid);
+            auto mergeBlob = new MergeBlob(options->concurrentTiles, pyramid, segmentationOptions);
 
 
             segmentationGraph->addEdge(labelingFilter, bookkeeper);
