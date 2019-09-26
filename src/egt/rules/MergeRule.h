@@ -27,6 +27,13 @@ class MergeRule : public htgs::IRule<ViewAnalyse, ViewAnalyseBlock> {
 
         void applyRule(std::shared_ptr<ViewAnalyse> data, size_t pipelineId) override {
 
+            //generated all  levels. We are done.
+            if(data->getLevel() == pyramid.getNumLevel() - 1) {
+                done = true;
+                VLOG(3) << "done generating last level." << std::endl;
+                return;
+            }
+
             uint32_t blockRow = data->getRow() / branchFactor;
             uint32_t blockCol = data->getCol() / branchFactor;
             uint32_t level = data->getLevel();
@@ -39,13 +46,6 @@ class MergeRule : public htgs::IRule<ViewAnalyse, ViewAnalyseBlock> {
 
             ViewAnalyseBlock* block = levels[level][{blockRow, blockCol}];
             block->getViewAnalyses().insert( {{data->getRow(), data->getCol()},data} );
-
-            //generated all  levels. We are done.
-            if(data->getLevel() == pyramid.getNumLevel() - 1) {
-                done = true;
-                VLOG(3) << "done generating last level." << std::endl;
-                return;
-            }
 
             auto splitCol = ((pyramid.getNumTileCol(level) % branchFactor) != 0);
             auto splitRow = ((pyramid.getNumTileRow(level) % branchFactor) != 0);

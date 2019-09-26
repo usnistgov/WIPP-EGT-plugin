@@ -187,6 +187,9 @@ namespace egt {
 
             VLOG(4) << "image written to : " << outputFilepath;
 
+
+            delete fc;
+
             auto endFC = std::chrono::high_resolution_clock::now();
 
             auto end = std::chrono::high_resolution_clock::now();

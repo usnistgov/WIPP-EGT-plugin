@@ -112,6 +112,7 @@ class Blob {
 
 
 
+    //TODO change once we replace the AABB Tree
     virtual ~Blob() {
       if(_feature != nullptr) {
           delete[] _feature->getBitMask();

@@ -111,7 +111,7 @@ namespace egt {
 //            cv::imwrite(outputPath + "tileoutcustom" + std::to_string(view->getRow()) + "-" + std::to_string(view->getCol())  + ".tif" , img5);
 //            img5.release();
 //
-//            delete[] tileOut;
+            delete[] tileOut;
 
             auto gradientView = new GradientView<T>(data,original);
 

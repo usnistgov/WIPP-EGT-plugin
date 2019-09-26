@@ -135,9 +135,9 @@ namespace egt {
             VLOG(5) << "objects finalized: " << _vAnalyse->getFinalBlobsParentSons().size();
             VLOG(5) << "objects to merge: " << _vAnalyse->getToMerge().size();
 
-            view->getGradientView()->releaseMemory();
-            this->addResult(new
-            ViewOrViewAnalyse<UserType>(_vAnalyse));
+            view->releaseMemory();
+
+            this->addResult(new ViewOrViewAnalyse<UserType>(_vAnalyse));
         }
 
         /// \brief View analyser copy function

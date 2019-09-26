@@ -83,8 +83,16 @@ class FeatureCollection {
       : _imageWidth(0), _imageHeight(0) {
     this->deserialize(pathFeatureCollection);
   }
+    
+    virtual ~FeatureCollection() {
+        for(Feature f : _vectorFeatures){
+            if(f.getBitMask() != nullptr) {
+                delete[] f.getBitMask();
+            }
+        }
+    }
 
-  /// \brief Get Image Width
+    /// \brief Get Image Width
   /// \return Image Width
   uint32_t getImageWidth() const { return _imageWidth; }
 
