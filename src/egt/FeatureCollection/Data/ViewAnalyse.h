@@ -61,11 +61,6 @@ namespace egt {
 
         ViewAnalyse(uint32_t row, uint32_t col, uint32_t level) : row(row), col(col), level(level) {}
 
-        void tidy() {
-            //TODO we could remove from merge list if we have tiny amount of pixel
-            VLOG(1) << "tidying up contiguous pixels";
-        }
-
         uint32_t getLevel() const {
             return level;
         }
@@ -110,7 +105,7 @@ namespace egt {
         }
 
 
-        Blob *getBlobFromPixel(std::vector<Blob*> &blobs, uint32_t row, uint32_t col) {
+        Blob *getSurroundingBlob(std::vector<Blob *> &blobs, uint32_t row, uint32_t col) {
             for (auto b : blobs){
                 if(b->isPixelinFeature(row - 1, col)){
                     return b;
@@ -127,12 +122,12 @@ namespace egt {
             //list of all blobs
             auto blobs = std::vector<Blob*>();
 
-            for(auto parentBlob : this->getBlobsParentSons()){
+            for(auto parentBlob : this->getBlobsParentSons()) {
                 for(auto blob : parentBlob.second) {
                     blobs.push_back(blob);
                 }
             }
-            for(auto finalParentBlob : this->getFinalBlobsParentSons()){
+            for(auto finalParentBlob : this->getFinalBlobsParentSons()) {
                 for(auto blob : finalParentBlob.second) {
                     blobs.push_back(blob);
                 }
@@ -150,10 +145,11 @@ namespace egt {
                 VLOG(4) << "Final hole group of size : " << holeGroup.size() << " and of area : " << area;
 
                 if(area < cutoff) {
-                    VLOG(4) << "Hole too small : delete.";
-                    auto blob = getBlobFromPixel(blobs, parentHole.first->getStartRow(), parentHole.first->getStartCol());
+                    VLOG(4) << "Hole too small : turn to foreground.";
+                    auto blob = getSurroundingBlob(blobs, parentHole.first->getStartRow(),
+                                                   parentHole.first->getStartCol());
 
-                    if(blob == nullptr){
+                    if(blob == nullptr) {
                         VLOG(1) << "SPECIAL CASE" << " : hole at the border and not merging. We need a better way to find surrounding blobs";
                         this->getFinalBlobsParentSons().insert(parentHole);
                     }
@@ -173,14 +169,13 @@ namespace egt {
                         }
                     }
                 }
-
-                //else delete
-//            auto it = parentHole.second.begin();
-//            while(it != parentHole.second.end()){
-//                delete (*it);
-//            }
-//            parentHole.second.clear();
+                else {
+                    for(auto hole : holeGroup) {
+                        delete hole;
+                    }
+                }
             }
+
             this->getFinalHolesParentSons().clear();
         }
 
@@ -214,6 +209,10 @@ namespace egt {
         virtual ~ViewAnalyse() {
             _toMerge.clear();
             _holesToMerge.clear();
+            _finalBlobsParentSons.clear();
+            _blobsParentSons.clear();
+            _holesParentSons.clear();
+            _finalHolesParentSons.clear();
         }
 
     private:
@@ -225,10 +224,6 @@ namespace egt {
                 _holesToMerge{};   ///< Map of holes which will need to be merged to a list of
         ///< coordinates
 
-        uint32_t level = 0;
-
-        uint32_t row = 0, col = 0;
-
         std::unordered_map<Blob *, std::list<Blob *>> _finalBlobsParentSons{};
 
         std::unordered_map<Blob *, std::list<Blob *>> _blobsParentSons{};
@@ -236,6 +231,10 @@ namespace egt {
         std::unordered_map<Blob *, std::list<Blob *>> _holesParentSons{};
 
         std::unordered_map<Blob *, std::list<Blob *>> _finalHolesParentSons{};
+
+        uint32_t level = 0;
+
+        uint32_t row = 0, col = 0;
 
     };
 }

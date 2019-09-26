@@ -314,8 +314,7 @@ public:
 
                                     //if yes, record the blobgroup as final
                                     if (mergeLeftCount == 0) {
-                                        result->getFinalBlobsParentSons()[root1].clear();
-                                        result->getFinalBlobsParentSons()[root1].merge(blobGroup1);
+                                        result->getFinalBlobsParentSons()[root1] = blobGroup1;
                                         result->getBlobsParentSons().erase(root1);
                                     }
                                 }
