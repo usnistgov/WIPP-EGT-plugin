@@ -477,7 +477,7 @@ namespace egt {
                 auto row = step.first;
                 auto col = step.second;
                 fi->requestTile(row,col,false,0);
-                VLOG(5) << "Requesting tile (" << row << "," << col << ")";
+                VLOG(4) << "Requesting tile (" << row << "," << col << ")";
             }
 
             segmentationGraph->finishedProducingData();

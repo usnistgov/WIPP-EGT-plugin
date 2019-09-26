@@ -93,19 +93,19 @@ namespace egt {
             return _holesToMerge;
         }
 
-        std::map<Blob *, std::set<Blob *>> &getBlobsParentSons() {
+        std::unordered_map<Blob *, std::list<Blob *>> &getBlobsParentSons() {
             return _blobsParentSons;
         }
 
-        std::map<Blob *, std::set<Blob *>> &getFinalBlobsParentSons() {
+        std::unordered_map<Blob *, std::list<Blob *>> &getFinalBlobsParentSons() {
             return _finalBlobsParentSons;
         }
 
-        std::map<Blob *, std::set<Blob *>> &getHolesParentSons() {
+        std::unordered_map<Blob *, std::list<Blob *>> &getHolesParentSons() {
             return _holesParentSons;
         }
 
-        std::map<Blob *, std::set<Blob *>> &getFinalHolesParentSons() {
+        std::unordered_map<Blob *, std::list<Blob *>> &getFinalHolesParentSons() {
             return _finalHolesParentSons;
         }
 
@@ -162,15 +162,16 @@ namespace egt {
                         auto parent = uf.find(blob);
                         auto it = this->getFinalBlobsParentSons().find(parent);
                         if (it != this->getFinalBlobsParentSons().end()) {
-                            it->second.insert(holeGroup.begin(), holeGroup.end());
+                            std::list<Blob *> blobs = it->second;
+                            blobs.splice(blobs.begin(), holeGroup);
                         } else {
-                            auto it2 = this->getBlobsParentSons().find(parent);
-                            if (it2 != this->getBlobsParentSons().end()) {
-                                it2->second.insert(holeGroup.begin(), holeGroup.end());
+                            auto it = this->getBlobsParentSons().find(parent);
+                            if (it != this->getBlobsParentSons().end()) {
+                                std::list<Blob *> blobs = it->second;
+                                blobs.splice(blobs.begin(), holeGroup);
                             }
                         }
                     }
-                    //turn to foreground
                 }
 
                 //else delete
@@ -199,15 +200,15 @@ namespace egt {
         /// \param b blob to add
         void insertBlob(Blob *b) {
             if(b->isToMerge()) {
-                _blobsParentSons[b].insert(b);
+                _blobsParentSons[b].push_back(b);
             }
             else {
-                _finalBlobsParentSons[b].insert(b);
+                _finalBlobsParentSons[b].push_back(b);
             }
         }
 
         void insertHole(Blob *b) {
-            _holesParentSons[b].insert(b);
+            _holesParentSons[b].push_back(b);
         }
 
         virtual ~ViewAnalyse() {
@@ -228,13 +229,13 @@ namespace egt {
 
         uint32_t row = 0, col = 0;
 
-        std::map<Blob *, std::set<Blob *>> _finalBlobsParentSons{};
+        std::unordered_map<Blob *, std::list<Blob *>> _finalBlobsParentSons{};
 
-        std::map<Blob *, std::set<Blob *>> _blobsParentSons{};
+        std::unordered_map<Blob *, std::list<Blob *>> _blobsParentSons{};
 
-        std::map<Blob *, std::set<Blob *>> _holesParentSons{};
+        std::unordered_map<Blob *, std::list<Blob *>> _holesParentSons{};
 
-        std::map<Blob *, std::set<Blob *>> _finalHolesParentSons{};
+        std::unordered_map<Blob *, std::list<Blob *>> _finalHolesParentSons{};
 
     };
 }

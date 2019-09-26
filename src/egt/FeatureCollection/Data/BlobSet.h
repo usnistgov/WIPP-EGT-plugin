@@ -12,9 +12,9 @@ namespace egt {
 
     struct BlobSet : public htgs::IData {
 
-        BlobSet(std::set<Blob *> &_blobs) : _blobs(_blobs) {}
+        BlobSet(std::list<Blob *> &_blobs) : _blobs(_blobs) {}
 
-        std::set<Blob*> _blobs{};
+        std::list<Blob*> _blobs{};
 
 
     };

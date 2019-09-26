@@ -49,8 +49,7 @@ namespace egt {
             //One blob is considered the parent of all the others.
             for (auto blob : blobs) {
                 blob->addToBitMask(bitMask, bb);
-
-                VLOG(4) << "deleting blob blob_" << blob->getId();
+                VLOG(6) << "deleting blob blob_" << blob->getId();
                 delete blob;
             }
 
@@ -64,7 +63,7 @@ namespace egt {
  * @param sons
  * @return
  */
-        BoundingBox calculateBoundingBox(std::set<Blob *> &sons) {
+        BoundingBox calculateBoundingBox(std::list<Blob *> &sons) {
 
             uint32_t upperLeftRow = std::numeric_limits<int32_t>::max(),
                     upperLeftCol = std::numeric_limits<int32_t>::max(),
@@ -86,6 +85,9 @@ namespace egt {
             return new FeatureBuilder(this->getNumThreads(), this->options);
         }
 
+        std::string getName() override {
+            return "FeatureBuilder";
+        }
 
 
         SegmentationOptions *options;

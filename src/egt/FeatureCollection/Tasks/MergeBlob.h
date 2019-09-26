@@ -85,6 +85,11 @@ public:
     }
 
 
+        std::string getName() override {
+            return "MergeBlob";
+        }
+
+
     void mergeAllBlobs(std::shared_ptr<ViewAnalyseBlock> data) {
         auto views = data->getViewAnalyses();
 
@@ -276,6 +281,8 @@ public:
         }
         assert(mergeCount1 == mergeCount2);
 
+        VLOG(2) << "Number of merges to do between tiles : level "<< result->getLevel() - 1 << " - (" << v1->getRow() << "," << v1->getCol() << ") & " << "(" << v2->getRow() << "," << v2->getCol() << ") : " << mergeCount1;
+
         //for each blob's border pixel to merge, find the corresponding blobs to merge in the adjacent tile
         for(auto &blobPixelPair : blobsToMerge) {
                 auto blob = blobPixelPair.first;
@@ -307,7 +314,8 @@ public:
 
                                     //if yes, record the blobgroup as final
                                     if (mergeLeftCount == 0) {
-                                        result->getFinalBlobsParentSons()[root1].insert(blobGroup1.begin(), blobGroup1.end());
+                                        result->getFinalBlobsParentSons()[root1].clear();
+                                        result->getFinalBlobsParentSons()[root1].merge(blobGroup1);
                                         result->getBlobsParentSons().erase(root1);
                                     }
                                 }
@@ -315,7 +323,7 @@ public:
                                 else {
                                     auto root = uf.unionElements(blob, otherBlob); //pick one root as the new root
                                     auto blobGroup2 = result->getBlobsParentSons()[root2];
-                                    blobGroup1.insert(blobGroup2.begin(), blobGroup2.end()); //merge sons
+                                    blobGroup1.splice(blobGroup1.begin(), blobGroup2); //merge sons
 
 
                                     //are we done merging the whole blob?
@@ -326,13 +334,12 @@ public:
 
                                     //if yes, record the blobgroup as final
                                     if (mergeLeftCount == 0) {
-                                        result->getFinalBlobsParentSons()[root].insert(blobGroup1.begin(),
-                                                                                       blobGroup1.end());
+                                        result->getFinalBlobsParentSons().insert({root, blobGroup1});
                                         result->getBlobsParentSons().erase(root1);
                                         result->getBlobsParentSons().erase(root2);
                                     //otherwise keep track of the merged blobgroup
                                     } else {
-                                        result->getBlobsParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
+                                        result->getBlobsParentSons()[root] = blobGroup1;
                                         if (root == root2) {
                                             result->getBlobsParentSons().erase(root1);
                                         } else {
@@ -591,7 +598,7 @@ public:
 
                             //if yes, record the blobgroup as final
                             if (mergeLeftCount == 0) {
-                                result->getFinalHolesParentSons()[root1].insert(blobGroup1.begin(), blobGroup1.end());
+                                result->getFinalHolesParentSons().insert({root1, blobGroup1});
                                 result->getHolesParentSons().erase(root1);
                             }
                         }
@@ -599,7 +606,7 @@ public:
                         else {
                             auto root = uf.unionElements(blob, otherBlob); //pick one root as the new root
                             auto blobGroup2 = result->getHolesParentSons()[root2];
-                            blobGroup1.insert(blobGroup2.begin(), blobGroup2.end()); //merge sons
+                            blobGroup1.splice(blobGroup1.begin(), blobGroup2); //merge sons
 
 
                             //are we done merging the whole blob?
@@ -610,13 +617,12 @@ public:
 
                             //if yes, record the blobgroup as final
                             if (mergeLeftCount == 0) {
-                                result->getFinalHolesParentSons()[root].insert(blobGroup1.begin(),
-                                                                               blobGroup1.end());
+                                result->getFinalHolesParentSons().insert({root, blobGroup1});
                                 result->getHolesParentSons().erase(root1);
                                 result->getHolesParentSons().erase(root2);
                                 //otherwise keep track of the merged blobgroup
                             } else {
-                                result->getHolesParentSons()[root].insert(blobGroup1.begin(), blobGroup1.end());
+                                result->getHolesParentSons()[root] = blobGroup1;
                                 if (root == root2) {
                                     result->getHolesParentSons().erase(root1);
                                 } else {
