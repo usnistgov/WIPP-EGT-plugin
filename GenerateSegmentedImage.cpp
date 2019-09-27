@@ -101,7 +101,7 @@ int main(int argc, const char **argv) {
     size_t nbLoaderThreads = 2;
     auto testNoGradient = false;
     auto imageDepth = ImageDepth::_8U;
-    auto threshold = 108;
+    auto threshold = 87;
 
     auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, htgs::VoidData>();
     auto runtime = new htgs::TaskGraphRuntime(graph);
@@ -142,19 +142,19 @@ int main(int argc, const char **argv) {
 
     auto gaussianBlur = new OpenCVConvTask<T>(concurrentTiles, kernel, 1);
 
-//    auto thresholder = new Thresholder<T>(concurrentTiles, threshold);
+    auto thresholder = new Thresholder<T>(concurrentTiles, threshold);
     auto tiffTileWriter = new TiffTileWriter<T>(1, imageHeight, imageWidth, tileSize, ImageDepth::_8U, outputPath);
 
     graph->addEdge(fastImage, sobelFilter);
  //   graph->addEdge(sobelFilter, gaussianBlur);
-    graph->addEdge(sobelFilter, tiffTileWriter);
-
+//    graph->addEdge(gaussianBlur, tiffTileWriter);
+//
     //PERFORM GRADIENT ONLY
 //    graph->addEdge(sobelFilter, tiffTileWriter);
 
     //PERFORM GRADIENT AND THRESHOLDING
-    //    graph->addEdge(sobelFilter, thresholder);
-    //    graph->addEdge(thresholder, tiffTileWriter);
+        graph->addEdge(sobelFilter, thresholder);
+        graph->addEdge(thresholder, tiffTileWriter);
 
     runtime->executeRuntime();
     fi->requestAllTiles(true, level);

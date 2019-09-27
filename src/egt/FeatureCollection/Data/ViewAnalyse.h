@@ -158,13 +158,11 @@ namespace egt {
                         auto parent = uf.find(blob);
                         auto it = this->getFinalBlobsParentSons().find(parent);
                         if (it != this->getFinalBlobsParentSons().end()) {
-                            std::list<Blob *> blobs = it->second;
-                            blobs.splice(blobs.begin(), holeGroup);
+                            it->second.splice(it->second.end(), holeGroup);
                         } else {
                             auto it = this->getBlobsParentSons().find(parent);
                             if (it != this->getBlobsParentSons().end()) {
-                                std::list<Blob *> blobs = it->second;
-                                blobs.splice(blobs.begin(), holeGroup);
+                                it->second.splice(it->second.end(), holeGroup);
                             }
                         }
                     }
