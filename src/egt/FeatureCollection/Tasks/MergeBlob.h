@@ -643,7 +643,7 @@ public:
                 }
 
                 if(!merged) {
-                    blob->decreaseMergeCount();
+               //     blob->decreaseMergeCount();
                 }
             }
         }

@@ -117,6 +117,12 @@ namespace egt {
             _tileWidth = _view->getTileWidth();
             _imageSize = _tileWidth * _tileHeight;
 
+            tileStartCol = _view->getGlobalXOffset();
+            tileStartRow = _view->getGlobalYOffset();
+            tileEndCol = tileStartCol + _view->getTileWidth();
+            tileEndRow = tileStartRow + _view->getTileHeight();
+
+
             visitedCount = 0;
             run(BACKGROUND); //find holes
             auto backgroundPixelCount = visitedCount;
@@ -255,9 +261,13 @@ namespace egt {
 
                     //We turn this hole into a foreground blob
                     if (!keepHole) {
-                        _currentBlob->compactBlobDataIntoFeature();
-                        //_vAnalyse->insertBlob(_currentBlob);
-                        _vAnalyse->getFinalHolesParentSons()[_currentBlob].push_back(_currentBlob);
+                        if(!overlap()) {
+                            fillUpHole();
+                        }
+                        else {
+                            _currentBlob->compactBlobDataIntoFeature();
+                            _vAnalyse->getFinalHolesParentSons()[_currentBlob].push_back(_currentBlob);
+                        }
                         holeRemovedCount++;
                     //It is an legit hole, remove
                     } else {
@@ -283,7 +293,13 @@ namespace egt {
         }
 
 
-        void flattenPixelToMerge(Blob *blob, Color blobColor) {
+        bool overlap()
+        {
+            return (_currentBlob->getRowMin() == tileStartRow) || (_currentBlob->getRowMax() == tileEndRow) ||
+                    (_currentBlob->getColMin() == tileStartCol) || (_currentBlob->getColMax() == tileEndCol);
+        }
+
+void flattenPixelToMerge(Blob *blob, Color blobColor) {
 
             blob->setMergeCount(0); //we reset the counter
 
@@ -646,20 +662,14 @@ namespace egt {
          * Set every pixel value to foreground and make sure those pixels are visited again in the object detection step.
          */
         void fillUpHole() {
+            auto xOffset = _view->getGlobalXOffset();
+            auto yOffset = _view->getGlobalYOffset();
             for (auto it = _currentBlob->getRowCols().begin();
                  it != _currentBlob->getRowCols().end(); ++it) {
                 auto pRow = it->first;
                 for (auto pCol : it->second) {
-                    auto xOffset = _view->getGlobalXOffset();
-                    auto yOffset = _view->getGlobalYOffset();
-
                     markAsUnvisited(pRow - yOffset, pCol - xOffset);
-
-                    if (_segmentationOptions->MASK_ONLY) {
-                        _view->setPixel(pRow - yOffset, pCol - xOffset, 255);
-                    } else {
-                        _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
-                    }
+                    _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
                 }
             }
 
@@ -726,6 +736,7 @@ namespace egt {
                 holeRemovedCount = 0,
                 visitedCount = 0;
 
+        uint32_t tileStartCol{}, tileEndCol{}, tileStartRow{}, tileEndRow{};
 
     };
 
