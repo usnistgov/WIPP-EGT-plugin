@@ -263,6 +263,7 @@ namespace egt {
                     if (!keepHole) {
                         if(!overlap()) {
                             fillUpHole();
+                            delete _currentBlob;
                         }
                         else {
                             _currentBlob->compactBlobDataIntoFeature();

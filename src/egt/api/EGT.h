@@ -426,10 +426,10 @@ namespace egt {
 
             htgs::ITask<htgs::MemoryData<fi::View<T>>, GradientView<T>>* sobelFilter = nullptr;
             if(options->testNoGradient) {
-                sobelFilter = new NoTransform<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+                sobelFilter = new NoTransform<T>(options->concurrentTiles / 2, options->imageDepth, 1, 1);
             }
             else {
-                sobelFilter = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+                sobelFilter = new EGTSobelFilter<T>(options->concurrentTiles / 2, options->imageDepth, 1, 1);
             }
 
             auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
@@ -449,7 +449,7 @@ namespace egt {
             auto mergeRule = new MergeRule(pyramid);
 
 
-            auto featureBuilder = new FeatureBuilder(options->concurrentTiles, segmentationOptions);
+            auto featureBuilder = new FeatureBuilder(options->concurrentTiles / 2, segmentationOptions);
 
             segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Feature>;
             segmentationGraph->addEdge(fastImage2, sobelFilter);
@@ -457,7 +457,7 @@ namespace egt {
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
 
 
-            auto mergeBlob = new MergeBlob(options->concurrentTiles, pyramid, segmentationOptions);
+            auto mergeBlob = new MergeBlob(options->concurrentTiles / 2, pyramid, segmentationOptions);
 
 
             segmentationGraph->addEdge(labelingFilter, bookkeeper);
