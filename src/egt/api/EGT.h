@@ -413,6 +413,7 @@ namespace egt {
             auto tileLoader2 = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
             auto *fi = new fi::FastImage<T>(tileLoader2, segmentationRadius);
             fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
+//            fi->getFastImageOptions()->setPreserveOrder(true);
             auto fastImage2 = fi->configureAndMoveToTaskGraphTask("Fast Image 2");
             imageHeightAtSegmentationLevel = fi->getImageHeight(pyramidLevelToRequestForSegmentation);
             imageWidthAtSegmentationLevel = fi->getImageWidth(pyramidLevelToRequestForSegmentation);
@@ -472,7 +473,6 @@ namespace egt {
 
             segmentationRuntime = new htgs::TaskGraphRuntime(segmentationGraph);
             segmentationRuntime->executeRuntime();
-            fi->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
 
 
             auto traversal = new pb::RecursiveBlockTraversal(pyramid);
@@ -480,8 +480,9 @@ namespace egt {
                 auto row = step.first;
                 auto col = step.second;
                 fi->requestTile(row,col,false,0);
-                VLOG(4) << "Requesting tile (" << row << "," << col << ")";
+                VLOG(1) << "Requesting tile (" << row << "," << col << ")";
             }
+            fi->finishedRequestingTiles();
 
             segmentationGraph->finishedProducingData();
 
