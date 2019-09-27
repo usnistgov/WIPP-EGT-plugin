@@ -346,6 +346,7 @@ public:
                                         }
                                     }
                                 }
+                                break;
                             }
                         }
                 }
@@ -566,13 +567,21 @@ public:
         }
         assert(mergeCount1 == mergeCount2);
 
+        bool merged;
+
         //for each blob's border pixel to merge, find the corresponding blobs to merge in the adjacent tile
         for(auto &blobPixelPair : blobsToMerge) {
             auto blob = blobPixelPair.first;
             for(auto coordinates : blobPixelPair.second) {
+
+                merged = false;
+
                 for(auto otherBlobPixelPair : otherBlobsToMerge) {
                     auto otherBlob = otherBlobPixelPair.first;
                     if (otherBlobPixelPair.first->isPixelinFeature(coordinates.first, coordinates.second)) {
+
+                        merged = true;
+
                         //merge the blob groups
                         VLOG(5) << "Creating merged blob from blobsToMerge : blob_" << blob->getId() << ", blob_" << otherBlob->getId();
                         UnionFind<Blob> uf{};
@@ -629,7 +638,12 @@ public:
                                 }
                             }
                         }
+                        break;
                     }
+                }
+
+                if(!merged) {
+                    blob->decreaseMergeCount();
                 }
             }
         }
