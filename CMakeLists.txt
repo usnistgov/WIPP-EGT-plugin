@@ -122,7 +122,8 @@ set(SRC_FILES src  src/egt/FeatureCollection/Data/Feature.h src/egt/FeatureColle
 add_executable(commandLineCli CommandLineCli.cpp ${SRC_FILES})
 add_executable(main main.cpp ${SRC_FILES})
 add_executable(generateSegmentedImage GenerateSegmentedImage.cpp ${SRC_FILES})
-
+add_executable(GenerateThresholdedSegmentedImage GenerateThresholdedSegmentedImage.cpp ${SRC_FILES})
+add_executable(GenerateThresholdedSegmentedDenoisedImage GenerateThresholdedSegmentedDenoisedImage.cpp ${SRC_FILES})
 #target_link_libraries(commandLineCli opencv_core opencv_imgcodecs zlib)
 
 

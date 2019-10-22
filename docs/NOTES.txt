@@ -51,6 +51,12 @@ Threshold finder
 Blobs are now compacted into Feature before being sent to merge.
     It cuts down on memory consumption by a factor of 64. (2 32bits coord vs 1bit per pixel)
 
+===================
+OPENCV
+
+be extremely careful. When creating an openCV matrix, the data is stored internally as a array of bytes.
+So we cannot copy by range, without casting at the first place.
+
 
 ===================
 Usage

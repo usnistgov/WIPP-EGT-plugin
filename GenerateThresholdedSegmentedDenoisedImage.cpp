@@ -39,31 +39,66 @@ using namespace egt;
 typedef uint16_t T;
 
 
+template <class T>
+class Thresholder : public  htgs::ITask<htgs::MemoryData<fi::View<T>>,  htgs::MemoryData<fi::View<T>>> {
+
+public:
+
+    explicit Thresholder(size_t numThreads, T threshold) : ITask<htgs::MemoryData<fi::View<T>>,  htgs::MemoryData<fi::View<T>>>(numThreads), threshold(threshold) {}
+
+    void executeTask(std::shared_ptr<MemoryData<fi::View<T>>> data) override {
+
+        auto maxVal = std::numeric_limits<T>::max();
+        auto view = data->get();
+
+        for(auto i = 0 ; i < view->getTileHeight(); i++) {
+            for(auto j = 0 ; j < view->getTileWidth(); j++) {
+                auto val = view->getPixel(i,j);
+                view->setPixel(i,j, (val > threshold) ? maxVal : 0);
+            }
+        }
+        this->addResult(data);
+
+    }
+
+    ITask<MemoryData<fi::View<T>>, MemoryData<fi::View<T>>> *copy() override {
+        return new Thresholder(this->getNumThreads(), threshold);
+    }
+
+    T threshold;
+
+};
+
+
 int main(int argc, const char **argv) {
 
 
     VLOG(3) << "ok";
 
     auto inputPath = "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif";
-    auto outputPath = "/home/gerardin/Documents/projects/egt++/outputs/gradientImage_phase_image_002_tiled256_pyramid.tif";
 
 //    auto inputPath = "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif";
 //    auto outputPath = "/home/gerardin/Documents/projects/egt++/outputs/tiled_stitched_c01t020p1_pyramid_1024.ome.tif";
 //    auto inputPath = "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif";
 //    auto inputPath = "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif";
 //    auto inputPath = "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif";
-//    auto outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/thresholdedGradientImage_stitched_c01t020p1.tif";
+
+    auto outputPath = "/home/gerardin/Documents/projects/egt++/outputs/thresholdedDenoisedGradientImage_phase_image_002_tiled256_pyramid.tif";
+
     uint32_t concurrentTiles = 1;
     size_t nbLoaderThreads = 1;
 
 //    auto imageDepth = ImageDepth::_8U;
     auto imageDepth = ImageDepth::_16U;
 
+    auto threshold = 108;
+//    auto threshold = 87;
+
     auto graph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, htgs::VoidData>();
     auto runtime = new htgs::TaskGraphRuntime(graph);
 
     uint32_t level = 0;
-    uint32_t radius = 1;
+    uint32_t radius = 3;
 
     auto loader = new PyramidTiledTiffLoader<T>(inputPath, nbLoaderThreads);
     auto *fi = new fi::FastImage<T>(loader, radius);
@@ -77,11 +112,20 @@ int main(int argc, const char **argv) {
 
     auto pyramid = pb::Pyramid(fi->getImageWidth(), fi->getImageHeight(), fi->getTileWidth());
 
+
     auto sobelFilter = new FCCustomSobelFilter3by3<T>(concurrentTiles, imageDepth, 1, 1);
+
+    auto gaussianBlur = new OpenCVConvTask<T>(concurrentTiles,  3, imageDepth);
+
+    auto thresholder = new Thresholder<T>(concurrentTiles, threshold);
+//    auto tiffTileWriter = new TiffTileWriter<T>(1, imageHeight, imageWidth, tileSize, imageDepth, outputPath);
+
     auto tiffTileWriter = new TiffTileWriter<T>(1, imageHeight, imageWidth, tileSize, imageDepth, outputPath);
 
     graph->addEdge(fastImage, sobelFilter);
-    graph->addEdge(sobelFilter, tiffTileWriter);
+    graph->addEdge(sobelFilter, thresholder);
+    graph->addEdge(thresholder, gaussianBlur);
+    graph->addEdge(gaussianBlur, tiffTileWriter);
 
 
     runtime->executeRuntime();
