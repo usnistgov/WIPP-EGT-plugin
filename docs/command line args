@@ -1,41 +1,41 @@
--i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "20" --maxhole "inf" --minobject "40" -x "0"  --op "or" --minintensity "50" --maxintensity "100" -e "loader=2;tile=10;threshold=108"
--i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "100" --maxhole "inf" --minobject "100" -x "0"   --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=108"
+-i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "20" --maxhole "inf" --minobject "40" -x "0"  --op "or" --minintensity "50" --maxintensity "100" -e "loader=2;tile=10;threshold=108"
+-i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "100" --maxhole "inf" --minobject "100" -x "0"   --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=108"
 
 
 # Test Blob segmentation only
 
--i  "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset02/" -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "1" --disableIntensityFilter "true" -e "loader=1;tile=1;threshold=1;testNoGradient=1"
--i "/home/gerardin/CLionProjects/newEgt/outputs/phase_image_002/bw-mask-phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "100" --maxhole "inf" --minobject "100" -x "0"   --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=108;testNoGradient=1"
--i  "/home/gerardin/CLionProjects/newEgt/outputs/stitched_c01t020p1/bw-mask-tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87;intensitylevel=0;testNoGradient=1"
+-i  "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif" -o "/home/gerardin/Documents/projects/egt++/outputs/dataset02/" -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "1" --disableIntensityFilter "true" -e "loader=1;tile=1;threshold=1;testNoGradient=1"
+-i "/home/gerardin/Documents/projects/egt++/outputs/phase_image_002/bw-mask-phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "100" --maxhole "inf" --minobject "100" -x "0"   --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=108;testNoGradient=1"
+-i  "/home/gerardin/Documents/projects/egt++/outputs/stitched_c01t020p1/bw-mask-tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87;intensitylevel=0;testNoGradient=1"
 
 
 
 # Dataset 1
 ## minHole =500 means the whole square is filled. Convenient for testing
--i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset01/" -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "2" -x "false"   --op "and" --disableIntensityFilter "true" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=2"
+-i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/dataset01/" -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "2" -x "false"   --op "and" --disableIntensityFilter "true" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=2"
 ## regular case
--i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset01/" -d "8U"  --level "0" --minhole "2" --maxhole "inf" --minobject "2" -x "false"   --op "and" --disableIntensityFilter "true" --minintensity "0" --maxintensity "100" -e "loader=1;tile=1;threshold=2"
+-i  "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/dataset01/" -d "8U"  --level "0" --minhole "2" --maxhole "inf" --minobject "2" -x "false"   --op "and" --disableIntensityFilter "true" --minintensity "0" --maxintensity "100" -e "loader=1;tile=1;threshold=2"
 
 ## Dataset 2
--i  "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset02/" -d "8U"  --level "0" --minhole "1" --maxhole "inf" --minobject "1" --disableIntensityFilter "true" -e "loader=1;tile=1;threshold=1"
--i  "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs/dataset02/" -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "1" --disableIntensityFilter "true" -e "loader=1;tile=1;threshold=1"
+-i  "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif" -o "/home/gerardin/Documents/projects/egt++/outputs/dataset02/" -d "8U"  --level "0" --minhole "1" --maxhole "inf" --minobject "1" --disableIntensityFilter "true" -e "loader=1;tile=1;threshold=1"
+-i  "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif" -o "/home/gerardin/Documents/projects/egt++/outputs/dataset02/" -d "8U"  --level "0" --minhole "500" --maxhole "inf" --minobject "1" --disableIntensityFilter "true" -e "loader=1;tile=1;threshold=1"
 
 ## Dataset small partial stitched
--i  "/home/gerardin/Documents/images/dataset2/images/processed/tiled_small_partial_stitched_c01t020p1.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "50" --maxhole "inf" --minobject "100" -x "0" -e "loader=2;tile=10;threshold=87;intensitylevel=0"
+-i  "/home/gerardin/Documents/images/dataset2/images/processed/tiled_small_partial_stitched_c01t020p1.ome.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "50" --maxhole "inf" --minobject "100" -x "0" -e "loader=2;tile=10;threshold=87;intensitylevel=0"
 
 
 
--i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "10000" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87"
--i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;"
--i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87"
--i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/CLionProjects/newEgt/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87;intensitylevel=0"
+-i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "10000" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87"
+-i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;"
+-i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87"
+-i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;threshold=87;intensitylevel=0"
 
 
 
--i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs2/" -d "8U" --level "2" --minhole "50" --maxhole "inf" --minobject "250" -x "0" -e "loader=2;tile=10;intensitylevel=2"
--i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs2/" -d "8U" --level "2" --minhole "50" --maxhole "inf" --minobject "250" -x "0" -e "loader=2;tile=10;intensitylevel=2"
--i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/CLionProjects/newEgt/outputs2/" -d "8U" --level "0" --minhole "800" --maxhole "inf" --minobject "4000" -x "0" -e "loader=2;tile=10;intensitylevel=0;threshold=120"
+-i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "8U" --level "2" --minhole "50" --maxhole "inf" --minobject "250" -x "0" -e "loader=2;tile=10;intensitylevel=2"
+-i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "8U" --level "2" --minhole "50" --maxhole "inf" --minobject "250" -x "0" -e "loader=2;tile=10;intensitylevel=2"
+-i "/home/gerardin/Documents/pyramidBuilding/outputs/poster.tif" -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "8U" --level "0" --minhole "800" --maxhole "inf" --minobject "4000" -x "0" -e "loader=2;tile=10;intensitylevel=0;threshold=120"
 
 
 
--i  "/home/gerardin/Documents/images/egt-test-images/egt_test/KB_2010_12_01_1hDryCol_IR/tigit led/"  -o "/home/gerardin/CLionProjects/newEgt/outputs/KB_2010_12_01_1hDryCol_IR/" -d "16U" --level "0" --minhole "20" --maxhole "inf" --minobject "100" -x "0" --disableIntensityFilter -e "loader=2;tile=10;intensitylevel=0;erode=0"
+-i  "/home/gerardin/Documents/images/egt-test-images/egt_test/KB_2010_12_01_1hDryCol_IR/tigit led/"  -o "/home/gerardin/Documents/projects/egt++/outputs/KB_2010_12_01_1hDryCol_IR/" -d "16U" --level "0" --minhole "20" --maxhole "inf" --minobject "100" -x "0" --disableIntensityFilter -e "loader=2;tile=10;intensitylevel=0;erode=0"

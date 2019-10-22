@@ -91,11 +91,11 @@ int main(int argc, const char **argv) {
 
     VLOG(3) << "ok";
 
-    auto inputPath = "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif";
-    auto outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/dataset02_gradient.tif";
+//    auto inputPath = "/home/gerardin/Documents/images/egt-test-images/dataset02/tiled/dataset02_tiled16.tif";
+    auto outputPath = "/home/gerardin/Documents/projects/egt++/outputs/tiled_stitched_c01t020p1_pyramid_1024.ome.tif";
 
 //    auto inputPath = "/home/gerardin/Documents/images/egt-test-images/dataset01/images/test01-tiled.tif";
-//    auto inputPath = "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif";
+    auto inputPath = "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif";
 //    auto inputPath = "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif";
 //    auto outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/thresholdedGradientImage_stitched_c01t020p1.tif";
     uint32_t concurrentTiles = 10;
@@ -172,5 +172,5 @@ int main(int argc, const char **argv) {
     runtime->waitForRuntime();
     delete traversal;
 
-    delete fi;
+   // delete fi;
 }

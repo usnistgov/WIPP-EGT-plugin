@@ -12,7 +12,6 @@
 #include <glog/logging.h>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core.hpp>
-#include <opencv/cv.hpp>
 #include <egt/utils/Utils.h>
 
 namespace egt {

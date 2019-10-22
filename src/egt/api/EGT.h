@@ -314,7 +314,7 @@ namespace egt {
 //FOR DEBUGGING
             graph->writeDotToFile("thresholdGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
-            delete fi;
+          //  delete fi;
             delete runtime;
 
             return threshold;
@@ -387,7 +387,7 @@ namespace egt {
             localMaskGenerationGraphRuntime->waitForRuntime();
             //FOR DEBUGGING
             localMaskGenerationGraph->writeDotToFile("SegmentationGraph.xdot", DOTGEN_COLOR_COMP_TIME);
-            delete fi;
+          //  delete fi;
             delete localMaskGenerationGraphRuntime;
             auto endSegmentation = std::chrono::high_resolution_clock::now();
         }
@@ -479,7 +479,7 @@ namespace egt {
             for(auto step : traversal->getTraversal()){
                 auto row = step.first;
                 auto col = step.second;
-                fi->requestTile(row,col,false,0);
+                fi->requestTile(row,col,false,pyramidLevelToRequestForSegmentation);
                 VLOG(1) << "Requesting tile (" << row << "," << col << ")";
             }
             fi->finishedRequestingTiles();
@@ -499,7 +499,7 @@ namespace egt {
 
             segmentationRuntime->waitForRuntime();
             delete traversal;
-            delete fi;
+           // delete fi;
             delete segmentationRuntime;
           return features;
         }
@@ -662,7 +662,7 @@ namespace egt {
 
             fi->finishedRequestingTiles();
             fi->waitForGraphComplete();
-            delete fi;
+       //     delete fi;
         }
 
 

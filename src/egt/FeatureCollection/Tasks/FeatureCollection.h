@@ -46,8 +46,6 @@
 #include <egt/FeatureCollection/Data/Blob.h>
 #include <egt/FeatureCollection/Data/ListBlobs.h>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/imgcodecs.hpp>
 //#include <libltdl/lt_system.h>
 
 using namespace fc;
@@ -306,7 +304,7 @@ class FeatureCollection {
 
     // Create the tiff file
     TIFF
-        *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+        *tif = TIFFOpen(pathLabeledMask.c_str(), "w8");
 
     uint32_t
         upperLeftRowFeature = 0,
@@ -338,7 +336,7 @@ class FeatureCollection {
       TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
       TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-      TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
       TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
       TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -474,7 +472,7 @@ class FeatureCollection {
 
     // Create the tiff file
     TIFF
-        *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+        *tif = TIFFOpen(pathLabeledMask.c_str(), "w8");
 
     uint32_t
         upperLeftRowFeature = 0,
@@ -506,7 +504,7 @@ class FeatureCollection {
       TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
       TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-      TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+      TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
       TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
       TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -636,7 +634,7 @@ class FeatureCollection {
 
       // Create the tiff file
       TIFF
-              *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+              *tif = TIFFOpen(pathLabeledMask.c_str(), "w8");
 
       if (tif != nullptr) {
         TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
@@ -648,7 +646,7 @@ class FeatureCollection {
         TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
         TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
         TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
         TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
         TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -734,7 +732,7 @@ class FeatureCollection {
 
       // Create the tiff file
       TIFF
-              *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+              *tif = TIFFOpen(pathLabeledMask.c_str(), "w8");
 
       if (tif != nullptr) {
         TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
@@ -746,7 +744,7 @@ class FeatureCollection {
         TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
         TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
         TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
         TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
         TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 

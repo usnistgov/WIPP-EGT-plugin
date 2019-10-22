@@ -105,7 +105,7 @@ namespace egt {
 
         fi->finishedRequestingTiles();
         fi->waitForGraphComplete();
-        delete fi;
+        // delete fi;
     }
 }
 

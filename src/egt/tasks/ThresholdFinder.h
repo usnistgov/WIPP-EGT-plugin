@@ -12,7 +12,6 @@
 #include <glog/logging.h>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core.hpp>
-#include <opencv/cv.hpp>
 #include <egt/utils/Utils.h>
 
 namespace egt {
@@ -56,7 +55,7 @@ namespace egt {
 
                 //cast to double so we can handle integer values in gradient
                 double rescale = (double)NUM_HISTOGRAM_BINS / (maxValue - minValue);
-                double sum = 0;
+                long double sum = 0;
                 for(auto k = 0; k < gradient.size(); k++ ){
                         //we round to closest integer
                         //WORKS ONLY IF VALUE ARE ALL POSITIVES. We are working with gradient magnitude so this works.

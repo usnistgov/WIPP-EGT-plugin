@@ -38,6 +38,7 @@
 #include <egt/loaders/FeatureBitmaskLoader.h>
 #include <egt/FeatureCollection/algorithms/bitmaskAlgorithms.h>
 #include <egt/api/EGTOptions.h>
+#include <opencv2/imgproc.hpp>
 
 namespace egt {
 /// \namespace fc FeatureCollection namespace
@@ -137,7 +138,7 @@ struct ListBlobs : public IData {
                     }
                 }
                 fi->waitForGraphComplete();
-                delete fi;
+                // delete fi;
 
                 if (maskCount < segmentationOptions->MIN_OBJECT_SIZE) {
                     VLOG(3) << "delete eroded feature. Reason : feature size < "

@@ -5,8 +5,10 @@
 #ifndef EGT_DATATYPES_H
 #define EGT_DATATYPES_H
 
-#include <opencv2/core.hpp>
-#include <opencv/cv.hpp>
+
+#include <string>
+#include <stdexcept>
+#include <opencv2/core/hal/interface.h>
 
 namespace egt {
 
