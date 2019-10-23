@@ -706,11 +706,6 @@ class FeatureCollection {
             resolution = 8 * sizeof(uint16_t);
             break;
           }
-          case ImageDepth::_32U :
-              {
-            resolution = 8 * sizeof(uint32_t);
-            break;
-          }
           default:
               VLOG(4) << "wrong encoding of depth for labeled mask... Defaulting to uint32";
               resolution = 8 * sizeof(uint32_t);

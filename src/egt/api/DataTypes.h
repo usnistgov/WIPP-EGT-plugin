@@ -15,7 +15,6 @@ namespace egt {
     enum class ImageDepth {
         _8U,
         _16U,
-        _32U,
         _32F
     };
 
@@ -25,8 +24,6 @@ namespace egt {
             return ImageDepth::_16U;
         } else if (depth == "8U") {
             return ImageDepth::_8U;
-        } else if (depth == "32U") {
-            return ImageDepth ::_32U;
         }
           else if (depth == "32F") {
             return ImageDepth::_32F;

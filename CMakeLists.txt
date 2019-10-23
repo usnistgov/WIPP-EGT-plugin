@@ -76,7 +76,7 @@ message(FAST_IMAGE_LINK_LIBRAIRIES_ARG = ${FastImage_LIBRARIES})
 #link_directories(/home/gerardin/Downloads/opencv-3.4.6/lib)
 
 #TODO REMOVE for PROD. highgui and imgcodecs are useful for debugging (provide cv::imwrite)
-link_libraries(opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
+link_libraries(opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs )
 #link_libraries(opencv_core opencv_imgproc)
 
 #link_directories(/home/gerardin/Downloads/opencv-3.4.6-static/build/lib)
@@ -119,7 +119,7 @@ add_subdirectory(test)
 
 set(SRC_FILES src  src/egt/FeatureCollection/Data/Feature.h src/egt/FeatureCollection/Data/BoundingBox.h src/egt/tasks/ViewToConvOutDataConverter.h src/egt/tasks/FCCustomSobelFilter3by3.h src/egt/api/SegmentationOptions.h src/egt/FeatureCollection/Data/ViewOrViewAnalyse.h  src/egt/FeatureCollection/Tasks/ViewAnalyseFilter.h src/egt/tasks/TiffTileWriter.h src/egt/FeatureCollection/Tasks/ViewFilter.h src/egt/FeatureCollection/Data/Feature.h)
 
-add_executable(commandLineCli CommandLineCli.cpp ${SRC_FILES})
+add_executable(commandLineCli CommandLineCli.cpp ${SRC_FILES} src/egt/tasks/MedianBlurFilter.h src/egt/tasks/Thresholder.h)
 add_executable(main main.cpp ${SRC_FILES})
 add_executable(generateSegmentedImage GenerateSegmentedImage.cpp ${SRC_FILES})
 add_executable(GenerateThresholdedSegmentedImage GenerateThresholdedSegmentedImage.cpp ${SRC_FILES})

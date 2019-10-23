@@ -52,7 +52,7 @@ namespace egt {
                     viewWidth = view->getViewWidth(),
                     viewHeight = view->getViewHeight(),
                     tileWidth = view->getTileWidth(),
-                    tileHeight = view->getViewHeight();
+                    tileHeight = view->getTileHeight();
 
             cv::Mat
                     matInput(viewHeight, viewWidth, convertToOpencvType(_imageDepth), view->getData()),

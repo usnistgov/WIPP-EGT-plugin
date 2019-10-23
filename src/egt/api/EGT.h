@@ -37,6 +37,8 @@
 #include <egt/FeatureCollection/Tasks/MergeBlob.h>
 #include <egt/rules/MergeCompletedRule.h>
 #include <egt/FeatureCollection/Tasks/FeatureBuilder.h>
+#include <egt/tasks/MedianBlurFilter.h>
+#include <egt/tasks/Thresholder.h>
 
 
 namespace egt {
@@ -407,7 +409,7 @@ namespace egt {
             uint32_t pyramidLevelToRequestForSegmentation = options->pyramidLevel;
             //radius of 2 since we need first apply convo, obtain a gradient of size n+1,
             //and then check the ghost region for potential merges for each tile of size n.
-            uint32_t segmentationRadius = 2;
+            uint32_t segmentationRadius = 4;
 
 
             auto tileLoader2 = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
@@ -426,11 +428,14 @@ namespace egt {
 
             htgs::ITask<htgs::MemoryData<fi::View<T>>, GradientView<T>>* sobelFilter = nullptr;
             if(options->testNoGradient) {
-                sobelFilter = new NoTransform<T>(options->concurrentTiles / 2, options->imageDepth, 1, 1);
+                sobelFilter = new NoTransform<T>(options->concurrentTiles, options->imageDepth, 1, 1);
             }
             else {
-                sobelFilter = new EGTSobelFilter<T>(options->concurrentTiles / 2, options->imageDepth, 1, 1);
+                sobelFilter = new Thresholder<T>(options->concurrentTiles, options->imageDepth, 1, 1, segmentationParams.threshold);
+//                sobelFilter = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
             }
+
+            auto noiseFilter = new MedianBlurFilter<T>(options->concurrentTiles,  5, options->imageDepth);
 
             auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
                                                            imageHeightAtSegmentationLevel,
@@ -449,15 +454,16 @@ namespace egt {
             auto mergeRule = new MergeRule(pyramid);
 
 
-            auto featureBuilder = new FeatureBuilder(options->concurrentTiles / 2, segmentationOptions);
+            auto featureBuilder = new FeatureBuilder(options->concurrentTiles, segmentationOptions);
 
             segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Feature>;
             segmentationGraph->addEdge(fastImage2, sobelFilter);
-            segmentationGraph->addEdge(sobelFilter, viewSegmentation);
+            segmentationGraph->addEdge(sobelFilter, noiseFilter);
+            segmentationGraph->addEdge(noiseFilter, viewSegmentation);
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
 
 
-            auto mergeBlob = new MergeBlob(options->concurrentTiles / 2, pyramid, segmentationOptions);
+            auto mergeBlob = new MergeBlob(options->concurrentTiles, pyramid, segmentationOptions);
 
 
             segmentationGraph->addEdge(labelingFilter, bookkeeper);
@@ -525,7 +531,7 @@ namespace egt {
             //generating a labeled mask. Let's try to find the appropriate resolution we need to correctly render each feature.
             if(options->label) {
                 auto nbBlobs = blob->_blobs.size();
-                auto depth = ImageDepth::_32U;
+                auto depth = ImageDepth::_32F;
 
                 outputFilenamePrefix = "labeled-mask-";
                 auto outputFilename = outputFilenamePrefix + inputFilename;

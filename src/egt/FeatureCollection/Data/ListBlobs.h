@@ -38,7 +38,9 @@
 #include <egt/loaders/FeatureBitmaskLoader.h>
 #include <egt/FeatureCollection/algorithms/bitmaskAlgorithms.h>
 #include <egt/api/EGTOptions.h>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/core/traits.hpp>
 
 namespace egt {
 /// \namespace fc FeatureCollection namespace
@@ -105,7 +107,9 @@ struct ListBlobs : public IData {
                         auto mat = cv::Mat(tileHeight, tileWidth, CV_8U,  data);
                         auto kernel = cv::getStructuringElement(cv::MORPH_ERODE,cv::Size(3,3), cv::Point(1,1));
                         cv::Mat eroded;
-                        cv::erode(mat,eroded,kernel);
+                        cv::Mat dilated;
+                        cv::dilate(mat,dilated,kernel);
+                        cv::erode(dilated,eroded,kernel);
                         mat.release();
                         //transform back the matrix to an array
                         std::vector<uchar> array;
@@ -117,7 +121,7 @@ struct ListBlobs : public IData {
                             }
                         }
                         eroded.release();
-
+                        dilated.release();
                         //copy back to the bitmask
                         uint32_t
                                 rowMin = (uint32_t) view->getGlobalYOffset(),

@@ -694,7 +694,7 @@ void flattenPixelToMerge(Blob *blob, Color blobColor) {
         }
 
         Color getColor(int32_t row, int32_t col) {
-            if (_view->getPixel(row, col) > _background) {
+            if (_view->getPixel(row, col) >= _background) {
                 return Color::FOREGROUND;
             }
             return Color::BACKGROUND;
