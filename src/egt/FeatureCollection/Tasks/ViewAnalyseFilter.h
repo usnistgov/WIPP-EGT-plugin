@@ -12,6 +12,9 @@ using namespace fc;
 
 namespace egt {
 
+
+
+
     template <class T>
     class ViewAnalyseFilter : public htgs::ITask<ViewOrViewAnalyse<T>, ViewAnalyse> {
 
@@ -25,6 +28,10 @@ namespace egt {
 
         ITask<ViewOrViewAnalyse<T>, ViewAnalyse> *copy() override {
             return new ViewAnalyseFilter(this->getNumThreads());
+        }
+
+        std::string getName() override {
+            return "ViewAnalyseFilter";
         }
     };
 

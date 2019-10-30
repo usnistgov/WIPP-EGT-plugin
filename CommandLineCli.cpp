@@ -33,6 +33,15 @@ uint32_t parseUint32String( std::string &val) {
     }
 }
 
+bool parseBooleanString( std::string &val) {
+    if(val == "true") {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 std::map<std::string,uint32_t> parseExpertMode(std::string &expertMode) {
 
     std::map<std::string,uint32_t> flags = {};
@@ -91,7 +100,10 @@ void run(egt::ImageDepth imageDepth, egt::EGTOptions* &options, egt::Segmentatio
 
 int main(int argc, const char **argv) {
 
+    auto begin = std::chrono::high_resolution_clock::now();
+
     try {
+
         TCLAP::CmdLine cmd("EGT", ' ', "1.0");
 
         TCLAP::ValueArg<std::string> inputPathArg("i", "images", "input images directory", true, "",
@@ -116,16 +128,16 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::uint32_t> MinObjectSizeArg("s", "minobject", "Minimum Object Size", true, 3000, "uint32_t");
         cmd.add(MinObjectSizeArg);
 
-        TCLAP::ValueArg<bool> MaskOnlyArg("x", "maskonly", "Mask only", false, false, "bool");
+        TCLAP::ValueArg<std::string> MaskOnlyArg("x", "maskonly", "Mask only", false, "false", "bool");
         cmd.add(MaskOnlyArg);
 
         TCLAP::ValueArg<std::string> expertModeArg("e", "expertmode", "Expert mode", false, "", "string");
         cmd.add(expertModeArg);
 
-        TCLAP::ValueArg<bool> labelFlag("","label","Generate a labeled mask", false, false, "bool");
+        TCLAP::ValueArg<std::string> labelFlag("","label","Generate a labeled mask", false, "false", "bool");
         cmd.add(labelFlag);
 
-        TCLAP::ValueArg<bool> disableIntensityFilterArg("", "disableIntensityFilter", "disable intensity filter", false, true, "bool");
+        TCLAP::ValueArg<std::string> disableIntensityFilterArg("", "disableIntensityFilter", "disable intensity filter", false, "true", "bool");
         cmd.add(disableIntensityFilterArg);
 
         std::vector<std::string> joinOperatorsAllowed;
@@ -141,8 +153,6 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::uint32_t> maxPixelIntensityPercentileArg("", "maxintensity", "Max Pixel Intensity Percentile", false, 100, "uint32_t");
         cmd.add(maxPixelIntensityPercentileArg);
 
-
-
         cmd.parse(argc, argv);
 
         std::string inputPath = inputPathArg.getValue();
@@ -152,13 +162,13 @@ int main(int argc, const char **argv) {
         uint32_t minHoleSize = MinHoleSizeArg.getValue();
         std::string maxHoleSizeString = MaxHoleSizeArg.getValue();
         uint32_t minObjectSize = MinObjectSizeArg.getValue();
-        bool maskOnly = MaskOnlyArg.getValue();
+        bool maskOnly = parseBooleanString(MaskOnlyArg.getValue());
         std::string expertMode = expertModeArg.getValue();
         std::string joinOperatorString = joinOperatorArg.getValue();
         uint32_t minPixelIntensityPercentile = minPixelIntensityPercentileArg.getValue();
         uint32_t maxPixelIntensityPercentile = maxPixelIntensityPercentileArg.getValue();
-        bool label = labelFlag.getValue();
-        bool disableIntensityFilter = disableIntensityFilterArg.getValue();
+        bool label = parseBooleanString(labelFlag.getValue());
+        bool disableIntensityFilter = parseBooleanString(disableIntensityFilterArg.getValue());
 
         if (!hasEnding(outputDir, "/")) {
             outputDir += "/";
@@ -223,6 +233,8 @@ int main(int argc, const char **argv) {
         DLOG(FATAL) << "error: " << e.error() << " for arg " << e.argId() << std::endl;
     }
 
+    auto end = std::chrono::high_resolution_clock::now();
+    VLOG(1) << "    WallTime: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " mS" << std::endl;
     exit(0);
 
 }

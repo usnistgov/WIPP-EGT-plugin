@@ -54,69 +54,186 @@ namespace egt {
   * the blob address and the values are all the possible coordinates the blob can
   * merge with.
   **/
-class ViewAnalyse : public htgs::IData {
- public:
+    class ViewAnalyse : public htgs::IData {
+    public:
 
-    void tidy(){
-            //TODO we could remove from merge list if we have tiny amount of pixel
-            VLOG(1) << "tidying up contiguous pixels";
-    }
+        ViewAnalyse() = default;
+
+        ViewAnalyse(uint32_t row, uint32_t col, uint32_t level) : row(row), col(col), level(level) {}
+
+        uint32_t getLevel() const {
+            return level;
+        }
+
+        uint32_t getRow() const {
+            return row;
+        }
+
+        uint32_t getCol() const {
+            return col;
+        }
+
+        void setLevel(uint32_t l) {
+            level = l;
+        }
 
 
-  /// \brief Getter to the merge map
-  /// \return Merge map
-  const std::unordered_map<Blob *, std::list<Coordinate>> &getToMerge() const {
-    return _toMerge;
-  }
+        /// \brief Getter to the merge map
+        /// \return Merge map
+        std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>> &getToMerge() {
+            return _toMerge;
+        }
 
-  std::unordered_map<Blob *, std::list<Coordinate>> &getHolesToMerge() {
-        return _holesToMerge;
-  }
+        std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>> &getHolesToMerge() {
+            return _holesToMerge;
+        }
 
-  /// \brief Getter to the blobs list
-  /// \return The blobs list
-  const std::list<Blob *> &getBlobs() const { return _blobs; }
+        std::unordered_map<Blob *, std::list<Blob *>> &getBlobsParentSons() {
+            return _blobsParentSons;
+        }
 
-  const std::list<Blob *> &getHoles() const { return _holes; }
+        std::unordered_map<Blob *, std::list<Blob *>> &getFinalBlobsParentSons() {
+            return _finalBlobsParentSons;
+        }
 
-  /// \brief Add an entry to the to merge structure
-  /// \param b Blob to add
-  /// \param c Coordinate links to this  blob
-  void addToMerge(Blob *b, Coordinate c) {
-      _toMerge[b].push_back(c);
-  }
+        std::unordered_map<Blob *, std::list<Blob *>> &getHolesParentSons() {
+            return _holesParentSons;
+        }
 
-    void addHolesToMerge(Blob *b, Coordinate c) {
-        _holesToMerge[b].push_back(c);
-    }
+        std::unordered_map<Blob *, std::list<Blob *>> &getFinalHolesParentSons() {
+            return _finalHolesParentSons;
+        }
 
-  /// \brief Insert a blob to the list of blobs
-  /// \param b blob to add
-  void insertBlob(Blob *b) { _blobs.push_back(b); }
 
-  void insertHole(Blob *b) { _holes.push_back(b); }
+        Blob *getSurroundingBlob(std::vector<Blob *> &blobs, uint32_t row, uint32_t col) {
+            for (auto b : blobs){
+                if(b->isPixelinFeature(row - 1, col)){
+                    return b;
+                }
+                if(b->isPixelinFeature(row, col - 1)){
+                    return b;
+                }
+            }
+            return nullptr;
+        }
 
-  virtual ~ViewAnalyse() {
-        _toMerge.clear();
-        _blobs.clear();
-        _holesToMerge.clear();
-        _holes.clear();
-  }
+        void filterHoles(uint32_t cutoff){
 
-private:
-  std::unordered_map<egt::Blob *, std::list<Coordinate>>
-      _toMerge{};   ///< Map of blob which will need to be merged to a list of
-                  ///< coordinates
+            //list of all blobs
+            auto blobs = std::vector<Blob*>();
 
-    std::unordered_map<egt::Blob *, std::list<Coordinate>>
-            _holesToMerge{};   ///< Map of holes which will need to be merged to a list of
-    ///< coordinates
+            for(auto parentBlob : this->getBlobsParentSons()) {
+                for(auto blob : parentBlob.second) {
+                    blobs.push_back(blob);
+                }
+            }
+            for(auto finalParentBlob : this->getFinalBlobsParentSons()) {
+                for(auto blob : finalParentBlob.second) {
+                    blobs.push_back(blob);
+                }
+            }
 
-  std::list<Blob *>
-      _blobs{};   ///< List of blobs created
+            //for each final hole
+            for(auto parentHole : this->getFinalHolesParentSons()) {
+                auto holeGroup = parentHole.second;
 
-  std::list<Blob *>
-      _holes{};   ///< List of holes created
-};
+                uint64_t area = 0;
+                for (auto blob : holeGroup) {
+                    area += blob->getCount();
+                }
+
+                VLOG(4) << "Final hole group of size : " << holeGroup.size() << " and of area : " << area;
+
+                if(area < cutoff) {
+                    VLOG(4) << "Hole too small : turn to foreground.";
+                    auto blob = getSurroundingBlob(blobs, parentHole.first->getStartRow(),
+                                                   parentHole.first->getStartCol());
+
+                    if(blob == nullptr) {
+                        VLOG(1) << "SPECIAL CASE" << " : hole at the border and not merging. We need a better way to find surrounding blobs";
+                        this->getFinalBlobsParentSons().insert(parentHole);
+                    }
+                    else {
+                        fc::UnionFind<Blob> uf{};
+                        auto parent = uf.find(blob);
+                        auto it = this->getFinalBlobsParentSons().find(parent);
+                        if (it != this->getFinalBlobsParentSons().end()) {
+                            it->second.splice(it->second.end(), holeGroup);
+                        } else {
+                            auto it = this->getBlobsParentSons().find(parent);
+                            if (it != this->getBlobsParentSons().end()) {
+                                it->second.splice(it->second.end(), holeGroup);
+                            }
+                        }
+                    }
+                }
+                else {
+                    for(auto hole : holeGroup) {
+                        delete hole;
+                    }
+                }
+            }
+
+            this->getFinalHolesParentSons().clear();
+        }
+
+
+        /// \brief Add an entry to the to merge structure
+        /// \param b Blob to add
+        /// \param c Coordinate links to this  blob
+        void addToMerge(Coordinate tileCoordinate, Blob *b, Coordinate c) {
+            _toMerge[tileCoordinate][b].push_back(c);
+        }
+
+        void addHolesToMerge(Coordinate tileCoordinate, Blob *b, Coordinate c) {
+            _holesToMerge[tileCoordinate][b].push_back(c);
+        }
+
+        /// \brief Insert a blob to the list of blobs
+        /// \param b blob to add
+        void insertBlob(Blob *b) {
+            if(b->isToMerge()) {
+                _blobsParentSons[b].push_back(b);
+            }
+            else {
+                _finalBlobsParentSons[b].push_back(b);
+            }
+        }
+
+        void insertHole(Blob *b) {
+            _holesParentSons[b].push_back(b);
+        }
+
+        virtual ~ViewAnalyse() {
+            _toMerge.clear();
+            _holesToMerge.clear();
+            _finalBlobsParentSons.clear();
+            _blobsParentSons.clear();
+            _holesParentSons.clear();
+            _finalHolesParentSons.clear();
+        }
+
+    private:
+        std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>
+                _toMerge{};   ///< Map of blob which will need to be merged to a list of
+        ///< coordinates
+
+        std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>
+                _holesToMerge{};   ///< Map of holes which will need to be merged to a list of
+        ///< coordinates
+
+        std::unordered_map<Blob *, std::list<Blob *>> _finalBlobsParentSons{};
+
+        std::unordered_map<Blob *, std::list<Blob *>> _blobsParentSons{};
+
+        std::unordered_map<Blob *, std::list<Blob *>> _holesParentSons{};
+
+        std::unordered_map<Blob *, std::list<Blob *>> _finalHolesParentSons{};
+
+        uint32_t level = 0;
+
+        uint32_t row = 0, col = 0;
+
+    };
 }
 #endif //EGT_REGIONLABELING_VIEWANALYSE_H

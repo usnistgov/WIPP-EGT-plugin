@@ -19,10 +19,6 @@ namespace egt {
         GradientView(const std::shared_ptr<htgs::MemoryData<fi::View<T>>> &gradientView, T*originalView) : gradientView(gradientView),
                                                                                           originalView(originalView) {}
 
-        ~GradientView() override {
-            delete[] originalView;
-        }
-
         const std::shared_ptr<MemoryData<fi::View<T>>> &getGradientView() const {
             return gradientView;
         }
@@ -30,6 +26,12 @@ namespace egt {
         T *getOriginalView() const {
             return originalView;
         }
+
+        void releaseMemory(){
+            delete[] originalView;
+            gradientView->releaseMemory();
+
+    }
 
 
     private:

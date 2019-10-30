@@ -64,7 +64,7 @@ namespace egt {
   * _A bitmask, telling for each pixel in the BoundingBox if it belongs to the feature
   * _The number of pixel in the feature.
   **/
-    class Feature {
+    class Feature : public IData {
     public:
         /// \brief Feature constructor from a bounding box and a bitmask
         /// \param id Feature Id

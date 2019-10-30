@@ -8,12 +8,10 @@
 #include <FastImage/api/View.h>
 #include <htgs/api/ITask.hpp>
 #include <egt/data/ConvOutData.h>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/core.hpp>
-#include <opencv/cv.hpp>
 #include <egt/api/DataTypes.h>
 #include <egt/data/ThresholdOrView.h>
 #include <egt/utils/Utils.h>
+#include <opencv2/imgcodecs.hpp>
 
 namespace egt {
 

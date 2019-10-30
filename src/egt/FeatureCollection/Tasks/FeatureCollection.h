@@ -46,8 +46,6 @@
 #include <egt/FeatureCollection/Data/Blob.h>
 #include <egt/FeatureCollection/Data/ListBlobs.h>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/imgcodecs.hpp>
 //#include <libltdl/lt_system.h>
 
 using namespace fc;
@@ -83,8 +81,16 @@ class FeatureCollection {
       : _imageWidth(0), _imageHeight(0) {
     this->deserialize(pathFeatureCollection);
   }
+    
+    virtual ~FeatureCollection() {
+        for(Feature f : _vectorFeatures){
+            if(f.getBitMask() != nullptr) {
+                delete[] f.getBitMask();
+            }
+        }
+    }
 
-  /// \brief Get Image Width
+    /// \brief Get Image Width
   /// \return Image Width
   uint32_t getImageWidth() const { return _imageWidth; }
 
@@ -298,7 +304,7 @@ class FeatureCollection {
 
     // Create the tiff file
     TIFF
-        *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+        *tif = TIFFOpen(pathLabeledMask.c_str(), "w8");
 
     uint32_t
         upperLeftRowFeature = 0,
@@ -330,7 +336,7 @@ class FeatureCollection {
       TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
       TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-      TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
       TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
       TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -466,7 +472,7 @@ class FeatureCollection {
 
     // Create the tiff file
     TIFF
-        *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+        *tif = TIFFOpen(pathLabeledMask.c_str(), "w8");
 
     uint32_t
         upperLeftRowFeature = 0,
@@ -498,7 +504,7 @@ class FeatureCollection {
       TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
       TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-      TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+      TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
       TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
       TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -628,7 +634,7 @@ class FeatureCollection {
 
       // Create the tiff file
       TIFF
-              *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+              *tif = TIFFOpen(pathLabeledMask.c_str(), "w8");
 
       if (tif != nullptr) {
         TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
@@ -640,7 +646,7 @@ class FeatureCollection {
         TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
         TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
         TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
         TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
         TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -700,10 +706,9 @@ class FeatureCollection {
             resolution = 8 * sizeof(uint16_t);
             break;
           }
-          case ImageDepth::_32U : {
-            resolution = 8 * sizeof(uint32_t);
-            break;
-          }
+          default:
+              VLOG(4) << "wrong encoding of depth for labeled mask... Defaulting to uint32";
+              resolution = 8 * sizeof(uint32_t);
       }
 
       if ((tileSize & (tileSize - 1)) != 0) {
@@ -722,7 +727,7 @@ class FeatureCollection {
 
       // Create the tiff file
       TIFF
-              *tif = TIFFOpen(pathLabeledMask.c_str(), "w");
+              *tif = TIFFOpen(pathLabeledMask.c_str(), "w8");
 
       if (tif != nullptr) {
         TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
@@ -734,7 +739,7 @@ class FeatureCollection {
         TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
         TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
         TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
         TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
         TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -801,6 +806,27 @@ class FeatureCollection {
       this->preProcessing();
     }
 
+
+    void createFCFromFeatures(const std::list<std::shared_ptr<Feature>> &features,
+                                      uint32_t imageHeight,
+                                      uint32_t imageWidth) {
+
+      this->setImageHeight(imageHeight);
+      this->setImageWidth(imageWidth);
+      uint32_t
+              idFeature = 0;
+
+      for (auto feature : features) {
+        //feature->printBitMask();
+        _vectorFeatures.push_back(*feature.get());
+        ++idFeature;
+      }
+
+
+
+      // Preprocess the FC
+      this->preProcessing();
+    }
 
 
     FeatureCollection(std::vector<Feature> &features,

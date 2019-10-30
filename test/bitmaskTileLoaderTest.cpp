@@ -108,6 +108,6 @@ int main() {
 
     fi->writeGraphDotFile("debug-fi-graph.xdot");
 
-    delete fi;
+    //delete fi;
 }
 

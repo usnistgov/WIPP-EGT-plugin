@@ -64,8 +64,9 @@ using Coordinate = std::pair<int32_t, int32_t>;
   **/
 class Blob {
  public:
-  /// \brief Blob construction and initialisation
-  Blob(uint32_t row, uint32_t col)
+
+    /// \brief Blob construction and initialisation
+  Blob(uint32_t row, uint32_t col, uint32_t tileRow, uint32_t tileCol)
       : _parent(this),
         _rank(0),
         _rowMin(std::numeric_limits<int32_t>::max()),
@@ -73,7 +74,10 @@ class Blob {
         _colMin(std::numeric_limits<int32_t>::max()),
         _colMax(0),
         _startRow(row),
-        _startCol(col) {
+        _startCol(col),
+        _tileRow(tileRow),
+        _tileCol(tileCol)
+        {
     static uint32_t
         currentTag = 0;
     std::mutex
@@ -81,10 +85,34 @@ class Blob {
     std::lock_guard<std::mutex>
         lock(m);
 
-    _tag = currentTag++;
+    _id = currentTag++;
     _count = 0;
   }
 
+
+    double getMaxCoord(int dim) {
+      return _feature->getMaxCoord(dim);
+    };
+
+    double getMinCoord(int dim) {
+      return _feature->getMinCoord(dim);
+    };
+
+    double getDistanceSqrTo(fc::Vector2<double> const &point) {
+      return _feature->getDistanceSqrTo(point);
+    };
+
+    bool contains(uint32_t row, uint32_t col) const {
+      return _feature->contains(row, col);
+    };
+
+    bool contains(fc::Vector2<double> const &point) {
+      return _feature->contains(point);
+    };
+
+
+
+    //TODO change once we replace the AABB Tree
     virtual ~Blob() {
       if(_feature != nullptr) {
           delete[] _feature->getBitMask();
@@ -94,16 +122,33 @@ class Blob {
 
     /// \brief Get Blob tag
   /// \return Blob tag
-  uint32_t getTag() const { return _tag; }
+  uint32_t getId() const { return _id; }
 
-    bool isToMerge() const {
-        return _toMerge;
+    bool isToMerge() {
+        return mergeCount > 0;
     }
 
-    void setToMerge(bool toMerge) {
-        _toMerge = toMerge;
+    bool setMergeCount(uint32_t newCount){
+      mergeCount = newCount;
     }
 
+    void increaseMergeCount() {
+      mergeCount++;
+   }
+
+   void decreaseMergeCount() {
+     if (mergeCount == 0) {
+       VLOG(3) << "TODO - Merge count already at zero. This should never happen!";
+       assert(false);
+     }
+     else {
+       mergeCount--;
+     }
+   }
+
+    uint32_t getMergeCount() const {
+      return mergeCount;
+    }
 
     uint32_t getStartRow() const {
         return _startRow;
@@ -173,7 +218,16 @@ class Blob {
       return (uint64_t)(_colMax - _colMin) * (_rowMax - _rowMin);
   }
 
-  /// \brief Minimum bounding box row setter
+
+  uint32_t getTileRow() const {
+    return _tileRow;
+  }
+
+  uint32_t getTileCol() const {
+    return _tileCol;
+  }
+
+    /// \brief Minimum bounding box row setter
   /// \param rowMin Minimum bounding box row
   void setRowMin(int32_t rowMin) { _rowMin = rowMin; }
 
@@ -310,7 +364,7 @@ class Blob {
       }
     }
 
-    _feature = new Feature(this->getTag(), boundingBox, bitMask);
+    _feature = new Feature(this->getId(), boundingBox, bitMask);
     _rowCols.clear();
   }
 
@@ -363,7 +417,7 @@ class Blob {
   /// \param blob Blob to print
   /// \return Output stream with the blob information
   friend std::ostream &operator<<(std::ostream &os, const Blob &blob) {
-    os << "Blob #" << blob._tag << std::endl;
+    os << "Blob #" << blob._id << std::endl;
     os << "    BB: ["
        << blob._rowMin << ", " << blob._colMin << "] -> ["
        << blob._rowMax << ", " << blob._colMax << "]" << std::endl;
@@ -382,7 +436,7 @@ class Blob {
 
   uint32_t
       _rank = 0,          ///< Blob rank, used by the Union find algorithm
-      _tag = 0;           ///< Tag, only used to print/debug purpose
+      _id = 0;           ///< Tag, only used to print/debug purpose
 
   int32_t
       _rowMin{},          ///< Minimum bounding box row (in the global coordinates of the image)
@@ -397,12 +451,15 @@ class Blob {
       _rowCols
       {};         ///< Sparse matrix of unique coordinates composing the blob
 
-  bool _toMerge = false;
-
   uint32_t _startRow = 0;
   uint32_t _startCol = 0;
 
   Feature *_feature = nullptr;
+
+  uint32_t _tileRow = 0,
+           _tileCol = 0;
+
+  uint32_t mergeCount = 0;
 };
 
 }

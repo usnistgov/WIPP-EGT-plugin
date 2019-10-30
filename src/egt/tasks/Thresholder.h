@@ -1,9 +1,13 @@
 //
-// Created by gerardin on 8/12/19.
+// Created by gerardin on 10/22/19.
 //
 
-#ifndef NEWEGT_EGTSOBELFILTER_H
-#define NEWEGT_EGTSOBELFILTER_H
+#ifndef NEWEGT_THRESHOLDER_H
+#define NEWEGT_THRESHOLDER_H
+
+//
+// Created by gerardin on 8/12/19.
+//
 
 
 #include <FastImage/api/View.h>
@@ -19,7 +23,7 @@
 namespace egt {
 
     template <class T>
-    class EGTSobelFilter : public htgs::ITask<htgs::MemoryData<fi::View<T>>, GradientView<T>> {
+    class Thresholder : public htgs::ITask<htgs::MemoryData<fi::View<T>>, GradientView<T>> {
 
 
     private:
@@ -31,9 +35,11 @@ namespace egt {
         std::string outputPath = "/home/gerardin/CLionProjects/newEgt/outputs/debug/";
 //        std::string outputPath = "/Users/gerardin/Documents/projects/wipp++/egt/outputs/";
 
+        T _threshold;
+
     public:
 
-        EGTSobelFilter(size_t numThreads, ImageDepth depth, uint32_t startRow, uint32_t startCol) : htgs::ITask<htgs::MemoryData<fi::View<T>>, GradientView<T>> (numThreads), depth(depth), startRow(startRow), startCol(startCol) {}
+        Thresholder(size_t numThreads, ImageDepth depth, uint32_t startRow, uint32_t startCol, T threshold) : htgs::ITask<htgs::MemoryData<fi::View<T>>, GradientView<T>> (numThreads), depth(depth), startRow(startRow), startCol(startCol), _threshold(threshold) {}
 
         /// \brief Do the convolution on a view
         /// \param data View
@@ -96,13 +102,13 @@ namespace egt {
                     assert(index >= viewWidth * startRow + startCol);
                     assert(index <= (viewWidth - startRow) * viewHeight - startCol );
 
-
-                    tileOut[index] = (T)sum;
+                    auto val = (T) (sum >= _threshold ? _threshold  : 0);
+                    tileOut[index] = val;
 
                 }
             }
 
-             std::copy_n(tileOut, viewHeight * viewWidth, view->getData());
+            std::copy_n(tileOut, viewHeight * viewWidth, view->getData());
 
 //            printBoolArray("seg tileout", tileOut, viewWidth, viewHeight);
 
@@ -120,7 +126,7 @@ namespace egt {
         }
 
         htgs::ITask <htgs::MemoryData<fi::View<T>>,  GradientView<T>> *copy() override {
-            return new EGTSobelFilter(this->getNumThreads(), this->depth, this->startRow, this->startCol);
+            return new Thresholder(this->getNumThreads(), this->depth, this->startRow, this->startCol, this->_threshold);
         }
 
         std::string getName() override { return "Sobel Filter 3 * 3"; }
@@ -130,6 +136,4 @@ namespace egt {
 }
 
 
-
-
-#endif //NEWEGT_EGTSOBELFILTER_H
+#endif //NEWEGT_THRESHOLDER_H

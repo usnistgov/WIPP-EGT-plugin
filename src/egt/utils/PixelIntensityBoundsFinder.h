@@ -107,7 +107,7 @@ namespace egt {
                 expCount++;
 
                 fi->waitForGraphComplete();
-                delete fi;
+                //// delete fi;
             }
 
             segmentationParams.minPixelIntensityValue = minValue;
@@ -230,7 +230,7 @@ namespace egt {
             expCount++;
 
             fi->waitForGraphComplete();
-            delete fi;
+          //  delete fi;
         }
 
         VLOG(3) << "Done with all sample experiments.";

@@ -4,16 +4,17 @@
 
 #ifndef EGT_DATATYPES_H
 #define EGT_DATATYPES_H
-#include <opencv2/core/mat.hpp>
-#include <opencv2/core.hpp>
-#include <opencv/cv.hpp>
+
+
+#include <string>
+#include <stdexcept>
+#include <opencv2/core/hal/interface.h>
 
 namespace egt {
 
     enum class ImageDepth {
         _8U,
         _16U,
-        _32U,
         _32F
     };
 
@@ -23,8 +24,6 @@ namespace egt {
             return ImageDepth::_16U;
         } else if (depth == "8U") {
             return ImageDepth::_8U;
-        } else if (depth == "32U") {
-            return ImageDepth ::_32U;
         }
           else if (depth == "32F") {
             return ImageDepth::_32F;

@@ -52,6 +52,7 @@
 
 namespace egt {
 
+
 /**
   * @class EGTGradientViewAnalyser EGTGradientViewAnalyser.h <egt/FeatureCollection/Tasks/EGTGradientViewAnalyser.h>
   *
@@ -68,51 +69,59 @@ namespace egt {
   * @tparam UserType File pixel type
   **/
     template<class UserType>
-    class EGTGradientViewAnalyzer : public htgs::ITask<GradientView<UserType>,
-            ViewOrViewAnalyse<UserType>> {
+    class EGTGradientViewAnalyzer : public htgs::ITask<GradientView < UserType>,
+                                    ViewOrViewAnalyse<UserType>> {
 
     public:
 
-        enum Color { FOREGROUND, BACKGROUND };
+        enum Color {
+            FOREGROUND, BACKGROUND
+        };
 
         EGTGradientViewAnalyzer(size_t numThreads,
-                const uint32_t imageHeight,
-                const uint32_t imageWidth,
-                const int32_t tileHeight,
-                const int32_t tileWidth,
-                const uint8_t rank,
-                const UserType background,
-                SegmentationOptions* options,
-                DerivedSegmentationParams<UserType>& params
-                )
-                : ITask<GradientView<UserType>, ViewOrViewAnalyse<UserType>>(numThreads),
-                  _imageHeight(imageHeight),
-                  _imageWidth(imageWidth),
-                  _tileHeight(tileHeight),
-                  _tileWidth(tileWidth),
-                  _rank(rank),
-                  _background(background),
-                  _segmentationOptions(options),
-                  _segmentationParams(params),
-                  _vAnalyse(nullptr) {
-            _visited = std::vector<bool>((unsigned long)(_tileWidth * _tileHeight), false);
+                                const uint32_t imageHeight,
+                                const uint32_t imageWidth,
+                                const int32_t tileHeight,
+                                const int32_t tileWidth,
+                                const uint8_t rank,
+                                const UserType background,
+                                SegmentationOptions *options,
+                                DerivedSegmentationParams<UserType> &params
+        ): ITask<GradientView < UserType>, ViewOrViewAnalyse<UserType>> (numThreads),
+                                                                        _imageHeight (imageHeight),
+                                                                        _imageWidth(imageWidth),
+                                                                        _tileHeight(tileHeight),
+                                                                        _tileWidth(tileWidth),
+                                                                        _rank(rank),
+                                                                        _background(background),
+                                                                        _segmentationOptions(options),
+                                                                        _segmentationParams(params),
+                                                                        _vAnalyse(nullptr) {
+            _visited = std::vector<bool>((unsigned long) (_tileWidth * _tileHeight), false);
         }
 
 
         /// \brief Execute the task, do a view analyse
         /// \param view View given by the FI
-        void executeTask(std::shared_ptr<GradientView<UserType>> view)
-        override {
+        void executeTask(std::shared_ptr<GradientView < UserType>> view) override {
             _view = view->getGradientView()->get();
             _originalView = view->getOriginalView();
             //FOR EACH NEW TILE WE NEED TO RESET THE TASK STATE SINCE MANY TILES CAN BE PROCESSED BY ONE TASK
-            _vAnalyse = new ViewAnalyse(); //OUTPUT
-            _toVisit.clear(); //clear queue that keeps track of neighbors to visit when flooding
-            _visited.assign(_visited.size(), false); //clear container that keeps track of all visited pixels in a pass through the image.
+            _vAnalyse = new ViewAnalyse(_view->getRow(), _view->getCol(), 0); //OUTPUT
+            _toVisit.
+            clear(); //clear queue that keeps track of neighbors to visit when flooding
+            _visited.
+            assign(_visited.size(),false); //clear container that keeps track of all visited pixels in a pass through the image.
             _currentBlob = nullptr;
             _tileHeight = _view->getTileHeight();
             _tileWidth = _view->getTileWidth();
             _imageSize = _tileWidth * _tileHeight;
+
+            tileStartCol = _view->getGlobalXOffset();
+            tileStartRow = _view->getGlobalYOffset();
+            tileEndCol = tileStartCol + _view->getTileWidth();
+            tileEndRow = tileStartRow + _view->getTileHeight();
+
 
             visitedCount = 0;
             run(BACKGROUND); //find holes
@@ -122,56 +131,49 @@ namespace egt {
             auto foregroundPixelCount = visitedCount;
             assert(_imageSize == backgroundPixelCount + foregroundPixelCount);
 
-            //if MASK_ONLY, we return the view with all pixel set to 0 (background) or 255 (foreground).
-            //Let's not forget to delete the viewAnalyse since we are done with it.
-            if(_segmentationOptions->MASK_ONLY) {
-                VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
-                VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
-                VLOG(3) << "objects removed because too small: " << objectRemovedCount;
-                delete _vAnalyse;
-                delete view->getOriginalView();
-                this->addResult(new ViewOrViewAnalyse<UserType>(view->getGradientView()));
-            }
-            //we return a ViewAnalyse to be merged. Let's not forget to release the view since we are done with it.
-            else {
-                VLOG(3) << "segmenting tile (" << _view->getRow() << " , " << _view->getCol() << ") :";
-                VLOG(3) << "holes turned to foreground : " << holeRemovedCount;
-                VLOG(3) << "objects removed because too small: " << objectRemovedCount;
-                VLOG(3) << "holes we keep track of in the merge: " << _vAnalyse->getHoles().size();
-                VLOG(3) << "holes to merge: " << _vAnalyse->getHolesToMerge().size();
-                VLOG(3) << "objects found: " << _vAnalyse->getBlobs().size();
-                VLOG(3) << "objects to merge: " << _vAnalyse->getToMerge().size();
-                view->getGradientView()->releaseMemory();
-                this->addResult(new ViewOrViewAnalyse<UserType>(_vAnalyse));
-            }
+            _vAnalyse->filterHoles(_segmentationOptions->MIN_HOLE_SIZE);
+
+
+            VLOG(4) << "Done analyzing tile (" << _view->getRow() << " , " << _view->getCol() << ").";
+            VLOG(5) << "holes turned to foreground : " << holeRemovedCount;
+            VLOG(5) << "objects removed because too small: " << objectRemovedCount;
+            VLOG(5) << "holes to merge: " << _vAnalyse->getHolesToMerge().size();
+            VLOG(5) << "objects finalized: " << _vAnalyse->getFinalBlobsParentSons().size();
+            VLOG(5) << "objects to merge: " << _vAnalyse->getToMerge().size();
+
+            view->releaseMemory();
+
+            this->addResult(new ViewOrViewAnalyse<UserType>(_vAnalyse));
         }
 
         /// \brief View analyser copy function
         /// \return A new View analyser
-        EGTGradientViewAnalyzer<UserType> *copy() override {
+        EGTGradientViewAnalyzer <UserType> *copy() override {
             auto viewAnalyzer = new EGTGradientViewAnalyzer<UserType>(this->getNumThreads(),
-                                                           _imageHeight,
-                                                           _imageWidth,
-                                                           _tileHeight,
-                                                           _tileWidth,
-                                                           _rank,
-                                                           _background,
-                                                           _segmentationOptions,
-                                                           _segmentationParams);
+                                                                      _imageHeight,
+                                                                      _imageWidth,
+                                                                      _tileHeight,
+                                                                      _tileWidth,
+                                                                      _rank,
+                                                                      _background,
+                                                                      _segmentationOptions,
+                                                                      _segmentationParams);
             return viewAnalyzer;
         }
 
         /// \brief Get task name
         /// \return Task name
-        std::string getName() override {
-            return "EGT View analyzer";
+        std::string getName()
+
+        override {
+        return "EGT View analyzer";
         }
 
 
     private:
 
-        void run(Color blobColor){
-//            printArray<UserType>("", _view->getData(), _view->getViewWidth(), _view->getViewHeight(), 4);
+        void run(Color blobColor) {
+        //            printArray<UserType>("", _view->getData(), _view->getViewWidth(), _view->getViewHeight(), 4);
 
             for (int32_t row = 0; row < _tileHeight; ++row) {
                 for (int32_t col = 0; col < _tileWidth; ++col) {
@@ -188,7 +190,7 @@ namespace egt {
 
                     //UNLESS WE ARE DONE EXPLORING WE CREATE A ONE PIXEL BLOB AND EXPLORE ITS NEIGHBORS
                     if (!visited(row, col) && getColor(row, col) == blobColor) {
-                        createBlob(row,col, blobColor);
+                        createBlob(row, col, blobColor);
                     }
                 }
             }
@@ -197,23 +199,19 @@ namespace egt {
             if (_currentBlob != nullptr) {
                 blobCompleted(blobColor);
             }
-       }
+        }
 
-       /**
-        * We have a queue of pixels to visit. Dequeue the first one and explore its neighbors.
-        * @param blobColor
-        */
-        void expandBlob(Color blobColor){
+        /**
+         * We have a queue of pixels to visit. Dequeue the first one and explore its neighbors.
+         * We use connectivity 4 for background and connectivity 8 for foreground.
+         * @param blobColor
+         */
+        void expandBlob(Color blobColor) {
             auto neighbourCoord = *_toVisit.begin();
             _toVisit.erase(_toVisit.begin());
             //mark pixel as visited so we don't look at it again
             markAsVisited(neighbourCoord.first,
                           neighbourCoord.second);
-
-            if(_segmentationOptions->MASK_ONLY){
-                auto maskValue = (getColor(neighbourCoord.first, neighbourCoord.second) == FOREGROUND) ? 255 : 0;
-                _view->setPixel(neighbourCoord.first,neighbourCoord.second, maskValue);
-            }
 
             _currentBlob->addPixel(
                     _view->getGlobalYOffset() + neighbourCoord.first,
@@ -221,8 +219,7 @@ namespace egt {
 
             if (blobColor == BACKGROUND) {
                 analyseNeighbour4(neighbourCoord.first, neighbourCoord.second, blobColor);
-            }
-            else {
+            } else {
                 analyseNeighbour8(neighbourCoord.first, neighbourCoord.second, blobColor);
             }
         }
@@ -232,90 +229,163 @@ namespace egt {
          * @param blobColor
          */
         void blobCompleted(Color blobColor) {
-                //background and foreground blobs are not handled the same way
-                if(blobColor == BACKGROUND) {
-                    //we know this hole is on the border, so we keep track of it for the merge.
-                    if (_currentBlob->isToMerge()) {
-                        if(!_segmentationOptions->MASK_ONLY) {
-                            _currentBlob->compactBlobDataIntoFeature();
-                            _vAnalyse->insertHole(_currentBlob);
-                        }
-                    }
-                    //for local hole, decide if we fill it up.
-                    else {
-                        bool keepHole = false;
-                        auto area = _currentBlob->getCount();
 
-                        if( _segmentationOptions->disableIntensityFilter) {
-                            keepHole = computeKeepHoleAreaOnlyCriteria<UserType>(area, _segmentationOptions, _segmentationParams);
+            if (blobColor == BACKGROUND) {
+
+                if (_currentBlob->isToMerge()) {
+
+        //            //A blob bigger than the cutoff is background, let's discard it
+        //            if(_currentBlob->getCount() >= _segmentationOptions->MIN_HOLE_SIZE){
+        //                delete _currentBlob;
+        //            }
+        //            //we cannot make a decision yet, hole needs to be merged.
+        //            else {
+                        flattenPixelToMerge(_currentBlob, blobColor);
+                        //we know this hole is on the border, so we keep track of it for the merge.
+                        _currentBlob->compactBlobDataIntoFeature();
+                        _vAnalyse->getHolesParentSons()[_currentBlob].push_back(_currentBlob);
+        //            }
+                }
+                    //for local holes, decide if we fill them up or ignore them.
+                else {
+                    bool keepHole = false;
+                    auto area = _currentBlob->getCount();
+
+                    if (_segmentationOptions->disableIntensityFilter) {
+                        keepHole = computeKeepHoleAreaOnlyCriteria<UserType>(area, _segmentationOptions, _segmentationParams);
+                    } else {
+                        UserType meanIntensity = computeMeanIntensity();
+                        keepHole = computeKeepHoleCriteria<UserType>(area, meanIntensity, _segmentationOptions,
+                                                                     _segmentationParams);
+                    }
+
+                    //We turn this hole into a foreground blob
+                    if (!keepHole) {
+                        if(!overlap()) {
+                            fillUpHole();
+                            delete _currentBlob;
                         }
                         else {
-                            UserType meanIntensity = computeMeanIntensity();
-                            keepHole = computeKeepHoleCriteria<UserType>(area, meanIntensity, _segmentationOptions, _segmentationParams);
+                            _currentBlob->compactBlobDataIntoFeature();
+                            _vAnalyse->getFinalHolesParentSons()[_currentBlob].push_back(_currentBlob);
                         }
-
-                        if(!keepHole) {
-                            fillUpHole();
-                        }
-                        delete _currentBlob;
                         holeRemovedCount++;
+                    //It is an legit hole, remove
+                    } else {
+                        delete _currentBlob;
                     }
+                }
+            }
+
+                //FOREGROUND OBJECT
+            else {
+                _currentBlob->compactBlobDataIntoFeature();
+
+                if (_currentBlob->isToMerge()) {
+                    flattenPixelToMerge(_currentBlob, blobColor);
+                    _vAnalyse->getBlobsParentSons()[_currentBlob].push_back(_currentBlob);
                 }
                 else {
-                    //we delete small objects
-                    if (!_currentBlob->isToMerge() && _currentBlob->getCount() < _segmentationOptions->MIN_OBJECT_SIZE) {
+                    _vAnalyse->getFinalBlobsParentSons()[_currentBlob].push_back(_currentBlob);
+                }
+            }
 
-                        if(_segmentationOptions->MASK_ONLY){
-                            for (auto it = _currentBlob->getRowCols().begin();
-                                 it != _currentBlob->getRowCols().end(); ++it) {
-                                auto pRow = it->first;
-                                for (auto pCol : it->second) {
-                                    auto xOffset = _view->getGlobalXOffset();
-                                    auto yOffset = _view->getGlobalYOffset();
-                                    _view->setPixel(pRow - yOffset, pCol - xOffset,0);
-                                }
+            _currentBlob = nullptr; //reset pointer in any case
+        }
+
+
+        bool overlap()
+        {
+            return (_currentBlob->getRowMin() == tileStartRow) || (_currentBlob->getRowMax() == tileEndRow) ||
+                    (_currentBlob->getColMin() == tileStartCol) || (_currentBlob->getColMax() == tileEndCol);
+        }
+
+void flattenPixelToMerge(Blob *blob, Color blobColor) {
+
+            blob->setMergeCount(0); //we reset the counter
+
+            //Where should we look to find its merging info?
+            std::map<Coordinate, std::unordered_map<Blob *, std::list<Coordinate>>>::iterator mergeIterator, endIterator;
+            if (blobColor == BACKGROUND) {
+                mergeIterator = _vAnalyse->getHolesToMerge().begin();
+                endIterator = _vAnalyse->getHolesToMerge().end();
+            } else {
+                mergeIterator = _vAnalyse->getToMerge().begin();
+                endIterator = _vAnalyse->getToMerge().end();
+            }
+
+            //iterate the merge structure. This blob can be present in several tiles.
+            while (mergeIterator != endIterator) {
+
+                auto blobMapIt = mergeIterator->second.find(blob);
+
+                //if the blob belongs a merge region
+                if (blobMapIt != mergeIterator->second.end()) {
+
+                    std::list<Coordinate> &listToFlat = blobMapIt->second;
+                    auto originalSize = listToFlat.size();
+                    listToFlat.sort(); //we need to sort to guarantee we keep matching coordinates in both tiles merges
+                    auto prev = listToFlat.front();
+                    auto it = listToFlat.begin()++;
+
+                    //we are flattening a row of pixels
+                    if (listToFlat.front().first == listToFlat.back().first) {
+                        while (it != listToFlat.end()) {
+                            if (prev.second + 1 == (*it).second) {
+                                prev = (*it);
+                                it = listToFlat.erase(it);
+                            } else {
+                                prev = (*it);
+                                it++;
                             }
                         }
-                        delete _currentBlob;
-                        objectRemovedCount++;
                     }
-                    // we keep track of the others
-                    else{
-                        if(!_segmentationOptions->MASK_ONLY) {
-                            _currentBlob->compactBlobDataIntoFeature();
-                            _vAnalyse->insertBlob(_currentBlob);
+                    //we are flattening a column of pixels
+                    else {
+                        while (it != listToFlat.end()) {
+                            if (prev.first + 1 == (*it).first) {
+                                prev = (*it);
+                                it = listToFlat.erase(it);
+                            } else {
+                                prev = (*it);
+                                it++;
+                            }
                         }
                     }
+
+                    //add the number of merge to perform in one direction to the total number of merges to perform
+                    blob->setMergeCount(blob->getMergeCount() + (uint32_t) listToFlat.size());
+
+                    VLOG(5) << "blob " << blobColor << " : blob_" << blob->getId() << " - Flattened border pixels from " << originalSize << " down to " << blob->getMergeCount();
                 }
 
-            _currentBlob = nullptr;
+                mergeIterator++;
+            }
+
+            assert(blob->getMergeCount() != 0);
+
         }
 
 
         /**
          * Create a new blob at a given position and try to expand it.
-         * @param row
-         * @param col
-         * @param blobColor
          */
         void createBlob(int32_t row, int32_t col, Color blobColor) {
             markAsVisited(row, col);
             //add pixel to a new blob (we are recording the global position)
-            _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
+            _currentBlob = new Blob(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col, _view->getRow(),
+                                    _view->getCol());
             _currentBlob->addPixel(_view->getGlobalYOffset() + row, _view->getGlobalXOffset() + col);
 
             //look at its neighbors
             if (blobColor == BACKGROUND) {
                 analyseNeighbour4(row, col, blobColor);
-            }
-            else {
+            } else {
                 analyseNeighbour8(row, col, blobColor);
             }
         }
 
         /// \brief Analyse the neighbour of a pixel for a 4-connectivity
-        /// \param row Pixel's row
-        /// \param col Pixel's col
         void analyseNeighbour4(int32_t row, int32_t col, Color color) {
 
             auto globalRow = row + _view->getGlobalYOffset();
@@ -341,15 +411,10 @@ namespace egt {
                 }
             }
             // Right pixel
-            if ( (col + 1) < _tileWidth) {
+            if ((col + 1) < _tileWidth) {
                 if (!visited(row, col + 1) && getColor(row, col + 1) == color) {
                     _toVisit.emplace(row, col + 1);
                 }
-            }
-
-            //WE DON'T NEED MERGING IF WE GENERATE ONLY THE MASK
-            if(_segmentationOptions->MASK_ONLY){
-                return;
             }
 
             //Check if the blob in this tile belongs to a bigger blob extending several tiles.
@@ -361,13 +426,12 @@ namespace egt {
                 if (getColor(row + 1, col) == color) {
                     auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol);
 
-                    if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    if (color == BACKGROUND) {
+                        _vAnalyse->addHolesToMerge({_view->getRow() + 1, _view->getCol()}, _currentBlob, coords);
+                    } else {
+                        _vAnalyse->addToMerge({_view->getRow() + 1, _view->getCol()}, _currentBlob, coords);
                     }
-                    else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
-                    }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
             // Add blob to merge list if tile right pixel has the same value than the view pixel on its right (continuity)
@@ -375,29 +439,43 @@ namespace egt {
             if (col + 1 == _tileWidth && globalCol + 1 != _imageWidth) {
                 if (getColor(row, col + 1) == color) {
 
-                    auto coords =std::pair<int32_t, int32_t>(globalRow,globalCol + 1);
+                    auto coords = std::pair<int32_t, int32_t>(globalRow, globalCol + 1);
 
-                    if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    if (color == BACKGROUND) {
+                        _vAnalyse->addHolesToMerge({_view->getRow(), _view->getCol() + 1}, _currentBlob, coords);
+                    } else {
+                        _vAnalyse->addToMerge({_view->getRow(), _view->getCol() + 1}, _currentBlob, coords);
                     }
-                    else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
-                    }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
             //look at the pixel on the left. We need to set a flag so we know how to filter this blob.
             if (col == 0 && col + _view->getGlobalXOffset() != 0) {
                 if (getColor(row, col - 1) == color) {
-                    _currentBlob->setToMerge(true);
+                    auto coords = std::pair<int32_t, int32_t>(globalRow, globalCol - 1);
+
+                    if (color == BACKGROUND) {
+                        _vAnalyse->addHolesToMerge({_view->getRow(), _view->getCol() - 1}, _currentBlob, coords);
+                    } else {
+                        _vAnalyse->addToMerge({_view->getRow(), _view->getCol() - 1}, _currentBlob, coords);
+                    }
+                    _currentBlob->increaseMergeCount();
+
                 }
             }
 
             //look at the pixel above. We need to set a flag so we know how to filter this blob.
             if (row == 0 && row + _view->getGlobalYOffset() != 0) {
                 if (getColor(row - 1, col) == color) {
-                    _currentBlob->setToMerge(true);
+                    auto coords = std::pair<int32_t, int32_t>(globalRow - 1, globalCol);
+
+                    if (color == BACKGROUND) {
+                        _vAnalyse->addHolesToMerge({_view->getRow() - 1, _view->getCol()}, _currentBlob, coords);
+                    } else {
+                        _vAnalyse->addToMerge({_view->getRow() - 1, _view->getCol()}, _currentBlob, coords);
+                    }
+                    _currentBlob->increaseMergeCount();
                 }
             }
         }
@@ -413,17 +491,11 @@ namespace egt {
 
             for (int32_t rowP = minRow; rowP < maxRow; ++rowP) {
                 for (int32_t colP = minCol; colP < maxCol; ++colP) {
-                    if (!visited(rowP, colP)  && getColor(rowP, colP) == color) {
+                    if (!visited(rowP, colP) && getColor(rowP, colP) == color) {
                         _toVisit.emplace(rowP, colP);
                     }
                 }
             }
-
-            //WE DON'T NEED MERGING IF WE GENERATE ONLY THE MASK
-            if(_segmentationOptions->MASK_ONLY){
-                return;
-            }
-
 
             auto globalRow = row + _view->getGlobalYOffset();
             auto globalCol = col + _view->getGlobalXOffset();
@@ -437,93 +509,130 @@ namespace egt {
             bool onTileTopBorder = (row == 0 && globalRow != 0);
             bool onTileLeftBorder = (col == 0 && globalCol != 0);
 
+            //TODO now that we treat all directions the same, we could compact those case as one
             if (onTileBottomBorder) {
                 if (getColor(row + 1, col) == color) {
                     auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol());
 
-                    if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    if (color == BACKGROUND) {
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+                    } else {
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
-                    }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
             if (onTileRightBorder) {
                 if (getColor(row, col + 1) == color) {
 
-                    auto coords =std::pair<int32_t, int32_t>(globalRow,globalCol + 1);
+                    auto coords = std::pair<int32_t, int32_t>(globalRow, globalCol + 1);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow(), _view->getCol() + 1);
 
-                    if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
+                    if (color == BACKGROUND) {
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+                    } else {
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
                     }
-                    else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
-                    }
-                    _currentBlob->setToMerge(true);
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
             //Bottom right pixel
-            if (onTileRightBorder && onTileBottomBorder) {
-                if (getColor(row + 1, col + 1) == color) {
-
-                    auto coords =std::pair<int32_t, int32_t>(globalRow + 1,globalCol + 1);
-
-                    if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
-                    }
-                    else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
-                    }
-                    _currentBlob->setToMerge(true);
-                }
-            }
+        //    if (onTileRightBorder && onTileBottomBorder) {
+        //        if (getColor(row + 1, col + 1) == color) {
+        //
+        //            auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol + 1);
+        //            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol() + 1);
+        //
+        //            if (color == BACKGROUND) {
+        //                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+        //            } else {
+        //                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+        //            }
+        //            _currentBlob->increaseMergeCount();
+        //        }
+        //    }
 
             //Top right pixel (we could have alternatively check the bottom left)
-            if (onTileRightBorder && onTileTopBorder) {
-                if (getColor(row - 1, col + 1) == color) {
-
-                    auto coords =std::pair<int32_t, int32_t>(globalRow - 1,globalCol + 1);
-
-                    if(color == BACKGROUND){
-                        _vAnalyse->addHolesToMerge(_currentBlob, coords);
-                    }
-                    else {
-                        _vAnalyse->addToMerge(_currentBlob, coords);
-                    }
-                    _currentBlob->setToMerge(true);
-                }
-            }
+        //    if (onTileRightBorder && onTileTopBorder) {
+        //        if (getColor(row - 1, col + 1) == color) {
+        //
+        //            auto coords = std::pair<int32_t, int32_t>(globalRow - 1, globalCol + 1);
+        //            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol() + 1);
+        //
+        //            if (color == BACKGROUND) {
+        //                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+        //            } else {
+        //                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+        //            }
+        //            _currentBlob->increaseMergeCount();
+        //        }
+        //    }
 
 
             // We need to set a flag so we know how to filter this blob.
 
             if (onTileTopBorder) {
                 if (getColor(row - 1, col) == color) {
-                    _currentBlob->setToMerge(true);
+
+                    auto coords = std::pair<int32_t, int32_t>(globalRow - 1, globalCol);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol());
+
+                    if (color == BACKGROUND) {
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+                    } else {
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+                    }
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
             if (onTileLeftBorder) {
                 if (getColor(row, col - 1) == color) {
-                    _currentBlob->setToMerge(true);
+
+                    auto coords = std::pair<int32_t, int32_t>(globalRow, globalCol - 1);
+                    auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow(), _view->getCol() - 1);
+
+                    if (color == BACKGROUND) {
+                        _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+                    } else {
+                        _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+                    }
+                    _currentBlob->increaseMergeCount();
                 }
             }
 
-            if (onTileLeftBorder && onTileTopBorder) {
-                if (getColor(row - 1, col - 1) == color) {
-                    _currentBlob->setToMerge(true);
-                }
-            }
-
-            if (onTileLeftBorder && onTileBottomBorder) {
-                if (getColor(row + 1, col - 1) == color) {
-                    _currentBlob->setToMerge(true);
-                }
-            }
+        //    if (onTileLeftBorder && onTileTopBorder) {
+        //        if (getColor(row - 1, col - 1) == color) {
+        //
+        //            auto coords = std::pair<int32_t, int32_t>(globalRow - 1, globalCol - 1);
+        //            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() - 1, _view->getCol() - 1);
+        //
+        //            if (color == BACKGROUND) {
+        //                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+        //            } else {
+        //                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+        //            }
+        //            _currentBlob->increaseMergeCount();
+        //        }
+        //    }
+        //
+        //    if (onTileLeftBorder && onTileBottomBorder) {
+        //        if (getColor(row + 1, col - 1) == color) {
+        //
+        //            auto coords = std::pair<int32_t, int32_t>(globalRow + 1, globalCol - 1);
+        //            auto tileCoords = std::pair<int32_t, int32_t>(_view->getRow() + 1, _view->getCol() - 1);
+        //
+        //            if (color == BACKGROUND) {
+        //                _vAnalyse->addHolesToMerge(tileCoords, _currentBlob, coords);
+        //            } else {
+        //                _vAnalyse->addToMerge(tileCoords, _currentBlob, coords);
+        //            }
+        //            _currentBlob->increaseMergeCount();
+        //        }
+        //    }
 
         }
 
@@ -536,16 +645,16 @@ namespace egt {
             auto yOffset = _view->getGlobalYOffset();
             uint64_t sum = 0, count = 0;
 
-            for(const auto &entry : _currentBlob->getRowCols()) {
+            for (const auto &entry : _currentBlob->getRowCols()) {
                 auto row = entry.first;
-                for(const auto col : entry.second) {
+                for (const auto col : entry.second) {
                     sum += _originalView[(row - yOffset) * _tileWidth + (col - xOffset)];
-                    count ++;
+                    count++;
                 }
             }
             auto intensity = (UserType)(sum / count);
 
-            VLOG(5) << "hole (" << _currentBlob->getTag()  << ") mean intensity "  << intensity;
+            VLOG(5) << "hole (" << _currentBlob->getId() << ") mean intensity " << intensity;
 
             return intensity;
         }
@@ -554,24 +663,19 @@ namespace egt {
          * Set every pixel value to foreground and make sure those pixels are visited again in the object detection step.
          */
         void fillUpHole() {
+            auto xOffset = _view->getGlobalXOffset();
+            auto yOffset = _view->getGlobalYOffset();
             for (auto it = _currentBlob->getRowCols().begin();
                  it != _currentBlob->getRowCols().end(); ++it) {
                 auto pRow = it->first;
                 for (auto pCol : it->second) {
-                    auto xOffset = _view->getGlobalXOffset();
-                    auto yOffset = _view->getGlobalYOffset();
-
                     markAsUnvisited(pRow - yOffset, pCol - xOffset);
-
-                    if (_segmentationOptions->MASK_ONLY) {
-                        _view->setPixel(pRow - yOffset, pCol - xOffset, 255);
-                    } else {
-                        _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
-                    }
+                    _view->setPixel(pRow - yOffset, pCol - xOffset, _background + 1);
                 }
             }
 
-            VLOG(5) << "hole (" << _currentBlob->getTag()  << ") filled up : "  << _currentBlob->getCount() << " pixels turned into foreground.";
+            VLOG(5) << "hole (" << _currentBlob->getId() << ") filled up : " << _currentBlob->getCount()
+                    << " pixels turned into foreground.";
         }
 
 
@@ -585,27 +689,26 @@ namespace egt {
             visitedCount--;
         }
 
-        inline bool visited(int32_t row, int32_t col){
+        inline bool visited(int32_t row, int32_t col) {
             return _visited[row * _tileWidth + col];
         }
 
         Color getColor(int32_t row, int32_t col) {
-            if(_view->getPixel(row,col) > _background){
+            if (_view->getPixel(row, col) >= _background) {
                 return Color::FOREGROUND;
             }
             return Color::BACKGROUND;
         }
 
 
-
-        fi::View<UserType>* _view;
-        UserType* _originalView;
+        fi::View<UserType> *_view;
+        UserType *_originalView;
 
         const uint8_t _rank{}; ///< Rank to the connectivity: < 4=> 4-connectivity, 8=> 8-connectivity
 
 
         std::vector<bool> _visited{}; ///keep track of every pixel we looked at.
-        std::set<Coordinate>_toVisit{}; /// for a current position, keep track of the neighbors that needs visit.
+        std::set<Coordinate> _toVisit{}; /// for a current position, keep track of the neighbors that needs visit.
 
 
         Blob
@@ -624,16 +727,17 @@ namespace egt {
                 _imageHeight{},               ///< Mask height
                 _imageWidth{};                ///< Mask width
 
-        SegmentationOptions* _segmentationOptions{};
+        SegmentationOptions *_segmentationOptions{};
         DerivedSegmentationParams<UserType> _segmentationParams{};
 
 
         ViewAnalyse *_vAnalyse = nullptr;         ///< Current view analyse
 
         uint32_t objectRemovedCount = 0,
-                 holeRemovedCount = 0,
-                 visitedCount = 0;
+                holeRemovedCount = 0,
+                visitedCount = 0;
 
+        uint32_t tileStartCol{}, tileEndCol{}, tileStartRow{}, tileEndRow{};
 
     };
 

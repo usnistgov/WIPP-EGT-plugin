@@ -27,7 +27,7 @@ namespace egt {
         TiffTileWriter(size_t numThreads,uint32_t imageHeight, uint32_t imageWidth, uint32_t tileSize, ImageDepth outputDepth, std::string outputPath) :
         _imageHeight(imageHeight), _imageWidth(imageWidth), _tileSize(tileSize), outputDepth(outputDepth), _outputPath(outputPath) {
             // Create the tiff file
-            tif = TIFFOpen(outputPath.c_str(), "w");
+            tif = TIFFOpen(outputPath.c_str(), "w8");
 
             if (tif != nullptr) {
                 TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
@@ -35,11 +35,11 @@ namespace egt {
                 TIFFSetField(tif, TIFFTAG_TILELENGTH, tileSize);
                 TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileSize);
                 TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8 * calculateBitsPerSample(outputDepth) );
-                TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
-                TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
                 TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+                TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+                TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
                 TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-                TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+                TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
                 TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
                 TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
             }
@@ -50,7 +50,7 @@ namespace egt {
 
             fi::View<UserType> *view = data->get();
 
-            auto *tile = new int8_t[_tileSize * _tileSize]();
+            auto *tile = new UserType[_tileSize * _tileSize]();
 
             for( auto row = 0 ; row < _tileSize ; row++){
                 std::copy_n(view->getPointerTile() + row * view->getViewWidth(), _tileSize, tile + row * _tileSize);

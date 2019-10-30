@@ -9,7 +9,6 @@
 #include <string>
 #include <egt/loaders/PyramidTiledTiffLoader.h>
 #include <FastImage/api/FastImage.h>
-#include <egt/FeatureCollection/Tasks/EGTViewAnalyzer.h>
 #include <egt/FeatureCollection/Tasks/BlobMerger.h>
 #include <egt/FeatureCollection/Tasks/FeatureCollection.h>
 #include <egt/FeatureCollection/Tasks/ViewAnalyseFilter.h>
@@ -27,10 +26,19 @@
 #include <egt/api/EGTOptions.h>
 #include <random>
 #include <egt/tasks/EGTSobelFilter.h>
+#include <egt/tasks/NoTransform.h>
 #include <egt/FeatureCollection/Tasks/EGTGradientViewAnalyzer.h>
 #include "DerivedSegmentationParams.h"
 #include <experimental/filesystem>
 #include <egt/utils/PixelIntensityBoundsFinder.h>
+#include <egt/utils/pyramid/Pyramid.h>
+#include <egt/utils/pyramid/RecursiveBlockTraversal.h>
+#include <egt/rules/MergeRule.h>
+#include <egt/FeatureCollection/Tasks/MergeBlob.h>
+#include <egt/rules/MergeCompletedRule.h>
+#include <egt/FeatureCollection/Tasks/FeatureBuilder.h>
+#include <egt/tasks/MedianBlurFilter.h>
+#include <egt/tasks/Thresholder.h>
 
 
 namespace egt {
@@ -105,6 +113,9 @@ namespace egt {
             options->erode = (expertModeOptions.find("erode") != expertModeOptions.end())
                                       ? expertModeOptions.at("erode") == 1 : true;
 
+            options->testNoGradient = (expertModeOptions.find("testNoGradient") != expertModeOptions.end())
+                             ? expertModeOptions.at("testNoGradient") == 1 : false;
+
             VLOG(1) << "Execution model : ";
             VLOG(1) << "loader threads : " << options->nbLoaderThreads;
             VLOG(1) << "concurrent tiles : " << options->concurrentTiles;
@@ -121,6 +132,7 @@ namespace egt {
             }
             VLOG(1) << "min and max intensity are calculated at pyramid level: " << options->pixelIntensityBoundsLevelUp;
             VLOG(1) << "performing erosion: " << std::boolalpha << options->erode;
+            VLOG(1) << "test flag set - not applying gradient on views: " << std::boolalpha << options->testNoGradient;
 
 
             //We need to derive the segmentations params from the user defined parameters
@@ -146,23 +158,40 @@ namespace egt {
             segmentationParams.threshold = threshold;
 
             //Segmentation
-            std::shared_ptr<ListBlobs> blobs = nullptr;
+            std::list<std::shared_ptr<Feature>> features{};
             auto beginSegmentation = std::chrono::high_resolution_clock::now();
             if (segmentationOptions->MASK_ONLY) {
                 runLocalMaskGenerator(threshold, options, segmentationOptions, segmentationParams);
             } else {
-                blobs = runSegmentation(threshold, options, segmentationOptions, segmentationParams);
+                features = runSegmentation(threshold, options, segmentationOptions, segmentationParams);
             }
             auto endSegmentation = std::chrono::high_resolution_clock::now();
 
             //Mask generation
             auto beginFC = std::chrono::high_resolution_clock::now();
-            if (!segmentationOptions->MASK_ONLY) {
-                if(options->erode) {
-                    blobs->erode(options, segmentationOptions);
-                }
-                runMaskGeneration(blobs, options, segmentationOptions);
-            }
+            auto fc = new FeatureCollection();
+            fc->createFCFromFeatures(features, imageHeightAtSegmentationLevel, imageWidthAtSegmentationLevel);
+
+            fs::path path = options->inputPath;
+            std::string inputFilename = path.filename();
+            std::string outputFilenamePrefix = "";
+            outputFilenamePrefix = "bw-mask-";
+            auto outputFilename = outputFilenamePrefix + inputFilename;
+            auto outputFilepath =  (fs::path(options->outputPath) / outputFilename).string();
+
+            fc->createBlackWhiteMask(outputFilepath, (uint32_t) tileWidthAtSegmentationLevel);
+//            if (!segmentationOptions->MASK_ONLY) {
+//                if(options->erode) {
+//                    blobs->erode(options, segmentationOptions);
+//                }
+//                runMaskGeneration(blobs, options, segmentationOptions);
+//            }
+
+            VLOG(4) << "image written to : " << outputFilepath;
+
+
+            delete fc;
+
             auto endFC = std::chrono::high_resolution_clock::now();
 
             auto end = std::chrono::high_resolution_clock::now();
@@ -287,7 +316,7 @@ namespace egt {
 //FOR DEBUGGING
             graph->writeDotToFile("thresholdGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
-            delete fi;
+          //  delete fi;
             delete runtime;
 
             return threshold;
@@ -360,7 +389,7 @@ namespace egt {
             localMaskGenerationGraphRuntime->waitForRuntime();
             //FOR DEBUGGING
             localMaskGenerationGraph->writeDotToFile("SegmentationGraph.xdot", DOTGEN_COLOR_COMP_TIME);
-            delete fi;
+          //  delete fi;
             delete localMaskGenerationGraphRuntime;
             auto endSegmentation = std::chrono::high_resolution_clock::now();
         }
@@ -372,19 +401,21 @@ namespace egt {
          * @param options - Options for configuring EGT execution.
          * @param segmentationOptions - Parameters used for the segmentation.
          */
-        std::shared_ptr<ListBlobs>
+        std::list<std::shared_ptr<Feature>>
         runSegmentation(T threshold, EGTOptions *options, SegmentationOptions *segmentationOptions, DerivedSegmentationParams<T> segmentationParams) {
-            htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs> *segmentationGraph;
+            htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Feature> *segmentationGraph;
             htgs::TaskGraphRuntime *segmentationRuntime;
 
             uint32_t pyramidLevelToRequestForSegmentation = options->pyramidLevel;
             //radius of 2 since we need first apply convo, obtain a gradient of size n+1,
             //and then check the ghost region for potential merges for each tile of size n.
-            uint32_t segmentationRadius = 2;
+            uint32_t segmentationRadius = 4;
+
 
             auto tileLoader2 = new PyramidTiledTiffLoader<T>(options->inputPath, options->nbLoaderThreads);
             auto *fi = new fi::FastImage<T>(tileLoader2, segmentationRadius);
             fi->getFastImageOptions()->setNumberOfViewParallel(options->concurrentTiles);
+//            fi->getFastImageOptions()->setPreserveOrder(true);
             auto fastImage2 = fi->configureAndMoveToTaskGraphTask("Fast Image 2");
             imageHeightAtSegmentationLevel = fi->getImageHeight(pyramidLevelToRequestForSegmentation);
             imageWidthAtSegmentationLevel = fi->getImageWidth(pyramidLevelToRequestForSegmentation);
@@ -392,7 +423,19 @@ namespace egt {
             tileWidthAtSegmentationLevel = fi->getTileWidth(pyramidLevelToRequestForSegmentation);
             uint32_t nbTiles = fi->getNumberTilesHeight(pyramidLevelToRequestForSegmentation) *
                                fi->getNumberTilesWidth(pyramidLevelToRequestForSegmentation);
-            auto sobelFilter2 = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+            auto pyramid = pb::Pyramid(fi->getImageWidth(), fi->getImageHeight(), fi->getTileWidth());
+
+
+            htgs::ITask<htgs::MemoryData<fi::View<T>>, GradientView<T>>* sobelFilter = nullptr;
+            if(options->testNoGradient) {
+                sobelFilter = new NoTransform<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+            }
+            else {
+                sobelFilter = new Thresholder<T>(options->concurrentTiles, options->imageDepth, 1, 1, segmentationParams.threshold);
+//                sobelFilter = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
+            }
+
+            auto noiseFilter = new MedianBlurFilter<T>(options->concurrentTiles,  5, options->imageDepth);
 
             auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
                                                            imageHeightAtSegmentationLevel,
@@ -404,33 +447,67 @@ namespace egt {
                                                            segmentationOptions,
                                                            segmentationParams);
             auto labelingFilter = new ViewAnalyseFilter<T>(options->concurrentTiles);
-            auto merge = new BlobMerger<T>(imageHeightAtSegmentationLevel,
-                                        imageWidthAtSegmentationLevel,
-                                        nbTiles,
-                                        options,
-                                        segmentationOptions,
-                                        segmentationParams);
-            segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, ListBlobs>;
-            segmentationGraph->addEdge(fastImage2, sobelFilter2);
-            segmentationGraph->addEdge(sobelFilter2, viewSegmentation);
+
+            auto bookkeeper = new htgs::Bookkeeper<ViewAnalyse>();
+
+            auto mergeCompletedRule = new MergeCompletedRule(pyramid);
+            auto mergeRule = new MergeRule(pyramid);
+
+
+            auto featureBuilder = new FeatureBuilder(options->concurrentTiles, segmentationOptions);
+
+            segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Feature>;
+            segmentationGraph->addEdge(fastImage2, sobelFilter);
+            segmentationGraph->addEdge(sobelFilter, noiseFilter);
+            segmentationGraph->addEdge(noiseFilter, viewSegmentation);
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
-            segmentationGraph->addEdge(labelingFilter, merge);
-            segmentationGraph->addGraphProducerTask(merge);
+
+
+            auto mergeBlob = new MergeBlob(options->concurrentTiles, pyramid, segmentationOptions);
+
+
+            segmentationGraph->addEdge(labelingFilter, bookkeeper);
+            segmentationGraph->addRuleEdge(bookkeeper, mergeCompletedRule, featureBuilder);
+            segmentationGraph->addRuleEdge(bookkeeper,mergeRule, mergeBlob);
+            segmentationGraph->addEdge(mergeBlob,bookkeeper);
+
+
+            segmentationGraph->addGraphProducerTask(featureBuilder);
 
             htgs::TaskGraphSignalHandler::registerTaskGraph(segmentationGraph);
             htgs::TaskGraphSignalHandler::registerSignal(SIGTERM);
 
             segmentationRuntime = new htgs::TaskGraphRuntime(segmentationGraph);
             segmentationRuntime->executeRuntime();
-            fi->requestAllTiles(true, pyramidLevelToRequestForSegmentation);
+
+
+            auto traversal = new pb::RecursiveBlockTraversal(pyramid);
+            for(auto step : traversal->getTraversal()){
+                auto row = step.first;
+                auto col = step.second;
+                fi->requestTile(row,col,false,pyramidLevelToRequestForSegmentation);
+                VLOG(1) << "Requesting tile (" << row << "," << col << ")";
+            }
+            fi->finishedRequestingTiles();
+
             segmentationGraph->finishedProducingData();
 
-            //we only generate one output, the list of all objects
-            std::shared_ptr<ListBlobs> blobs = segmentationGraph->consumeData();
+            std::list<std::shared_ptr<Feature>> features{};
+
+            while(! segmentationGraph->isOutputTerminated()) {
+                auto feature = segmentationGraph->consumeData();
+                if(feature != nullptr){
+                    features.push_back(feature);
+                }
+            }
+
+            VLOG(4) << " Total number of features produced: " << features.size();
+
             segmentationRuntime->waitForRuntime();
-            delete fi;
+            delete traversal;
+           // delete fi;
             delete segmentationRuntime;
-            return blobs;
+          return features;
         }
 
         void runMaskGeneration(std::shared_ptr<ListBlobs> &blob, EGTOptions *options,
@@ -447,14 +524,14 @@ namespace egt {
             std::string inputFilename = path.filename();
             std::string outputFilenamePrefix = "";
 
-            if(! fs::create_directories(fs::path(options->outputPath))){
-                VLOG(4) << "Problem creating directory : " << options->outputPath;
+            if(fs::create_directories(fs::path(options->outputPath))){
+                VLOG(4) << "Directory  created: " << options->outputPath;
             }
 
             //generating a labeled mask. Let's try to find the appropriate resolution we need to correctly render each feature.
             if(options->label) {
                 auto nbBlobs = blob->_blobs.size();
-                auto depth = ImageDepth::_32U;
+                auto depth = ImageDepth::_32F;
 
                 outputFilenamePrefix = "labeled-mask-";
                 auto outputFilename = outputFilenamePrefix + inputFilename;
@@ -591,7 +668,7 @@ namespace egt {
 
             fi->finishedRequestingTiles();
             fi->waitForGraphComplete();
-            delete fi;
+       //     delete fi;
         }
 
 
