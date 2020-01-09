@@ -128,6 +128,9 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::uint32_t> MinObjectSizeArg("s", "minobject", "Minimum Object Size", true, 3000, "uint32_t");
         cmd.add(MinObjectSizeArg);
 
+        TCLAP::ValueArg<int> greedyArg("g", "greedy", "Greedy", false, 0, "int");
+        cmd.add(greedyArg);
+
         TCLAP::ValueArg<std::string> MaskOnlyArg("x", "maskonly", "Mask only", false, "false", "bool");
         cmd.add(MaskOnlyArg);
 
@@ -169,6 +172,7 @@ int main(int argc, const char **argv) {
         uint32_t maxPixelIntensityPercentile = maxPixelIntensityPercentileArg.getValue();
         bool label = parseBooleanString(labelFlag.getValue());
         bool disableIntensityFilter = parseBooleanString(disableIntensityFilterArg.getValue());
+        int greedy = greedyArg.getValue();
 
         if (!hasEnding(outputDir, "/")) {
             outputDir += "/";
@@ -183,6 +187,7 @@ int main(int argc, const char **argv) {
         VLOG(1) << joinOperatorArg.getDescription() << ": " << joinOperatorString << std::endl;
         VLOG(1) << minPixelIntensityPercentileArg.getDescription() << ": " << minPixelIntensityPercentile << std::endl;
         VLOG(1) << maxPixelIntensityPercentileArg.getDescription() << ": " << maxPixelIntensityPercentile << std::endl;
+        VLOG(1) << greedyArg.getDescription() << ": " << greedy << std::endl;
         VLOG(1) << MaskOnlyArg.getDescription() << ": " << std::noboolalpha  << maskOnly << ":" << std::boolalpha << maskOnly << std::endl;
         VLOG(1) << labelFlag.getDescription() << ": " << std::boolalpha << label << std::endl;
         VLOG(1) << disableIntensityFilterArg.getDescription() << ": " << std::boolalpha << disableIntensityFilter << std::endl;
@@ -199,6 +204,7 @@ int main(int argc, const char **argv) {
         options->outputPath = outputDir;
         options->pyramidLevel = pyramidLevel;
         options->label = label;
+        options->greedy = greedy;
 
         auto segmentationOptions = new egt::SegmentationOptions();
         segmentationOptions->MIN_HOLE_SIZE = minHoleSize;

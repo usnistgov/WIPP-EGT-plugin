@@ -254,7 +254,7 @@ namespace egt {
             auto sobelFilter = new CustomSobelFilter3by3<T>(options->concurrentTiles, options->imageDepth, 1, 1);
 
             auto thresholdFinder = new FastThresholdFinder<T>(nbOfSamplingExperiment, tileHeight * tileWidth, nbOfSamples,
-                                                          options->imageDepth);
+                                                          options->imageDepth, options->greedy);
             graph->addEdge(fastImage, sobelFilter);
             graph->addEdge(sobelFilter, thresholdFinder);
             graph->addGraphProducerTask(thresholdFinder);
@@ -435,7 +435,7 @@ namespace egt {
 //                sobelFilter = new EGTSobelFilter<T>(options->concurrentTiles, options->imageDepth, 1, 1);
             }
 
-            auto noiseFilter = new MedianBlurFilter<T>(options->concurrentTiles,  5, options->imageDepth);
+//            auto noiseFilter = new MedianBlurFilter<T>(options->concurrentTiles,  3, options->imageDepth);
 
             auto viewSegmentation = new EGTGradientViewAnalyzer<T>(options->concurrentTiles,
                                                            imageHeightAtSegmentationLevel,
@@ -458,8 +458,9 @@ namespace egt {
 
             segmentationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, Feature>;
             segmentationGraph->addEdge(fastImage2, sobelFilter);
-            segmentationGraph->addEdge(sobelFilter, noiseFilter);
-            segmentationGraph->addEdge(noiseFilter, viewSegmentation);
+//            segmentationGraph->addEdge(sobelFilter, noiseFilter);
+//            segmentationGraph->addEdge(noiseFilter, viewSegmentation);
+            segmentationGraph->addEdge(sobelFilter, viewSegmentation);
             segmentationGraph->addEdge(viewSegmentation, labelingFilter);
 
 

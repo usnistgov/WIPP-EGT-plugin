@@ -21,10 +21,11 @@ namespace egt {
 
 
     public:
-        ThresholdFinder(size_t numThreads, uint32_t sampleSize, uint32_t numberOfSamples, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(numThreads),
+        ThresholdFinder(size_t numThreads, uint32_t sampleSize, uint32_t numberOfSamples, ImageDepth imageDepth, int greedy = 0) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(numThreads),
                                                                                            sampleSize(sampleSize),
                                                                                            nbOfSamples(numberOfSamples),
-                                                                                           imageDepth(imageDepth) {
+                                                                                           imageDepth(imageDepth),
+                                                                                           greedy(greedy){
 //        gradient = std::vector<T>(nbOfSamples * sampleSize, 0);
   //          gradient.reserve(nbOfSamples * sampleSize);
             hist= std::vector<double>(NUM_HISTOGRAM_BINS + 1, 0);
@@ -159,7 +160,7 @@ namespace egt {
 
                 //greedy param taken into account
                 assert(-50 <= greedy <= 50);
-                percentileThreshold += std::round(greedy);
+                percentileThreshold += greedy;
                 percentileThreshold = (percentileThreshold > 100) ? 100 : percentileThreshold;
                 percentileThreshold = (percentileThreshold < 0) ? 0 : percentileThreshold;
 
@@ -216,7 +217,7 @@ namespace egt {
         T minValue = std::numeric_limits<T>::max(),
           maxValue = std::numeric_limits<T>::min();
 
-        uint32_t greedy = 0; //TODO add to constructor
+        int greedy = 0;
         ImageDepth imageDepth = ImageDepth::_8U;
 
 

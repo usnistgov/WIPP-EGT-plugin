@@ -27,6 +27,8 @@ namespace egt {
 
         int32_t threshold{};
 
+        int greedy = 0;
+
         bool label{};
 
         uint8_t rank{};

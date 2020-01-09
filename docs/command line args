@@ -1,3 +1,28 @@
+### BIG BOX
+
+## tiled_stitched_c01t020p1_pyramid_1024.ome.tif
+
+-i  "/home/gerardin/Documents/images/dataset2/images/tiled_stitched_c01t020p1_pyramid_1024.ome.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" -e "loader=2;tile=10;intensity=0;"
+
+
+-i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "100" --maxhole "inf" --minobject "100" -x "0"   --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=108"
+-i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "100" --maxhole "inf" --minobject "100" -x "0"   --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;"
+
+-i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "100" --maxhole "inf" --minobject "100" -x "0" --greedy "-20"  --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "20" --maxhole "inf" --minobject "40" -x "0"  --op "or" --minintensity "50" --maxintensity "100" -e "loader=2;tile=10;threshold=108"
 -i "/home/gerardin/Documents/images/egt-test-images/egt_test/inputs/phase_image_002_tiled256_pyramid.tif"  -o "/home/gerardin/Documents/projects/egt++/outputs/" -d "16U" --level "0" --minhole "100" --maxhole "inf" --minobject "100" -x "0"   --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;threshold=108"
 
@@ -39,3 +64,7 @@
 
 
 -i  "/home/gerardin/Documents/images/egt-test-images/egt_test/KB_2010_12_01_1hDryCol_IR/tigit led/"  -o "/home/gerardin/Documents/projects/egt++/outputs/KB_2010_12_01_1hDryCol_IR/" -d "16U" --level "0" --minhole "20" --maxhole "inf" --minobject "100" -x "0" --disableIntensityFilter -e "loader=2;tile=10;intensitylevel=0;erode=0"
+
+
+
+
