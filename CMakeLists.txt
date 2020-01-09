@@ -1,10 +1,14 @@
-project(newEgt CXX)
+cmake_policy(SET CMP0048 NEW)
 
-cmake_minimum_required(VERSION 3.7)
+project(newEgt VERSION 1.0.2)
+
+cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
+
+option(RUN_GTEST "Downloads google unit test API and runs google test scripts." ON)
 
 #TODO Set this flag only in debug
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -pedantic -Wno-reorder -Wno-unused-parameter" )
@@ -42,6 +46,7 @@ if(APPLE)
     include_directories(/usr/local/Cellar/opencv\@3/3.4.5/include/)
 endif(APPLE)
 message(Apple : ${APPLE})
+
 
 # if installed through package manager a FindTIFF.cmake is available on the path
 # (ex : /usr/share/cmake-3.10/Modules/FindTIFF.cmake)
@@ -113,17 +118,61 @@ link_libraries(glog)
 
 include_directories(src)
 
-#TODO add only for tests
-add_subdirectory(test)
-
 
 set(SRC_FILES src  src/egt/FeatureCollection/Data/Feature.h src/egt/FeatureCollection/Data/BoundingBox.h src/egt/tasks/ViewToConvOutDataConverter.h src/egt/tasks/FCCustomSobelFilter3by3.h src/egt/api/SegmentationOptions.h src/egt/FeatureCollection/Data/ViewOrViewAnalyse.h  src/egt/FeatureCollection/Tasks/ViewAnalyseFilter.h src/egt/tasks/TiffTileWriter.h src/egt/FeatureCollection/Tasks/ViewFilter.h src/egt/FeatureCollection/Data/Feature.h)
 
-add_executable(commandLineCli CommandLineCli.cpp ${SRC_FILES} src/egt/tasks/MedianBlurFilter.h src/egt/tasks/Thresholder.h)
+add_executable(commandLineCli CommandLineCli.cpp ${SRC_FILES} src/egt/tasks/MedianBlurFilter.h src/egt/tasks/Thresholder.h src/egt/utils/Bitmask.h)
 add_executable(main main.cpp ${SRC_FILES})
 add_executable(generateSegmentedImage GenerateSegmentedImage.cpp ${SRC_FILES})
 add_executable(GenerateThresholdedSegmentedImage GenerateThresholdedSegmentedImage.cpp ${SRC_FILES})
 add_executable(GenerateThresholdedSegmentedDenoisedImage GenerateThresholdedSegmentedDenoisedImage.cpp ${SRC_FILES})
+add_executable(OpenCVTest OpenCV.cpp ${SRC_FILES})
+
+# CONFIGURING GTEST
+# Download and unpack googletest at configure time
+if(RUN_GTEST)
+    configure_file(test/CMakeLists.txt.gtest googletest-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+            RESULT_VARIABLE result
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+    if(result)
+        message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+            RESULT_VARIABLE result
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+    if(result)
+        message(FATAL_ERROR "Build step for googletest failed: ${result}")
+    endif()
+
+    # Prevent overriding the parent project's compiler/linker
+    # settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+    # Add googletest directly to our build. This defines
+    # the gtest and gtest_main targets.
+    add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+            ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+            EXCLUDE_FROM_ALL)
+
+    # The gtest/gtest_main targets carry header search path
+    # dependencies automatically when using CMake 2.8.11 or
+    # later. Otherwise we have to add them here ourselves.
+    if (CMAKE_VERSION VERSION_LESS 2.8.11)
+        include_directories("${gtest_SOURCE_DIR}/include")
+    endif()
+    enable_testing()
+    add_subdirectory(test)
+endif(RUN_GTEST)
+
+
+
+
+
+
+
+
+
 #target_link_libraries(commandLineCli opencv_core opencv_imgcodecs zlib)
 
 

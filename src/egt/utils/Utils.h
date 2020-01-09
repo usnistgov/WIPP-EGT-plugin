@@ -14,14 +14,14 @@
 
 namespace egt {
 
-    std::string getFileExtension(const std::string &path) {
+    static std::string getFileExtension(const std::string &path) {
         std::string extension = path.substr(path.find_last_of('.') + 1);
         std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
         return extension;
     }
 
     template<class T>
-    void printArray(std::string title, T *data, uint32_t w, uint32_t h) {
+    static std::string printArray(std::string title, T *data, uint32_t w, uint32_t h) {
         std::ostringstream oss;
 
         oss << title << std::endl;
@@ -33,12 +33,12 @@ namespace egt {
         }
         oss << std::endl;
 
-        VLOG(3) << oss.str();
+        return oss.str();
     }
 
 
     template<class T>
-    void printArray(std::string title, T *data, uint32_t w, uint32_t h, int space) {
+    static std::string printArray(std::string title, T *data, uint32_t w, uint32_t h, int space) {
         std::ostringstream oss;
 
         oss << title << std::endl;
@@ -50,12 +50,12 @@ namespace egt {
         }
         oss << std::endl;
 
-        VLOG(3) << oss.str();
+        return oss.str();
     }
 
 
     template<class T>
-    void printBoolArray(std::string title, T *data, uint32_t w, uint32_t h) {
+    static std::string printBoolArray(std::string title, T *data, uint32_t w, uint32_t h) {
         std::ostringstream oss;
 
         oss << title << std::endl;
@@ -67,11 +67,11 @@ namespace egt {
         }
         oss << std::endl;
 
-        VLOG(0) << oss.str();
+        return oss.str();
     }
 
     template <class T>
-    bool computeKeepHoleAreaOnlyCriteria(uint64_t area, SegmentationOptions *segmentationOptions,
+    static bool computeKeepHoleAreaOnlyCriteria(uint64_t area, SegmentationOptions *segmentationOptions,
                                  DerivedSegmentationParams<T> &segmentationParams) {
         return (area >= segmentationOptions->MIN_HOLE_SIZE);
 
@@ -79,7 +79,7 @@ namespace egt {
 
 
     template <class T>
-    bool computeKeepHoleCriteria(uint64_t area, T meanIntensity, SegmentationOptions *segmentationOptions,
+    static bool computeKeepHoleCriteria(uint64_t area, T meanIntensity, SegmentationOptions *segmentationOptions,
                                  DerivedSegmentationParams<T> &segmentationParams) {
         bool keepHole = computeKeepHoleAreaOnlyCriteria(area, segmentationOptions, segmentationParams);
 

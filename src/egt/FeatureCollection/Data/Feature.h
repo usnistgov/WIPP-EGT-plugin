@@ -192,7 +192,7 @@ namespace egt {
             return BitmaskAlgorithms::isBitSet(_bitMask, pos);
         }
 
-        void printBitmask() const {
+        std::string printBitmask() const {
             std::ostringstream oss;
             oss << std::endl;
             for (uint32_t i = 0; i < _boundingBox.getHeight(); ++i) {
@@ -203,7 +203,7 @@ namespace egt {
             }
             oss << std::endl;
 
-            VLOG(3) << oss.str();
+            return oss.str();
         }
 
 

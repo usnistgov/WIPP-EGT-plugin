@@ -13,6 +13,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core.hpp>
 #include <egt/utils/Utils.h>
+#include <numeric>
 
 namespace egt {
 
@@ -22,12 +23,10 @@ namespace egt {
 
     public:
         FastThresholdFinder(size_t numThreads, uint32_t sampleSize, uint32_t numberOfSamples, ImageDepth imageDepth) : htgs::ITask<ConvOutMemoryData<T>, Threshold<T>>(numThreads),
-                                                                                                                   sampleSize(sampleSize),
-                                                                                                                   nbOfSamples(numberOfSamples),
-                                                                                                                   imageDepth(imageDepth) {
-//        gradient = std::vector<T>(nbOfSamples * sampleSize, 0);
-            //          gradient.reserve(nbOfSamples * sampleSize);
-            hist= std::vector<double>(NUM_HISTOGRAM_BINS + 1, 0);
+                sampleSize(sampleSize),
+                nbOfSamples(numberOfSamples),
+                imageDepth(imageDepth) {
+        hist= std::vector<double>(NUM_HISTOGRAM_BINS + 1, 0);
 
             hist.reserve(NUM_HISTOGRAM_BINS + 1);
 
@@ -41,7 +40,7 @@ namespace egt {
                     size = 256 * 256;
                     break;
                 default:
-                    throw "Image Depth is too large for this approach.";
+                    throw std::runtime_error("Image Depth is too large for this approach.");
             }
             bins = std::vector<double>(size);
         }
@@ -199,7 +198,7 @@ namespace egt {
         }
 
         htgs::ITask <ConvOutMemoryData<T>, Threshold<T>> *copy() override {
-            return new FastThresholdFinder(this->getNumThreads(), sampleSize, nbOfSamples,  imageDepth);
+            return new FastThresholdFinder(this->getNumThreads(), sampleSize, nbOfSamples, imageDepth);
         }
 
         std::string getName() override { return "Threshold Finder"; }

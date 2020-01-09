@@ -128,7 +128,7 @@ class Blob {
         return mergeCount > 0;
     }
 
-    bool setMergeCount(uint32_t newCount){
+    void setMergeCount(uint32_t newCount){
       mergeCount = newCount;
     }
 

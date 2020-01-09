@@ -127,7 +127,7 @@ class SobelFilterOpenCV : public htgs::ITask<htgs::MemoryData<fi::View<T>>, Conv
                         auto img5 = cv::Mat(tileHeight, tileWidth, CV_32F, tileOut);
                         cv::imwrite(outputPath + "tileout" + std::to_string(counter)  + ".png" , img5);
 
-                        printArray<T>("gradient of tile",tileOut,tileWidth,tileHeight);
+                        VLOG(3) << printArray<T>("gradient of tile",tileOut,tileWidth,tileHeight);
 
                     // Write the output tile
                     this->addResult(new ConvOutData<T>(tileOut, view->getGlobalYOffset(), view->getGlobalXOffset(), tileWidth, tileHeight));
