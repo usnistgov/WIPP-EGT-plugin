@@ -23,6 +23,12 @@
             "description": "Minimum Object Size"
         },
         {
+            "name": "greedy",
+            "type": "number",
+            "required": "false",
+            "description": "Greedy parameter in range [-50,50]"
+        },
+        {
             "name": "depth",
             "type": "enum",
             "options": {
@@ -39,6 +45,12 @@
             "type": "boolean",
             "required": "false",
             "description": "Generate a Labeled Mask"
+        },
+        {
+            "name": "expert",
+            "type": "string",
+            "required": "false",
+            "description": "undocumented parameter for advanced control."
         }
     ],
     "outputs": [{

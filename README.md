@@ -21,9 +21,6 @@ Dependencies can be build from sources or obtained from package managers when av
      ccmake ../ (or cmake-gui)
      make
 
-NOTE : Only one OpenCV function (erode) is used by the egt algorithm.
-Linking statically to OpenCV is recommended for container distribution in order to reduce the size of the container.
-
 
 ## Distribution with Docker Container
 
@@ -48,7 +45,10 @@ Example:
 The -e flag can be used for advanced controls :
     
     -e "loader=2;tile=10;threshold=87;intensitylevel=0"
-    
+
+
+Extra parameters can be run from
+
 #### Logging
 
 Environment variables can be set to generate logs.
@@ -63,8 +63,6 @@ Log Levels :
 2/ algorithmic steps.
 3/ detailed logs.
 4/ very detailed logs.
-
-
     
 
 
