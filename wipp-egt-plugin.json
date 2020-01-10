@@ -74,6 +74,11 @@
             "description": "Pick a Minimum Object Size..."
         },
         {
+            "key": "inputs.greedy",
+            "title": "Greedy: ",
+            "description": "Greedy parameter"
+        },
+        {
             "key": "inputs.depth",
             "title": "Image Depth"
         },
