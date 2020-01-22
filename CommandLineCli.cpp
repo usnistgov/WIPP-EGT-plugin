@@ -137,7 +137,7 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::string> expertModeArg("e", "expertmode", "Expert mode", false, "", "string");
         cmd.add(expertModeArg);
 
-        TCLAP::ValueArg<std::string> labelFlag("","label","Generate a labeled mask", false, "false", "bool");
+        TCLAP::ValueArg<std::string> labelFlag("L","label","Generate a labeled mask", false, "false", "bool");
         cmd.add(labelFlag);
 
         TCLAP::ValueArg<std::string> disableIntensityFilterArg("", "disableIntensityFilter", "disable intensity filter", false, "true", "bool");

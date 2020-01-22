@@ -179,7 +179,43 @@ namespace egt {
             auto outputFilename = outputFilenamePrefix + inputFilename;
             auto outputFilepath =  (fs::path(options->outputPath) / outputFilename).string();
 
-            fc->createBlackWhiteMask(outputFilepath, (uint32_t) tileWidthAtSegmentationLevel);
+
+            //generating a labeled mask. Let's try to find the appropriate resolution we need to correctly render each feature.
+            if(options->label) {
+                auto nbBlobs = features.size();
+                auto depth = ImageDepth::_32F;
+
+                outputFilenamePrefix = "labeled-mask-";
+                auto outputFilename = outputFilenamePrefix + inputFilename;
+                auto outputFilepath =  (fs::path(options->outputPath) / outputFilename).string();
+
+
+                if(options->streamingWrite) {
+                    if (nbBlobs < 256) {
+                        depth = ImageDepth::_8U;
+                        fc->createLabeledMaskStreaming<uint8_t>(outputFilepath,
+                                                                (uint32_t) tileWidthAtSegmentationLevel,
+                                                                depth);
+                    } else if (nbBlobs < 256 * 256) {
+                        depth = ImageDepth::_16U;
+                        fc->createLabeledMaskStreaming<uint16_t>(outputFilepath,
+                                                                 (uint32_t) tileWidthAtSegmentationLevel,
+                                                                 depth);
+                    } else {
+                        fc->createLabeledMaskStreaming<uint32_t>(outputFilepath,
+                                                                 (uint32_t) tileWidthAtSegmentationLevel,
+                                                                 depth);
+                    }
+                }
+                else {
+                    fc->createLabeledMask(outputFilepath);
+                }
+            }
+            else {
+                fc->createBlackWhiteMask(outputFilepath, (uint32_t) tileWidthAtSegmentationLevel);
+            }
+
+
 //            if (!segmentationOptions->MASK_ONLY) {
 //                if(options->erode) {
 //                    blobs->erode(options, segmentationOptions);

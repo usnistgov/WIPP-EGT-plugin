@@ -22,7 +22,7 @@ CONTAINER_DIR_INPUTS=/tmp/inputs
 CONTAINER_DIR_OUTPUTS=/tmp/outputs
 
 # image name
-CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.1.0
+CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.1.4
 # CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.0.3
 #CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.0.1
 
@@ -35,7 +35,7 @@ CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.1.0
  docker run -v $INPUT_DIR_HOST:$CONTAINER_DIR_INPUTS  -v $OUTPUT_DIR_HOST:$CONTAINER_DIR_OUTPUTS \
 -e GLOG_v=1 -e GLOG_logtostderr=1 $CONTAINER_IMAGE \
   -i $CONTAINER_DIR_INPUTS/$IMAGE_RELATIVE_PATH -o $CONTAINER_DIR_OUTPUTS \
- -d "16U"  --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0"   --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;intensity=0;"
+ -d "16U"  --level "0" --minhole "1000" --maxhole "inf" --minobject "3000" -x "0" --label "true"  --op "and" --minintensity "0" --maxintensity "100" -e "loader=2;tile=10;intensity=0;"
 
 # FOR DEBUGGING ONLY. Pop up a bash shell in the container.
 # docker run -it -v $INPUT_DIR_HOST:$CONTAINER_DIR_INPUTS  -v $OUTPUT_DIR_HOST:$CONTAINER_DIR_OUTPUTS $CONTAINER_IMAGE bash
