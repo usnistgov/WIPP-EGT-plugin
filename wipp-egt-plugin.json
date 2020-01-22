@@ -1,6 +1,6 @@
 {
     "name": "EGTSegmentationPlugin",
-    "version": "1.0.3",
+    "version": "1.1.2",
     "title": "EGTSegmentation plugin",
     "author": "Antoine Gerardin",
     "institution": "National Institute of Standards and Technology",
@@ -8,7 +8,7 @@
     "website": "https://isg.nist.gov/deepzoomweb/resources/csmet/pages/EGT_segmentation/EGT_segmentation.html",
     "citation": "J.Chalfoun et al., \"Empirical Gradient Threshold Technique for Automated Segmentation across Image Modalities and Cell Lines\", Journal of Microscopy, 2014",
     "description": "Efficient EGT Segmentation (C++)",
-    "containerId": "wipp/wipp-egt-plugin:1.0.3",
+    "containerId": "wipp/wipp-egt-plugin:1.1.1",
     "inputs": [{
             "name": "images",
             "type": "collection",
@@ -91,6 +91,11 @@
             "key": "inputs.label",
             "title": "Generate Labeled Masks instead of Binary Masks: ",
             "description": "Pick an option..."
+        },
+        {
+            "key": "inputs.expert",
+            "title": "Advanced Options ",
+            "description": "Expert Flags..."
         }
     ]
 }
