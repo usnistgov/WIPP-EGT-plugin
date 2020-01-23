@@ -140,6 +140,9 @@ int main(int argc, const char **argv) {
         TCLAP::ValueArg<std::string> labelFlag("L","label","Generate a labeled mask", false, "false", "bool");
         cmd.add(labelFlag);
 
+        TCLAP::ValueArg<int> compressionArg("c", "compression", "Compression", false, 5, "int encoding (see https://www.awaresystems.be/imaging/tiff/tifftags/compression.html)");
+        cmd.add(compressionArg);
+
         TCLAP::ValueArg<std::string> disableIntensityFilterArg("", "disableIntensityFilter", "disable intensity filter", false, "true", "bool");
         cmd.add(disableIntensityFilterArg);
 
@@ -167,6 +170,7 @@ int main(int argc, const char **argv) {
         uint32_t minObjectSize = MinObjectSizeArg.getValue();
         bool maskOnly = parseBooleanString(MaskOnlyArg.getValue());
         std::string expertMode = expertModeArg.getValue();
+        int compression = compressionArg.getValue();
         std::string joinOperatorString = joinOperatorArg.getValue();
         uint32_t minPixelIntensityPercentile = minPixelIntensityPercentileArg.getValue();
         uint32_t maxPixelIntensityPercentile = maxPixelIntensityPercentileArg.getValue();
@@ -192,7 +196,7 @@ int main(int argc, const char **argv) {
         VLOG(1) << labelFlag.getDescription() << ": " << std::boolalpha << label << std::endl;
         VLOG(1) << disableIntensityFilterArg.getDescription() << ": " << std::boolalpha << disableIntensityFilter << std::endl;
         VLOG(1) << expertModeArg.getDescription() << ": " << expertMode << std::endl;
-
+        VLOG(1) << compressionArg.getDescription() << ": " << compression << std::endl;
 
         egt::ImageDepth imageDepth = egt::parseImageDepth(depth);
         uint32_t maxHoleSize = parseUint32String(maxHoleSizeString);
@@ -204,6 +208,7 @@ int main(int argc, const char **argv) {
         options->outputPath = outputDir;
         options->pyramidLevel = pyramidLevel;
         options->label = label;
+        options->compression = compression;
         options->greedy = greedy;
 
         auto segmentationOptions = new egt::SegmentationOptions();

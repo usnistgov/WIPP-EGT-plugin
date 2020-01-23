@@ -31,6 +31,8 @@ namespace egt {
 
         bool label{};
 
+       int compression{};
+
         uint8_t rank{};
 
         bool streamingWrite{};

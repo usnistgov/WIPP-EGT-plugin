@@ -24,24 +24,24 @@ namespace egt {
         /// \param tileSize
         /// \param outputDepth The depth of the Output Image.
         /// \param outputPath
-        TiffTileWriter(size_t numThreads,uint32_t imageHeight, uint32_t imageWidth, uint32_t tileSize, ImageDepth outputDepth, std::string outputPath) :
-        _imageHeight(imageHeight), _imageWidth(imageWidth), _tileSize(tileSize), outputDepth(outputDepth), _outputPath(outputPath) {
+        TiffTileWriter(size_t numThreads,uint32_t imageHeight, uint32_t imageWidth, uint32_t tileSize, ImageDepth outputDepth, std::string outputPath, int compression = COMPRESSION_LZW) :
+                _imageHeight(imageHeight), _imageWidth(imageWidth), _tileSize(tileSize), _outputDepth(outputDepth), _outputPath(outputPath), _compression(compression) {
             // Create the tiff file
-            tif = TIFFOpen(outputPath.c_str(), "w8");
+            _tif = TIFFOpen(outputPath.c_str(), "w8");
 
-            if (tif != nullptr) {
-                TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, imageWidth);
-                TIFFSetField(tif, TIFFTAG_IMAGELENGTH, imageHeight);
-                TIFFSetField(tif, TIFFTAG_TILELENGTH, tileSize);
-                TIFFSetField(tif, TIFFTAG_TILEWIDTH, tileSize);
-                TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8 * calculateBitsPerSample(outputDepth) );
-                TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
-                TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
-                TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
-                TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-                TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
-                TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-                TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+            if (_tif != nullptr) {
+                TIFFSetField(_tif, TIFFTAG_IMAGEWIDTH, imageWidth);
+                TIFFSetField(_tif, TIFFTAG_IMAGELENGTH, imageHeight);
+                TIFFSetField(_tif, TIFFTAG_TILELENGTH, tileSize);
+                TIFFSetField(_tif, TIFFTAG_TILEWIDTH, tileSize);
+                TIFFSetField(_tif, TIFFTAG_BITSPERSAMPLE, 8 * calculateBitsPerSample(outputDepth) );
+                TIFFSetField(_tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+                TIFFSetField(_tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+                TIFFSetField(_tif, TIFFTAG_ROWSPERSTRIP, 1);
+                TIFFSetField(_tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+                TIFFSetField(_tif, TIFFTAG_COMPRESSION, compression);
+                TIFFSetField(_tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+                TIFFSetField(_tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
             }
 
         }
@@ -56,7 +56,7 @@ namespace egt {
                 std::copy_n(view->getPointerTile() + row * view->getViewWidth(), _tileSize, tile + row * _tileSize);
             }
 
-            TIFFWriteTile(tif,
+            TIFFWriteTile(_tif,
                           (tdata_t)tile,
                           view->getCol() * _tileSize,
                           view->getRow() * _tileSize,
@@ -69,20 +69,21 @@ namespace egt {
 
         /// \brief Close the tiff file
         void shutdown() override {
-            TIFFClose(tif);
+            TIFFClose(_tif);
         }
 
 
         htgs::ITask <htgs::MemoryData<fi::View<UserType>>, htgs::VoidData> *copy() override {
-            return new TiffTileWriter(this->getNumThreads(), _imageHeight, _imageWidth, _tileSize, outputDepth ,_outputPath);
+            return new TiffTileWriter(this->getNumThreads(), _imageHeight, _imageWidth, _tileSize, _outputDepth , _outputPath, _compression);
         }
 
-        TIFF *tif;
+        TIFF* _tif;
         uint32_t _imageHeight;
         uint32_t _imageWidth;
         uint32_t _tileSize;
         std::string _outputPath;
-        ImageDepth outputDepth;
+        ImageDepth _outputDepth;
+        int _compression;
 
     };
 

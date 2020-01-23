@@ -195,24 +195,24 @@ namespace egt {
                         depth = ImageDepth::_8U;
                         fc->createLabeledMaskStreaming<uint8_t>(outputFilepath,
                                                                 (uint32_t) tileWidthAtSegmentationLevel,
-                                                                depth);
+                                                                depth, options->compression);
                     } else if (nbBlobs < 256 * 256) {
                         depth = ImageDepth::_16U;
                         fc->createLabeledMaskStreaming<uint16_t>(outputFilepath,
                                                                  (uint32_t) tileWidthAtSegmentationLevel,
-                                                                 depth);
+                                                                 depth, options->compression);
                     } else {
                         fc->createLabeledMaskStreaming<uint32_t>(outputFilepath,
                                                                  (uint32_t) tileWidthAtSegmentationLevel,
-                                                                 depth);
+                                                                 depth, options->compression);
                     }
                 }
                 else {
-                    fc->createLabeledMask(outputFilepath);
+                    fc->createLabeledMask(outputFilepath, (uint32_t) tileWidthAtSegmentationLevel, options->compression);
                 }
             }
             else {
-                fc->createBlackWhiteMask(outputFilepath, (uint32_t) tileWidthAtSegmentationLevel);
+                fc->createBlackWhiteMask(outputFilepath, (uint32_t) tileWidthAtSegmentationLevel, options->compression);
             }
 
 
@@ -410,7 +410,8 @@ namespace egt {
                     imageWidthAtSegmentationLevel,
                     (uint32_t) tileHeigthAtSegmentationLevel,
                     ImageDepth::_8U,
-                    (fs::path(options->outputPath) / "mask.tif").string()
+                    (fs::path(options->outputPath) / "mask.tif").string(),
+                    options->compression
             );
 
             localMaskGenerationGraph = new htgs::TaskGraphConf<htgs::MemoryData<fi::View<T>>, VoidData>;

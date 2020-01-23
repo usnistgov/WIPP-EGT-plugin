@@ -280,7 +280,7 @@ class FeatureCollection {
   /// \param pathLabeledMask Path to save the mask.
   /// \param tileSize Size of tile in the tiff image
   void createLabeledMask(const std::string &pathLabeledMask,
-                         const uint32_t tileSize = 1024) {
+                         const uint32_t tileSize = 1024,  int compression = COMPRESSION_LZW) {
     if ((tileSize & (tileSize - 1)) != 0) {
       std::stringstream message;
       message
@@ -336,7 +336,7 @@ class FeatureCollection {
       TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
       TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, compression);
       TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
       TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -448,7 +448,7 @@ class FeatureCollection {
   /// \param pathLabeledMask Path to save the mask.
   /// \param tileSize Size of tile in the tiff image
   void createBlackWhiteMask(const std::string &pathLabeledMask,
-                            const uint32_t tileSize = 1024) {
+                            const uint32_t tileSize = 1024,  int compression = COMPRESSION_LZW) {
     if ((tileSize & (tileSize - 1)) != 0) {
       std::stringstream message;
       message
@@ -504,7 +504,7 @@ class FeatureCollection {
       TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
       TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
       TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-      TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+      TIFFSetField(tif, TIFFTAG_COMPRESSION, compression);
       TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
       TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -617,7 +617,7 @@ class FeatureCollection {
     /// \param pathLabeledMask Path to save the mask.
     /// \param tileSize Size of tile in the tiff image
     void createBlackWhiteMaskStreaming(const std::string &pathLabeledMask,
-                              const uint32_t tileSize = 1024) {
+                              const uint32_t tileSize = 1024, int compression = COMPRESSION_LZW ) {
       if ((tileSize & (tileSize - 1)) != 0) {
         std::stringstream message;
         message
@@ -646,7 +646,7 @@ class FeatureCollection {
         TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
         TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
         TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, compression);
         TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
         TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 
@@ -693,7 +693,7 @@ class FeatureCollection {
     /// \param pathLabeledMask Path to save the mask.
     /// \param tileSize Size of tile in the tiff image
     template <class T>
-    void createLabeledMaskStreaming(const std::string &pathLabeledMask, const uint32_t tileSize = 1024, ImageDepth depth = ImageDepth::_8U) {
+    void createLabeledMaskStreaming(const std::string &pathLabeledMask, const uint32_t tileSize = 1024, ImageDepth depth = ImageDepth::_8U, int compression = COMPRESSION_LZW) {
 
       uint32_t resolution = 0;
 
@@ -739,7 +739,7 @@ class FeatureCollection {
         TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
         TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
         TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, compression);
         TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
         TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 

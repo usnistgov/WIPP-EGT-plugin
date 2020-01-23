@@ -9,6 +9,7 @@
 #include <string>
 #include <stdexcept>
 #include <opencv2/core/hal/interface.h>
+#include <tiffio.h>
 
 namespace egt {
 
@@ -17,6 +18,9 @@ namespace egt {
         _16U,
         _32F
     };
+
+
+
 
 
     ImageDepth parseImageDepth(const std::string &depth) {
