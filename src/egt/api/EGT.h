@@ -352,8 +352,8 @@ namespace egt {
 //FOR DEBUGGING
             graph->writeDotToFile("thresholdGraph.xdot", DOTGEN_COLOR_COMP_TIME);
 
-          //  delete fi;
             delete runtime;
+            delete fi;
 
             return threshold;
         }
@@ -426,8 +426,8 @@ namespace egt {
             localMaskGenerationGraphRuntime->waitForRuntime();
             //FOR DEBUGGING
             localMaskGenerationGraph->writeDotToFile("SegmentationGraph.xdot", DOTGEN_COLOR_COMP_TIME);
-          //  delete fi;
             delete localMaskGenerationGraphRuntime;
+            delete fi;
             auto endSegmentation = std::chrono::high_resolution_clock::now();
         }
 
@@ -523,7 +523,7 @@ namespace egt {
             for(auto step : traversal->getTraversal()){
                 auto row = step.first;
                 auto col = step.second;
-                fi->requestTile(row,col,false,pyramidLevelToRequestForSegmentation);
+                fi->requestTile(row,col,pyramidLevelToRequestForSegmentation, false);
                 VLOG(1) << "Requesting tile (" << row << "," << col << ")";
             }
             fi->finishedRequestingTiles();
@@ -543,8 +543,8 @@ namespace egt {
 
             segmentationRuntime->waitForRuntime();
             delete traversal;
-           // delete fi;
             delete segmentationRuntime;
+            delete fi;
           return features;
         }
 
@@ -661,7 +661,7 @@ namespace egt {
                     indexRowMax = (bb.getBottomRightRow() / fi->getTileHeight()) + 1;
                 for (auto indexRow = indexRowMin; indexRow < indexRowMax; ++indexRow) {
                     for (auto indexCol = indexColMin; indexCol < indexColMax; ++indexCol) {
-                        fi->requestTile(indexRow,indexCol, false);
+                        fi->requestTile(indexRow,indexCol, 0, false);
                         featureTotalTileCount++;
                     }
                 }
@@ -706,7 +706,7 @@ namespace egt {
 
             fi->finishedRequestingTiles();
             fi->waitForGraphComplete();
-       //     delete fi;
+            delete fi;
         }
 
 

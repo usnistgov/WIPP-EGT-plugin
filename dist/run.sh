@@ -22,7 +22,7 @@ CONTAINER_DIR_INPUTS=/tmp/inputs
 CONTAINER_DIR_OUTPUTS=/tmp/outputs
 
 # image name
-CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.1.4
+CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.1.6
 # CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.0.3
 #CONTAINER_IMAGE=wipp/wipp-egt-plugin:1.0.1
 
